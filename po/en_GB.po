@@ -1,0 +1,46 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2005 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <EMAIL@ADDRESS>, 2005.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-05-16 15:25+0300\n"
+"PO-Revision-Date: 2005-04-22 15:50+0300\n"
+"Last-Translator:  <EMAIL@ADDRESS>\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/mmc-format.h:37
+msgid "FIL-NOT015"
+msgstr "Formatting memory card"
+
+#. some UI strings
+#: src/events.h:111
+msgid "CON-INF009"
+msgstr "Connected via USB cable"
+
+#: src/events.h:112
+msgid "CON-INF011"
+msgstr "USB cable disconnected"
+
+#: src/events.h:113
+msgid "MMC-NOT023"
+msgstr "No memory card inserted"
+
+#: src/events.h:114
+msgid "MMC-INF012"
+msgstr "Memory card inserted"
+
+#: src/events.h:115
+msgid "MMC-INF018"
+msgstr "Memory card corrupted"
+
+#: src/events.h:116
+msgid "FIL-NOT032"
+msgstr "Formatting complete"

@@ -1,0 +1,46 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-05-16 15:26+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/mmc-format.h:37
+msgid "FIL-NOT015"
+msgstr ""
+
+#. some UI strings
+#: src/events.h:111
+msgid "CON-INF009"
+msgstr ""
+
+#: src/events.h:112
+msgid "CON-INF011"
+msgstr ""
+
+#: src/events.h:113
+msgid "MMC-NOT023"
+msgstr ""
+
+#: src/events.h:114
+msgid "MMC-INF012"
+msgstr ""
+
+#: src/events.h:115
+msgid "MMC-INF018"
+msgstr ""
+
+#: src/events.h:116
+msgid "FIL-NOT032"
+msgstr ""

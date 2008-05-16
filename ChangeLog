@@ -1,0 +1,61 @@
+2007-09-10  Marius Vollmer  <marius.vollmer@nokia.com>
+
+	Released 2.18
+	
+	* src/mmc-mount: Run dosfsck before mounting and exit script when
+	that fails.
+
+2005-10-18  Marius Vollmer  <marius.vollmer@nokia.com>
+
+	* configure.in: Changed version to 0.40 to agree with
+	debian/changelog.
+
+	* src/osso-mmc-corrupted.sh, src/osso-mmc-not-corrupted.sh: New.
+	* src/exec-func.h (MMC_CORRUPTED_SCRIPT,
+	MMC_NOT_CORRUPTED_SCRIPT): New.
+	* src/exec-func.c, src/exec-func.h (set_mmc_corrupted_flag): New.
+	* src/ke-recv.schemas: Added schema for mmc-corrupted flag.
+
+	* src/events.c (take_mmc_to_use, handle_e_opened): Use
+	set_mmc_corrupted_flag to maintain the "corrupted mmc" gconf
+	value.
+
+	* src/mmc-mount: New.
+	* src/Makefile.am (sbin_SCRIPTS): Added it.
+	* src/osso-mmc-mount.sh: Use it instead of calling mount directly.
+
+2005-10-05  Marius Vollmer  <marius.vollmer@nokia.com>
+
+	* src/ke-recv.c (sig_handler): Only react to the full
+	MMC_DEVICE_OP path, not also when it is a prefix.
+
+2005-10-04  Marius Vollmer  <marius.vollmer@nokia.com>
+
+	* src/events.c (mmc_device_file): Removed, this value is only
+	stored in an envvar now.
+	(handle_e_startup): Don't initialize it.
+	(handle_e_rename, format_and_mount): Don't use mmc_device_file,
+	use the envvar.
+	
+	* src/ke-recv.h (MMC_DEVICE_FILE_DEFAULT): Removed, there is no
+	default any more.
+	(MMC_DEVICE_FILE_WITH_PARTITION,
+	MMC_DEVICE_FILE_WITHOUT_PARTITION): New, run_mount will try both.
+	(MMC_DEVICE_OP): Removed partition part.
+	(MMC_SYSFS_FILE): Likewise.
+	
+	* src/exec-func.c (try_mount): Renamed from run_mount, made static
+	and changed to take the device file as an argument.
+	(run_mount): Call try_mount with MMC_DEVICE_FILE_WITHOUT_PARTITION
+	and the with MMC_DEVICE_FILE_WITH_PARTITION until it succeeds.
+
+	* src/mmc-format.c (start_format): Fail when envvar
+	MMC_DEVICE_FILE is not defined.
+
+	* src/osso-mmc-mount.sh: Do not pass our own arguments to mount.
+	Explicitely pass type, options and $MMC_DEVICE_FILE.  This allows
+	this script to mount different device files.
+
+	* src/osso-update-mmc-label.sh: Also clear /tmp/.mmc-volume-label
+	when mmc-rename failed.
+

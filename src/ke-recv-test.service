@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.nokia.ke_recv_test
+Exec=/usr/bin/ke-recv-test

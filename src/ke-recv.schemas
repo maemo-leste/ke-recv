@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<gconfschemafile>
+  <schemalist>
+    <schema>
+      <key>/schemas/system/osso/af/usb-cable-attached</key>
+      <applyto>/system/osso/af/usb-cable-attached</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the USB cable is attached or not</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc-cover-open</key>
+      <applyto>/system/osso/af/mmc-cover-open</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the memory card cover is open or not</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc/mmc-corrupted</key>
+      <applyto>/system/osso/af/mmc/mmc-corrupted</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the external memory card is corrupted</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc/internal-mmc-corrupted</key>
+      <applyto>/system/osso/af/mmc/internal-mmc-corrupted</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the internal memory card is corrupted</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc-used-over-usb</key>
+      <applyto>/system/osso/af/mmc-used-over-usb</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the external memory card is used over USB</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/internal-mmc-used-over-usb</key>
+      <applyto>/system/osso/af/internal-mmc-used-over-usb</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the internal memory card is used over USB</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc-device-present</key>
+      <applyto>/system/osso/af/mmc-device-present</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short>tells whether the external memory card device
+               file is present</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/internal-mmc-device-present</key>
+      <applyto>/system/osso/af/internal-mmc-device-present</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+       <short>tells whether the internal memory card device
+              file is present</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/camera-is-out</key>
+      <applyto>/system/osso/af/camera-is-out</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+              <short>tells whether the camera is out</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/camera-has-turned</key>
+      <applyto>/system/osso/af/camera-has-turned</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+              <short>tells whether the camera has turned</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/slide-open</key>
+      <applyto>/system/osso/af/slide-open</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+              <short>tells whether the slide keyboard is open</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/internal-mmc-swap</key>
+      <applyto>/system/osso/af/internal-mmc-swap</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+              <short>tells whether swapping is enabled
+                     for the internal card</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/mmc-swap</key>
+      <applyto>/system/osso/af/mmc-swap</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+              <short>tells whether swapping is enabled
+                     for the external card</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/on-camera-out</key>
+      <applyto>/system/osso/af/on-camera-out</applyto>
+      <owner>ke-recv</owner>
+      <type>list</type>
+      <list_type>string</list_type>
+      <default>[org.freedesktop.Telepathy.StreamEngine,com.nokia.osso_voip_ui]</default>
+      <locale name="C">
+	<short>Services to launch</short>
+        <long>List of DBUS services to launch when the camera pops-out</long>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/launch-on-camera</key>
+      <applyto>/system/osso/af/launch-on-camera</applyto>
+      <owner>ke-recv</owner>
+      <type>bool</type>
+      <default>true</default>
+      <locale name="C">
+        <short>Wether to launch anything</short>
+        <long>This key decides whether camd should launch anything when camera pops-out</long>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/usb-mode</key>
+      <applyto>/system/osso/af/usb-mode</applyto>
+      <owner>ke-recv</owner>
+      <type>string</type>
+      <default>idle</default>
+      <locale name="C">
+        <short>Current USB mode</short>
+      </locale>
+    </schema>
+    <schema>
+      <key>/schemas/system/osso/af/usb-device-name</key>
+      <applyto>/system/osso/af/usb-device-name</applyto>
+      <owner>ke-recv</owner>
+      <type>string</type>
+      <default>unknown</default>
+      <locale name="C">
+        <short>Name of the connected USB peripheral</short>
+      </locale>
+    </schema>
+  </schemalist>
+</gconfschemafile>

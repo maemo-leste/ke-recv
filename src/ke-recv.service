@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.nokia.ke_recv
+Exec=/usr/sbin/ke-recv

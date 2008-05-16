@@ -1,0 +1,1037 @@
+ke-recv (2.27-2~unreleased) unstable; urgency=low
+
+  * Tuned source headers a bit before open-sourcing (wohoo!).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 16 May 2008 16:18:27 +0300
+
+ke-recv (2.27-1) unstable; urgency=low
+
+  * Fix dosfsck return code handling.
+  * Removed busybox and udev dependencies, they were only useful as temporary
+    dependencies.
+  * Updated dosfstools' versioned dependency due to a required patch for it.
+  * Do not use gtk_main_quit in signal handlers of mmc-check and mmc-format
+    because it causes jamming sometimes. Fixes: NB#83045
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 31 Mar 2008 16:12:31 +0300
+
+ke-recv (2.26-1) unstable; urgency=low
+
+  * Fix segfault in case there is no slide keyboard. Fixes: NB#82554
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 14 Mar 2008 12:33:17 +0200
+
+ke-recv (2.25-1) unstable; urgency=low
+
+  * Slide UDI is now discovered also when there are more than one HAL entry
+    for it. Fixes: NB#80924
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 11 Mar 2008 08:58:37 +0200
+
+ke-recv (2.24-1) unstable; urgency=low
+
+  * Do not delay mounting in the first boot.
+  * Re-removed running dosfsck before mounting (now it's final!).
+  * Disabling swapping before unmounting on exit.
+  * Set GConf key for memory card cover also when closing the cover in the
+    unmount pending state. Fixes: NB#72884
+  * Use stab_me_usb_no_file_system_available instead of
+    stab_me_usb_cannot_connect. Fixes: NB#75993
+  * Removed "-R 6" option from mkdosfs command line, using explicit "-F 32"
+    instead.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 19 Feb 2008 12:55:40 +0200
+
+ke-recv (2.23-1) unstable; urgency=low
+
+  * Delayed mounting of memory cards. Fixes: NB#72083
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri,  5 Oct 2007 10:22:36 +0300
+
+ke-recv (2.22-1) unstable; urgency=low
+
+  * Re-enabled pre-mount-time dosfsck run.
+  * Added support for memory cards without volumes: they are now marked as
+    corrupt so that the user is able format them in File Manager.
+  * Removed some commented out code and unused struct members.
+  * Added a workaround for backup boot sector problem after renaming a memory
+    card. Fixes: NB#71239
+  * Not checking the is_mounted property before trying to mount because of its
+    unreliability.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 02 Oct 2007 14:35:21 +0300
+
+ke-recv (2.21-1~jorma) unstable; urgency=low
+
+  * Removed running dosfsck before mounting.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  1 Oct 2007 11:06:50 +0300
+
+ke-recv (2.20-1) unstable; urgency=low
+
+  * Return code 1 from dosfsck is also considered as success, because dosfsck
+    returns 1 even when repairing succeeded.
+  * Mark volume not corrupted after a successful dosfsck run.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 25 Sep 2007 12:44:51 +0300
+
+ke-recv (2.19-1) unstable; urgency=low
+
+  * Show the default USB device name if it's not available on ejection.
+    Fixes: NB#69649
+  * Return true even if osso_filemanager_open_folder() fails, because it
+    does not mean that the USB volume cannot be used.
+  * Now using HAL property usb_device.mode instead of usb_device.cable_type
+    due to Tony's recommendation.
+  * Fixes to mmc-check.c: hildon_banner_set_fraction() enabled and now
+    handling G_IO_STATUS_AGAIN.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 21 Sep 2007 18:16:11 +0300
+
+ke-recv (2.18-1) unstable; urgency=low
+
+  * Run dosfsck before mounting a memory card.  Fixes: NB#66761.
+
+ -- Marius Vollmer <marius.vollmer@nokia.com>  Mon, 10 Sep 2007 15:20:50 +0300
+
+ke-recv (2.17-1) unstable; urgency=low
+
+  * Removed extra banner after format. Fixes: NB#64712
+  * Small fix to osso-mmc-mount.sh from Gabriel.
+  * Avoiding sending of pre-unmount signal for unmounted removable storage.
+    Fixes: NB#61537
+  * Increased the waiting time between USB storage and volume from 1s to 5s.
+  * Ke-recv GConf keys are now stored to RAM. (Related to NB#64985)
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 17 Aug 2007 11:10:37 +0300
+
+ke-recv (2.16-1) unstable; urgency=low
+
+  * Added two new GConf keys for hildon-fm: /system/osso/af/mmc-mount-point
+    and /system/osso/af/mmc-device-name.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 26 Jul 2007 14:23:12 +0300
+
+ke-recv (2.15-1) unstable; urgency=low
+
+  * Now starting File manager on mounted USB volumes only if hildon-desktop
+    has already been started. Fixes: NB#63027
+  * Not trying to start Application manager twice if both memory cards have
+    the auto-install file -- the file on external card is chosen in that case.
+    Fixes: NB#56594
+  * Not starting Application manager before hildon-desktop is available.
+    Fixes: NB#58240
+  * Improvements to USB cable type detection: ke-recv tries again if HAL is
+    not ready and USB-shares memory cards in this case. Fixes: NB#63079
+  * Implemented support for memory cards that do not have a partition table
+    but still have a mountable volume.
+  * Added clearing of old volume information before formatting (fixes some
+    mounting problems after formatting).
+  * Now making sure that the formatting progress banner is shown as soon as
+    possible to give the user some visual feedback quicker.
+  * Removed unnecessary property watches for memory card volumes.
+  * Ke-recv is no longer requesting dialogs when hildon-desktop is not
+    running.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 20 Jul 2007 16:37:34 +0300
+
+ke-recv (2.14-1) unstable; urgency=low
+
+  * Added a missing g_thread_init call to mmc-pre-unmount.
+  * Ke-recv is now stopped for ACTDEAD mode. Fixes: NB#60549
+  * Applied a patch from Zeeshan for the camera code. Fixes: NB#54817
+  * Fixed some lintian errors and warnings.
+  * HAL is now used for detecting the USB cable type (unreliable hack
+    removed). Fixes: NB#60609
+  * Fixed behaviour when the Mini-A cable is detected as Mini-B cable
+    (old code displayed UI for both modes).
+  * Ke-recv is now stopped later to increase chances that the removable
+    file systems are not in use when unmounting them.
+  * Added dialog for the case that both memory cards cannot be USB-shared.
+    Fixes: NB#60599
+  * USB-share the internal card first so that it gets the first available
+    drive letter in Windows. Fixes: NB#60815
+  * Fixed the USB-sharing script to check whether the card is already
+    USB-shared.
+  * Added missing information notes for formatting and renaming when the
+    card is in use. Fixes: NB#61395
+  * Added missing updating of GConf key mmc-device-present when memory card
+    device added event comes in cover open state. Fixes: NB#62143
+  * Added two new GConf keys for the Statusbar USB plugin:
+    /system/osso/af/usb-mode and /system/osso/af/usb-device-name.
+  * Added dependencies to Statusbar USB plugin and File manager localisation
+    files.
+  * Fixed device lock handling. Fixes: NB#62645
+  * Increased USB mass storage mounting timeout to 15 seconds.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 06 Jul 2007 13:50:58 +0300
+
+ke-recv (2.13-1) unstable; urgency=low
+
+  * Re-enabled Zeeshan's camera code (seems broken, though).
+  * Added device lock support.
+  * Now showing correct infobanner when the USB cable is removed in
+    peripheral mode. Fixes: NB#59207
+  * Now showing information note when going to peripheral mode and no memory
+    cards are inserted. Fixes: NB#59650
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 07 Jun 2007 14:03:59 +0300
+
+ke-recv (2.12-1) unstable; urgency=low
+
+  * Fixed localisation domain for USB plugin strings.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 24 May 2007 12:25:42 +0300
+
+ke-recv (2.11-1) unstable; urgency=low
+
+  * Fixed a trivial bug in E_REPAIR handling.
+  * D-Bus interfaces for formatting, repairing, and renaming changed.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 23 May 2007 18:51:57 +0300
+
+ke-recv (2.10-1) unstable; urgency=low
+
+  * Added handling of org.freedesktop.Notifications signals.
+  * Implemented re-mounting in cancellation of the eject operation.
+  * Miscellaneous fixes to dialog code.
+  * Applied a corrective patch from Tomas Junnonen for slide detection.
+  * Added missing possibly_turn_swap_off() calls for E_OPENED and E_PLUGGED.
+  * Removed support for unneeded OSSO_SWAPOFF_ALWAYS_FAILS environment
+    variable.
+  * Removed deprecated USB cable code.
+  * Added missing updates to USB cable status in GConf.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 22 May 2007 19:34:43 +0300
+
+ke-recv (2.9-1) unstable; urgency=low
+
+  * First automatic mounting implementation for USB mass storages. 
+  * Added versioned dependency to libosso1 because of
+    org.freedesktop.Notifications support.
+  * Now osso-mmc-mount.sh returns 0 when the volume is already mounted.
+  * Applied a patch from Tomas Junnonen to correct the slide detection.
+  * Ported open_closeable_dialog and close_closeable_dialog to the new
+    org.freedesktop.Notifications API.
+  * Now depends on libosso-filemanager-interface-dev because of opening
+    of USB folder in File Manager.
+  * Old hacky way of passing the volume label to GnomeVFS is back.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 18 May 2007 18:09:45 +0300
+
+ke-recv (2.8-1) unstable; urgency=low
+
+  * Added missing retrieval of whole_device to the code handling new
+    memory card storages.
+  * Fixed a design mistake in initialisation: memory cards would be mounted
+    independently of the cover status.
+  * Now the init script loads g_file_storage if g_ether is not loaded.
+  * Fixed a problem in formatting: re-mounting is done on HAL's signals.
+  * Added a workaround for buggy is_mounted property.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 10 May 2007 18:49:44 +0300
+
+ke-recv (2.7-1) unstable; urgency=low
+
+  * Added dmask=000,fmask=0133 to mount options. Fixes: NB#49750
+  * Added first implementation of mmc-check.
+  * Applied a patch from Tomas Junnonen for detecting the sliding keyboard.
+  * Began implementation of USB mass storage support (not finished yet).
+  * Removed some hard-coding and rewrote parts of memory card volume
+    handling.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 07 May 2007 20:37:38 +0300
+
+ke-recv (2.6-1) unstable; urgency=low
+
+  * Corrected the .auto.install file support: not running it when the USB
+    cable is removed, added D-Bus interface for checking it on demand.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 19 Apr 2007 14:55:00 +0300
+
+ke-recv (2.5-1) unstable; urgency=low
+
+  * Fixed problem in swapping off code when timeout happens. Fixes: NB#53984
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 16 Apr 2007 12:26:10 +0300
+
+ke-recv (2.4-1) unstable; urgency=low
+
+  * Added setting of the corrupted flag for memory cards that are already
+    mounted by someone.
+  * Implemented support for the .auto.install file. Implemented: NR#159767
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 11 Apr 2007 12:47:24 +0300
+
+ke-recv (2.3-3) unstable; urgency=low
+
+  * Added dependency to hal.
+  * Added TODOs for memory card autoinstall.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 03 Apr 2007 13:20:09 +0300
+
+ke-recv (2.3-2) unstable; urgency=low
+
+  * Removed inclusion of libhal-storage.h. 
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 29 Mar 2007 13:25:21 +0300
+
+ke-recv (2.3-1) unstable; urgency=low
+
+  * Added version to dosfstools dependency because of big memory cards.
+  * Now using 'b' (FAT32) type instead of '6' (FAT16) type with sfdisk.
+  * Added versioned dependency to udev because of a needed feature.
+  * Final Hildon consolidation (hildon-libs -> hildon-1 and
+    hildon-base-lib -> osso-af-settings).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 27 Mar 2007 16:50:03 +0300
+
+ke-recv (2.2-1) unstable; urgency=low
+
+  * Removed unused definitions from fat-tools.h.
+  * Partial renaming implementation; run-time updating of the label still
+    needs to be solved.
+  * Implemented formatting interface.
+  * Now using the new HAL property mmc_host.slot_name to determine the
+    cover for the external memory card.
+  * Fixed a bug in volume info discarding code.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 19 Mar 2007 15:47:18 +0200
+
+ke-recv (2.1-1) unstable; urgency=low
+
+  * First version that is using HAL.
+  * Removed MAD dependency.
+  * Removed input-device and lowmem code, because they still require sysfs
+    polling and will be handled by a separate daemon.
+  * Removed sfdisk because it will be provided by busybox. Added busybox
+    to dependencies.
+  * Removed lot of unused code now that some responsibilities are going
+    to move to a separate daemon.
+  * Added support for ext3-formatted cards and kernel module loading for
+    ext2 and ext3 formats. Original patch from Gabriel Schulhof.
+  * Removed GConf key /system/osso/af/keyboard-attached, it's now handled
+    by ke-recv-extra package.
+  * Removed the restartke-recv init script hack. Now ke-recv will exit on
+    the shutdown signal.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 14 Mar 2007 10:55:25 +0200
+
+ke-recv (2.0-1) unstable; urgency=low
+
+  * Branched code for new OS release.
+  * Removed mlabel code and added dependency to separate mtools package.
+  * Fixed osso-update-mmc-label.sh for unmodified mtools.
+  * Added mmc-rename.sh script to wrap mlabel.
+  * Now trying to disable swapping on plugging of USB cable (from maintenance
+    branch). 
+  * Applied patch from Zeeshan Ali for NB#48616.
+  * Applied patch from Timo Teräs to format memory cards so that they work
+    faster.
+  * Ported two-process code from the maintenance branch.
+  * Removed use of HildonApp.
+  * Updated swap_mgr code from Leonid.
+  * Made ke-recv more g_ether-friendly.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 18 Jan 2007 16:41:20 +0200
+
+ke-recv (1.31-1) unstable; urgency=low
+
+  * Fixed race condition in take_unmounted_mmc_to_use() with updating
+    the memory card volume label file (now done before mounting).
+  * Added missing updating of GConf key for swapping after swapping was
+    disabled using the D-Bus interface. Fixes: NB#44232
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Oct 2006 16:36:30 +0300
+
+ke-recv (1.30-1) unstable; urgency=low
+
+  * Increased INPUT_DEVICE_BUILTIN_EVENTS in input-device.h. Fixes: NB#43337
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 16 Oct 2006 13:40:32 +0300
+
+ke-recv (1.29-1) unstable; urgency=low
+
+  * Now writing the volume label file before re-mounting the memory
+    card after renaming it. Fixes: NB#41548
+  * Hacked mlabel so that it returns exit code 1 when name clash happens.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 05 Oct 2006 11:26:34 +0300
+
+ke-recv (1.28-1) unstable; urgency=low
+
+  * Integrated ossocamd to ke-recv process. Patch is from Zeeshan Ali
+    <zeeshan.ali@nokia.com>. Fixes: NB#42158
+  * Now showing information banner in case renaming fails because of
+    broken (or non-FAT) memory card.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 04 Oct 2006 13:30:20 +0300
+
+ke-recv (1.27-1) unstable; urgency=low
+
+  * Added missing note about memory card in use when card is use when
+    USB cable is plugged in. Fixes: NB#41827, NB#41488, NB#38900
+  * Now using a progress banner instead of information note with Cancel
+    button during formatting.
+  * Fixed copyright notice in kdbus.c and debian/copyright. Added Nokia
+    copyright notice to debian/init.d. Fixes: NB#41974
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 03 Oct 2006 10:12:00 +0300
+
+ke-recv (1.26-3) unstable; urgency=low
+
+  * Removed dependency to sudo, because it was mistakingly put.
+  * Cleaned up some po files and changelog because of certain words.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 20 Sep 2006 14:03:27 +0300
+
+ke-recv (1.26-2) unstable; urgency=low
+
+  * Added dependency to sudo.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 12 Sep 2006 11:32:25 +0300
+
+ke-recv (1.26-1) unstable; urgency=low
+
+  * Now memory cards are shown as USB mass storage independently of each
+    other's state (this is now possible because the kernel module is kept
+    loaded all the time). Fixes: NB#39847, NB#39563
+  * Now unmounting script also considers other partitions.
+    (Protects 'hackers' using more than one partition in memory card.)
+  * Corrected license headers. Fixes: NB#33926
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 12 Sep 2006 11:26:15 +0300
+
+ke-recv (1.25-1) unstable; urgency=low
+
+  * Now using only memory card device files to detect insertion of them.
+    Rationale: udev's devices and kernel's uevents don't match, and
+    this way it is less dependent on sysfs path names, and it allows for
+    simpler implementation. Bad side is that there is polling for few
+    seconds. Fixes: NB#38847
+  * Fixed showing of multiple dialogs when connecting or disconnecting USB
+    cable. Fixes: NB#37954
+  * Added chown for the ext2 support to make the root folder read-write.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 01 Sep 2006 17:05:56 +0300
+
+ke-recv (1.24-1) unstable; urgency=low
+
+  * Now sending also D-Bus signals about the camera state. Fixes: NB#38495
+  * Fixed copyright notice in swap_mgr.c.
+  * Now using /sbin/insmod again and removed the workaround (Busybox was
+    fixed).
+  * USB mass storage operation keeps the g_file_storage module now always
+    loaded.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 29 Aug 2006 18:15:17 +0300
+
+ke-recv (1.23-1) unstable; urgency=low
+
+  * Fixed handling of low-memory signals. Fixes: NB#36714
+  * Removed creation of the /media/mmc2 folder to osso-af-startup package.
+    (And added dependency to new osso-af-startup version because of this.)
+    Fixes: NB#37373
+  * Implemented USB mass storage support for both memory cards.
+    Fixes: NB#37716
+  * Removed sending of the Statusbar event when USB cable is connected and
+    disconnected, because that is a deprecated way.
+  * Added missing initialisations for USB cable and mass storage GConf keys.
+  * Added support for ext2-formatted memory cards (not tested).
+  * Added /system/osso/af/mmc-swap and /system/osso/af/internal-mmc-swap
+    GConf keys.
+  * Added a workaround to work around differences in /dev and /mnt/initfs/dev
+    device naming.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 21 Aug 2006 14:33:29 +0300
+
+ke-recv (1.22-1) unstable; urgency=low
+
+  * Added support for formatting big (2GB) memory cards.
+  * Fixed sysfs path for the external memory card (new kernel had different
+    one).
+  * Moved from kevents to polling sysfs when detecting changes in some sysfs
+    files.
+  * Fixed a segmentation fault with the new kernel, revealed by a changed
+    sysfs path.
+  * Added missing handling of the appearance of internal memory card device.
+  * Added a hack for the USB driver (i.e. insertion of g_ether module), so
+    that it can inform about the USB cable changes through a sysfs file.
+  * Fixed bug in memory card presence information when the internal card is
+    missing. Fixes: NB#34615
+  * Fixed wrong mount point argument in the pre-unmount signal, when about
+    to unmount the internal memory card. Fixes: NB#36802
+  * Re-applied thumb instruction support. Fixes: NB#36770
+  * Swapping on insertion of the memory card is now done only for the
+    internal memory card. Fixes: NB#32328
+  * Now emulating the battery cover signal really works in ke-recv-test.
+  * Added missing initialisation of camera GConf keys. Fixes: NB#34927
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 08 Aug 2006 16:48:54 +0300
+
+ke-recv (1.21-2) unstable; urgency=low
+
+  * Keyboard attached state informed upon global initialization.
+    Fixes: NB#34196
+
+ -- Kuisma Salonen <kuisma.salonen@nokia.com>  Wed, 19 Jul 2006 13:52:21 +0300
+
+ke-recv (1.21-1) unstable; urgency=low
+
+  * Now updating the MMC cover GConf key before checking if it can be
+    unmounted. Fixes: NB#33899
+  * Removed dependency to hildon-base. Fixes: NB#33292
+  * Now using new chown syntax. Fixes: NB#33558
+  * Removed unused dh_make templates. Fixes: NB#33559
+  * Fixed init script installation to be proper. Fixes: NB#33560
+  * Added support for GConf keys telling about the camera HW state.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 30 Jun 2006 12:52:34 +0300
+
+ke-recv (1.20-1) unstable; urgency=low
+
+  * Fixed segfault in kevent handling. Fixes: NB#32009
+    (This also fixed the memory card automounting.)
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 28 Jun 2006 17:08:21 +0300
+
+ke-recv (1.19-1) unstable; urgency=low
+
+  * Improved reliability of formatting at the expense of not supporting
+    custom partitions in memory card (N#32384).
+  * Redirected logging from stderr to syslog (N#32040).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 12 Jun 2006 17:24:34 +0300
+
+ke-recv (1.18-1) unstable; urgency=low
+
+  * Lintian fixes.
+  * Updated the state diagram to reflect unmounting when renaming MMC.
+  * Fix to sfdisk llseek() calls because of N#31636.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 02 Jun 2006 16:18:49 +0300
+
+ke-recv (1.17-1) unstable; urgency=low
+
+  * Fixed the exit signal to be broadcast on session bus (N#29144).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 24 May 2006 14:31:45 +0300
+
+ke-recv (1.16-1) unstable; urgency=low
+
+  * Some support for the new polling style of using sysfs (the code
+    is not used yet).
+  * Now mounting memory card with mixed-case support (N#28799).
+  * Returned to the old MMC renaming code with unmount (N#23090).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 23 May 2006 16:04:17 +0300
+
+ke-recv (1.15-1) unstable; urgency=low
+
+  * Fixed bug with mmc-cover-open GConf key not updated when the memory
+    card is in use and the cover is closed (N#29350).
+  * handle_event() is no longer expecting non-NULL mmc argument (N#29695).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 15 May 2006 17:28:48 +0300
+
+ke-recv (1.14-1) unstable; urgency=low
+
+  * Applied patch for keyboard support from Tomas Junnonen (N#27972).
+  * Added more support for several memory cards.
+  * Fixed removing of the USB mass storage module (N#23251).
+  * Not using sfdisk for waiting for partition table information, because
+    of unreliability problems.
+  * Added swap file corrupted note (N#26649).
+  * Added support for empty volume labels (N#27744).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Sat, 06 May 2006 22:08:00 +0300
+
+ke-recv (1.13-1) unstable; urgency=low
+
+  * Added a workaround for Core problem with USB mass storage (N#23251).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 24 Apr 2006 17:10:32 +0300
+
+ke-recv (1.12-1) unstable; urgency=low
+
+  * Fixed compilation problem.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 24 Apr 2006 12:46:22 +0300
+
+ke-recv (1.11-1) unstable; urgency=low
+
+  * Removed another OSSO_SWAP definition from the init script.
+  * Corrected alternative sysfs cover switch path (N#24389).
+  * Added GConf keys for the internal memory card.
+  * Made the program more configurable.
+  * Enabled thumb instruction compilation.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 19 Apr 2006 20:36:39 +0300
+
+ke-recv (1.10-1) unstable; urgency=low
+
+  * Added dependency to osso-af-startup for OSSO_SWAP variable.
+  * Added a hackish workaround for an MMC issue (N#23361).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 27 Mar 2006 16:38:02 +0300
+
+ke-recv (1.9-1) unstable; urgency=low
+
+  * Swap file is again hidden '.swap'.
+  * Fixed localisation package dependency.
+  * Modified the DBus interface for enabling and disabling swapping.
+  * Now using new system dialog DBus API.
+  * Swap is now enabled according to the existence of the swap file.
+  * Removed unnecessary debug spew.
+  * Fixed lot of compilation warnings.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Sat, 11 Mar 2006 19:54:39 +0200
+
+ke-recv (1.8-1) unstable; urgency=low
+
+  * Plugged a leak in dialog showing (N#20884).
+  * Updated the state diagram for swapping.
+  * Added swapping disabling and enabling, and DBus interface for them.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 02 Mar 2006 14:00:09 +0200
+
+ke-recv (1.7-1) unstable; urgency=low
+
+  * Integrated osso-af-mmc package to this package.
+  * Added build dependency to GnomeVFS for some osso-af-mmc code.
+  * Warning dialogs are now automatically closing.
+  * Added S_UNMOUNT_PENDING cases to several places where it was missing.
+  * Now showing 'No MMC inserted' on MMC device timeouts (N#19988).
+  * Now using correct logical id strings.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 24 Feb 2006 10:45:32 +0200
+
+ke-recv (1.6-1) unstable; urgency=low
+
+  * Check for open files is now done before unmounting MMC.
+  * Removed S_HANDLE_WAITS and related stuff (S_USB_PENDING replaces it).
+  * Removed the delay from the user low-memory signal.
+  * Added Makefile for the dotty diagram.
+  * Added new S_UNMOUNT_PENDING state.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 14 Feb 2006 17:09:38 +0200
+
+ke-recv (1.5-1) unstable; urgency=low
+
+  * Removed 'Memory card inserted' when disconnecting USB cable (N#20933).
+  * Added code from util-linux to compile sfdisk.
+  * Changed MMC mounting to be more reliable and fast.
+  * Added a shell script for partitioning MMC.
+  * MMC is now partitioned before formatting if it is not already (N#21265).
+  * Redirected logging to stderr, since there is no syslogd.
+  * Unmounting now succeeds if MMC is not mounted.
+  * Fixed bug in reading volume labels of partition tableless MMCs.
+  * Fixed renaming MMC that does not have partitions.
+  * Removed three-second sleep from sfdisk when re-reading partitions.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 08 Feb 2006 18:38:45 +0200
+
+ke-recv (1.4-1) unstable; urgency=low
+
+  * kdbusd is now integrated to ke-recv.
+  * Removed kdbusd dependency.
+  * ke-recv is now running as root because of kdbusd functionality.
+  * Not trying to connect to activation bus anymore.
+  * sudo is not used anymore.
+  * Added an init script and init startup.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 10 Jan 2006 18:40:57 +0200
+
+ke-recv (1.3-1) unstable; urgency=low
+
+  * Boolean GConf keys are now handled directly with libgconf, saving
+    some exec()s, CPU and DBus signals when compared to using gconftool.
+  * Added new Boolean GConf key "/system/osso/af/mmc-device-present".
+  * Added new Boolean GConf key "/system/osso/af/mmc-used-over-usb".
+  * Removed unused shell scripts used to set Boolean GConf keys.
+  * Added dependency to libgconf2-dev.
+  * Removed unused 'protective shell' signal and related files.
+  * Removed unused mmc-volume-label.c.
+  * 'Ignore cable' now means that even the Status Bar USB plugin does
+    not get the signal.
+  * Fixed object paths for the USB device sysfs change (kdbusd replaces
+    '-' with '_').
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 10 Jan 2006 11:25:39 +0200
+
+ke-recv (1.2-1) unstable; urgency=low
+
+  * Moved DBus service file to right directory.
+  * Removed "set -e" from postinst.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 15 Dec 2005 15:25:07 +0200
+
+ke-recv (1.1-1) unstable; urgency=low
+
+  * Changed kernel signal object paths according to fix in kdbusd.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 07 Dec 2005 15:06:50 +0200
+
+ke-recv (1.0-1) unstable; urgency=low
+
+  * Ported for v0.50 D-BUS.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 21 Nov 2005 17:41:09 +0200
+
+ke-recv (0.41-1) unstable; urgency=low
+
+  * Fixed renaming of partitionless MMCs (bug 21382).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 16 Nov 2005 17:41:54 +0200 
+
+ke-recv (0.40-2) unstable; urgency=low
+
+  * Added mmc-states dotty diagram and generated PNG to new docs directory.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Oct 2005 18:00:21 +0300
+
+ke-recv (0.40-1) unstable; urgency=low
+
+  * Packaged 0.40.  Add lines to /etc/sudoers that allow invocations of
+    mmc-mount in a properly restricted way.  Collapse wildcards in mkdosfs
+    and mmc-rename lines.
+
+ -- Marius Vollmer <marius.vollmer@nokia.com>  Tue, 18 Oct 2005 16:51:08 +0300
+
+ke-recv (0.39-1) unstable; urgency=low
+
+  * We can now handle MMCs without partition table (bug 10223).  Postinst
+    will add needed lines to /etc/sudoers if they are not already there.
+
+ -- Marius Vollmer <marius.vollmer@nokia.com>  Tue,  4 Oct 2005 23:10:49 +0300
+
+ke-recv (0.38-1) unstable; urgency=low
+
+  * Changed lowmem signal names to be compatible with Paul's version.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 14 Sep 2005 12:45:32 +0300
+
+ke-recv (0.37-1) unstable; urgency=low
+
+  * Added support for the new background killing signal.
+  * Disabled the 3 second delay for the user_lowmem signal.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Sun, 11 Sep 2005 14:31:52 +0300
+
+ke-recv (0.36-1) unstable; urgency=low
+
+  * Added wait for MMC device to osso-mmc-mount.sh (contributes fixing bug
+    18603).
+  * Increased timeout for MMC device event from 2 to 10 seconds (contributes fixing     bug 18603).
+  * Using /proc/mounts instead of /etc/mtab in osso-mmc-mount.sh (bug 18404).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 09 Sep 2005 14:27:55 +0300
+
+ke-recv (0.35-1) unstable; urgency=low
+
+  * Removed use of TMPDIR and using hard-coded /tmp, due to fix needed for bug
+    18842.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 07 Sep 2005 17:00:04 +0300
+
+ke-recv (0.34-1) unstable; urgency=low
+
+  * Stripped trailing newline character from /tmp/.mmc-volume-label (bug
+    17822).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 06 Sep 2005 12:37:13 +0300
+
+ke-recv (0.33-1) unstable; urgency=low
+
+  * Returned unmounting and remounting when renaming MMC, to work around
+    bug in UI.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 25 Aug 2005 10:05:00 +0300
+
+ke-recv (0.32-1) unstable; urgency=low
+
+  * Added GnomeVFS pre-unmount signal emissions.
+  * Removed unmounting and remounting when renaming MMC.
+  * Added missing dependency to osso-af-mmc.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 24 Aug 2005 15:53:00 +0300
+
+ke-recv (0.31-1) unstable; urgency=low
+
+  * Added support for additional input devices (e.g. Bluetooth keyboard). The
+    code is from Tomas Junnonen.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 24 Aug 2005 09:53:51 +0300
+
+ke-recv (0.30-1) unstable; urgency=low
+
+  * Now using /dev/mmcblk0p1 again for more reliable mounting, because udev
+    seems to be staying (bug 17703).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 22 Aug 2005 13:31:34 +0300
+
+ke-recv (0.29-1) unstable; urgency=low
+
+  * Raised the user lowmem signal stabilation time to 3 seconds (bug 15821).
+  * Added listening of kernel's MMC device signal (bug 16883).
+  * Added support for additional MMC sysfs path (bug 17060) to cope with
+    the coming kernel version.
+  * Not displaying infoprint after rename (bug 16640).
+  * Added support for /mnt/initfs/lib/modules/current soft link.
+  * Removed GConf key and added regular file for the MMC volume label.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 11 Aug 2005 11:33:53 +0300
+
+ke-recv (0.28-1) unstable; urgency=low
+
+  * Workaround for the Glib syslog patch (broke MMC formatting).
+  * Spotted and fixed a small bug in stderr reading function.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 04 Aug 2005 08:13:17 +0300
+
+ke-recv (0.27-2) unstable; urgency=low
+
+  * Remove old l10n packages.
+  * Use UI specification 3.0 for l10n strings.
+
+ -- Alexander Kanevskiy <alexander.kanevskiy@nokia.com>  Tue,  2 Aug 2005 12:36:17 +0300
+
+ke-recv (0.27-1) unstable; urgency=low
+
+  * Added maintenance of GConf key for the MMC volume label (bug 16401).
+  * Optimised the speed of lazy unmount.
+  * Changed mmc-rename implementation to mlabel of mtools package.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 01 Aug 2005 08:32:16 +0300
+
+ke-recv (0.26-1) unstable; urgency=low
+
+  * Fixed a bug in E_PLUGGED handling (closes bug 16295).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 26 Jul 2005 10:39:34 +0300
+
+ke-recv (0.25-1) unstable; urgency=low
+
+  * Added the user lowmem signal (closes bug 15821).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 25 Jul 2005 15:55:51 +0300
+
+ke-recv (0.24-1) unstable; urgency=low
+
+  * Now using better sysfs file for MMC existence check (bug 15719).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 13 Jul 2005 19:39:01 +0300
+
+ke-recv (0.23-1) unstable; urgency=low
+
+  * Fixed handling of USB cable in startup (bug 11975).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 04 Jul 2005 14:24:08 +0300
+
+ke-recv (0.22-1) unstable; urgency=low
+
+  * Changed infoprint to information note (bug 14493).
+  * Now coping with already mounted MMC in startup (bug 14972).
+  * Added support for the protective shell signal (bug 14963).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 27 Jun 2005 11:21:46 +0300
+
+ke-recv (0.21-1) unstable; urgency=low
+
+  * Added detection for USB host mode (bug 14214).
+  * Added copyright and GPL headers to files.
+  * Added GConf schema file for default values (bug 14217).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 13 Jun 2005 13:17:46 +0300
+
+ke-recv (0.20-1) unstable; urgency=low
+
+  * Removed annoying logging to console (now it goes to syslog).
+  * Added GConf key for indicating USB cable status (bug 12199).
+  * Removed some commented code and fixed copyrights.
+  * Added #include <locale.h> to ke-recv.h.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 27 May 2005 19:22:41 +0300
+
+ke-recv (0.19-1) unstable; urgency=low
+
+  * Differentiating formatting error from user cancellation. mmc-format's
+    return codes tweaked to make it possible.
+  * Added "Formatting complete" infoprint (and string to en_GB.po).
+  * Added "canceled" D-BUS error message for user-cancelled formatting.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 16 May 2005 10:25:37 +0300
+
+ke-recv (0.18-1) unstable; urgency=low
+
+  * Removed some commented code, copyrights, and other cleanup.
+  * Added support for the low-memory signal and state.
+  * Fixed some obvious memory leaks.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 12 May 2005 11:24:20 +0300
+
+ke-recv (0.17-1) unstable; urgency=low
+
+  * Updated en_GB.po and UI strings.
+  * Removed some duplicate and unused definitions for UI string macros.
+  * Added infoprint for inserting USB cable when MMC is not present.
+  * Added message sending to Statusbar USB plugin on USB cable events.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 22 Apr 2005 16:02:05 +0300
+
+ke-recv (0.16-1) unstable; urgency=low
+
+  * Forward-ported USB mass storage fixes from 0.14-1fix.
+  * USB cable handling is now the default behaviour.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 21 Apr 2005 13:46:22 +0300
+
+ke-recv (0.15-1) unstable; urgency=low
+
+  * Added match rule for MCE signals.
+  * Now ignore_cable is respected also on E_DEVICE_UNLOCKED.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 14 Apr 2005 15:36:07 +0300
+
+ke-recv (0.14-1) unstable; urgency=low
+
+  * Renamed "ke-recv" to "ke_recv" in .conf and .service files.
+  * Added S_SHUTDOWN state and E_SHUTDOWN event.
+  * Added device lock and unlock handling (E_DEVICE_LOCKED/UNLOCKED).
+  * If D-BUS system bus exits, ke-recv now goes to S_SHUTDOWN.
+  * Fixed garbage environment problem caused by funny environ variable
+    definition.
+  * Now handling both "tahvo-usb0" and "tahvo-usb".
+  * Made the progress bar to move.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 11 Apr 2005 17:11:23 +0300
+
+ke-recv (0.13-1) unstable; urgency=low
+
+  * Now handling both "mmci-omap.2" and "mmci-omap2".
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 04 Apr 2005 15:33:30 +0300
+
+ke-recv (0.12-1) unstable; urgency=low
+
+  * Updated PO files (bug 8685).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 01 Apr 2005 12:50:52 +0300
+
+ke-recv (0.11-1) unstable; urgency=low
+
+  * Added scripts for switching USB mode.
+  * Added/fixed code for USB cable.
+  * Added OSSO_KE_RECV_IGNORE_CABLE for disabling USB cable handling.
+  * The ke-recv.sh startup script is now installed by this package.
+  * Added wait message sending functionality to the testing program.
+  * Alexander made po files UTF-8 encoded.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Sun, 20 Mar 2005 11:21:35 +0200
+
+ke-recv (0.10-1) unstable; urgency=low
+
+  * Fixed bug in testing code.
+  * D-BUS interface change: '-' -> '_'.
+  * Updated sysfs path for the new kernel.
+  * Updated some copyrights.
+  * Removed hard-coded device name.
+  * Using sudo from mmc-format.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Sat, 19 Mar 2005 19:27:53 +0200
+
+ke-recv (0.9-2) unstable; urgency=low
+
+  * Added dependency to sudo.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 17 Mar 2005 15:26:10 +0200
+
+ke-recv (0.9-1) unstable; urgency=low
+
+  * Added testing code for MMC format and rename.
+  * Alexander Kanevskiy did some changes to localisation files.
+  * FIxed BusyBox problem.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 16 Mar 2005 13:48:43 +0200
+
+ke-recv (0.8-2) unstable; urgency=low
+
+  * Rebuild with new hildon-fm0
+
+ -- Alexander Kanevskiy <alexander.kanevskiy@nokia.com>  Wed,  9 Mar 2005 16:25:52 +0200
+
+ke-recv (0.8-1) unstable; urgency=low
+
+  * Added D-BUS interfaces for MMC renaming and formatting.
+  * Implemented MMC formatting UI in mmc-format.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 24 Feb 2005 10:46:06 +0200
+
+ke-recv (0.7-1) unstable; urgency=low
+
+  * Added missing "-l" option for umount (bug 6064).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 23 Feb 2005 16:12:25 +0200
+
+ke-recv (0.6-1) unstable; urgency=low
+
+  * Rerun automake version 1.7.X
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 22 Feb 2005 09:42:03 +0200
+
+ke-recv (0.5-1) unstable; urgency=low
+
+  * Reflecting MMC cover changes in GConf (bug 3601).
+  * Added l10n files, installation etc. (bug 6128).
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 21 Feb 2005 09:38:18 +0200
+
+ke-recv (0.4-2) unstable; urgency=low
+
+  * SVN tag version
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 14 Feb 2005 15:27:23 +0200
+
+ke-recv (0.4-1) unstable; urgency=low
+
+  * Removed mount options and device file argument from mmc-mount.sh
+  * Added libxml-parser-perl dependency (bug 5822)
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 14 Feb 2005 13:48:06 +0200
+
+ke-recv (0.3-2) unstable; urgency=low
+
+  * rebuild with new hildon-base-lib
+
+ -- Alexander Kanevskiy <alexander.kanevskiy@nokia.com>  Mon,  7 Feb 2005 17:48:25 +0200
+
+ke-recv (0.3-1) unstable; urgency=low
+
+  * MMC is now mounted with uid and gid 29999.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 14 Jan 2005 11:27:51 +0200
+
+ke-recv (0.2-3) unstable; urgency=low
+
+  * Added hildon-libs-dev to build-dependencies.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 07 Jan 2005 15:13:32 +0200
+
+ke-recv (0.2-2) unstable; urgency=low
+
+  * Added hildon-base-lib-dev and hildon-lgpl-dev to build-dependencies.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 07 Jan 2005 14:53:15 +0200
+
+ke-recv (0.2-1) unstable; urgency=low
+
+  * Added some dialogs. Implemented mmc-rename (almost properly tested).
+    Started to implement mmc-format.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 10 Dec 2004 16:09:36 +0200
+
+ke-recv (0.1-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 03 Dec 2004 06:45:42 +0200

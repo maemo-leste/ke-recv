@@ -1,0 +1,39 @@
+digraph packages {
+concentrate=true;
+size="20,20";
+"cable\ndetached" -> "host mode?" [label="cable\nattached"];
+"host mode?" -> "peripheral\nmode" [label="no"];
+"host mode?" -> "read & mount\nvolumes" [label="yes"];
+"read & mount\nvolumes" -> "host\nmode";
+"host\nmode" -> "unmount\nvolumes" [label="cable\ndetached"];
+"unmount\nvolumes" -> "cable\ndetached";
+"peripheral\nmode" -> "cable\ndetached" [label="cable\ndetached"];
+"host\nmode" -> "unmount\nvolume" [label="volume\nremoved"];
+"unmount\nvolume" -> "host\nmode";
+"host\nmode" -> "mount\nvolume" [label="volume\nadded"];
+"mount\nvolume" -> "host\nmode";
+"host\nmode" -> "unmount\nvolumes(2)" [label="eject"];
+"unmount\nvolumes(2)" -> "mounted\nvolumes?";
+"mounted\nvolumes?" -> "unmount\npending" [label="yes"];
+"unmount\npending" -> "unmount\nvolumes(2)" [label="timeout"];
+"unmount\npending" -> "mount\nvolumes" [label="eject\ncancelled"];
+"mount\nvolumes" -> "host\nmode";
+"mounted\nvolumes?" -> "ejected" [label="no"];
+"ejected" -> "cable\ndetached" [label="cable\ndetached"];
+
+"cable\ndetached" [shape=ellipse];
+"host\nmode" [shape=ellipse];
+"peripheral\nmode" [shape=ellipse];
+"unmount\npending" [shape=ellipse];
+"ejected" [shape=ellipse];
+
+"host mode?" [shape=triangle];
+"mounted\nvolumes?" [shape=triangle];
+
+"read & mount\nvolumes" [shape=box];
+"mount\nvolumes" [shape=box];
+"unmount\nvolumes" [shape=box];
+"unmount\nvolumes(2)" [shape=box];
+"unmount\nvolume" [shape=box];
+"mount\nvolume" [shape=box];
+}
