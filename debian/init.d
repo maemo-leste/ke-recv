@@ -42,6 +42,10 @@ fi
 
 source /etc/osso-af-init/af-defines.sh
 
+# FIXME: these should come from startup scripts
+export MMC_MOUNTPOINT='/media/mmc1'
+export INTERNAL_MMC_MOUNTPOINT='/media/mmc2'
+
 /sbin/lsmod | grep g_ether > /dev/null
 if [ $? = 0 ]; then
   echo "$DESC: g_ether loaded, ignoring USB cable"

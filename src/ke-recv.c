@@ -1423,34 +1423,36 @@ static void set_device_name_and_mount_point_key()
         mmc_keys_set = TRUE;
 }
 
-static void init_card(const char *udi)
+static int init_card(const char *udi, int internal)
 {
-        int internal;
         mmc_info_t *mmc;
+#if 0  /* slot_name is not provided yet */
         char *slot;
 
         slot = get_prop_string(udi, "mmc_host.slot_name");
-        if (slot == NULL) {
-                ULOG_ERR_F("couldn't get mmc_host.slot_name for %s", udi);
-                return;
-        }
 
-        if (strcmp(slot, "external") == 0) {
+        if (slot == NULL || strcmp(slot, "slot:external") == 0) {
                 mmc = &ext_mmc;
                 internal = 0;
-        } else if (strcmp(slot, "internal") == 0) {
+        } else if (strcmp(slot, "slot:internal") == 0) {
                 mmc = &int_mmc;
                 internal = 1;
         } else {
                 ULOG_ERR_F("%s has unknown mmc_host.slot_name value: %s",
                            udi, slot);
                 libhal_free_string(slot);
-                return;
+                return 0;
         }
         libhal_free_string(slot);
+#endif
 
         /* NOTE: keep these in the same order as in the mmc_info_t
          * struct, so that nothing is missed */
+
+        if (internal)
+                mmc = &int_mmc;
+        else
+                mmc = &ext_mmc;
 
         mmc->internal_card = internal;
         if (internal) {
@@ -1477,7 +1479,7 @@ static void init_card(const char *udi)
         mmc->udi = strdup(udi);
         if (mmc->udi == NULL) {
                 ULOG_ERR_F("out of memory");
-                return;
+                return 0;
         }
 
         if (internal) {
@@ -1512,7 +1514,8 @@ static void init_card(const char *udi)
                 mmc->whole_device = NULL;
         }
 
-        if (!mmc_keys_set) {
+        if (!mmc_keys_set && int_mmc.udi && ext_mmc.udi) {
+                /* assumes two memory card slots... */
                 set_device_name_and_mount_point_key();
         }
 
@@ -1520,6 +1523,8 @@ static void init_card(const char *udi)
         ULOG_DEBUG_F("%s cover_udi == %s", mmc->name, mmc->cover_udi);
 
         if (mmc->cover_udi != NULL) {
+                /* FIXME: this property is missing from HAL */
+#if 0
                 int state;
                 state = get_prop_bool(mmc->cover_udi,
                                       "button.state.value");
@@ -1528,12 +1533,16 @@ static void init_card(const char *udi)
                 } else {
                         mmc->state = S_COVER_OPEN;
                 }
+#endif
+                mmc->state = S_COVER_CLOSED;
         }
 
         mmc->unmount_pending_timer_id = 0;
         mmc->swap_off_with_close_apps = FALSE;
         mmc->dialog_id = -1;
         mmc->swap_dialog_id = -1;
+
+        return 1;
 }
 
 usb_state_t get_usb_state(void)
@@ -1584,7 +1593,26 @@ static void read_config()
         ULOG_DEBUG_F("number of mmc_hosts: %d", num_hosts);
 
         for (i = 0; i < num_hosts; ++i) {
-                init_card(list[i]);
+                /* FIXME workaround HAL bug for detecting int/ext MMC */
+                char **clist;
+                int internal, nchildren;
+                internal = nchildren = 0;
+                clist = libhal_manager_find_device_string_match(hal_ctx,
+                         "info.parent", list[i], &nchildren, NULL);
+                if (clist != NULL && nchildren == 1) {
+                        char *s;
+                        s = get_prop_string(clist[0], "info.product");
+                        if (s && strcmp(s, "MMC16G") == 0) {
+                                ULOG_DEBUG_F("%s is the internal", list[i]);
+                                internal = 1;
+                        }
+                        libhal_free_string(s);
+                } else {
+                        ULOG_ERR_F("%p, %d children", clist, nchildren);
+                } 
+                libhal_free_string_array(clist);
+
+                init_card(list[i], internal);
         }
 
         if (int_mmc.udi != NULL) {
@@ -1758,7 +1786,8 @@ static void prop_modified(LibHalContext *ctx,
                     && strcmp(slide_keyboard_udi, udi) == 0) {
                         ULOG_DEBUG_F("SLIDE_KEYBOARD %d", val);
                         inform_slide_keyboard(val);
-                } else if (strcmp(ext_mmc.cover_udi, udi) == 0) {
+                } else if (ext_mmc.cover_udi &&
+                           strcmp(ext_mmc.cover_udi, udi) == 0) {
                         if (val) {
                                 handle_event(E_CLOSED, &ext_mmc, NULL);
                         } else {
@@ -2910,14 +2939,18 @@ int main(int argc, char* argv[])
 
         /* register D-BUS interface for enabling swapping on MMC */
         vtable.message_function = enable_mmc_swap_handler;
+        /* FIXME
         register_op(sys_conn, &vtable, ext_mmc.swap_on_op, &ext_mmc);
+        */
         if (int_mmc_enabled) {
                 register_op(sys_conn, &vtable, int_mmc.swap_on_op, &int_mmc);
         }
 
         /* register D-BUS interface for disabling swapping on MMC */
         vtable.message_function = disable_mmc_swap_handler;
+        /* FIXME
         register_op(sys_conn, &vtable, ext_mmc.swap_off_op, &ext_mmc);
+        */
         if (int_mmc_enabled) {
                 register_op(sys_conn, &vtable, int_mmc.swap_off_op, &int_mmc);
         }

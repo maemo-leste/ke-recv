@@ -1,7 +1,7 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2004-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -23,11 +23,8 @@ RC=0
 
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? != 0 ]; then
-    DIR=/mnt/initfs/lib/modules/`uname -r`
-    if [ -f $DIR/g_file_storage.ko ]; then
-        /sbin/insmod $DIR/g_file_storage.ko stall=0 luns=2 removable
-        RC=$?
-    fi
+    /sbin/modprobe g_file_storage stall=0 luns=2 removable
+    RC=$?
 fi
 
 if [ $RC != 0 ]; then

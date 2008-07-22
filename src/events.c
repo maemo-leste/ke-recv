@@ -1174,6 +1174,10 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
 int handle_event(mmc_event_t e, mmc_info_t *mmc, const char *arg)
 {
         int ret = 1;
+        if (mmc->whole_device == NULL) {
+                ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
+                return ret;
+        }
         switch (mmc->state) {
                 case S_COVER_OPEN:
                         ret = event_in_cover_open(e, mmc, arg);
