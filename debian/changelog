@@ -1,7 +1,9 @@
-ke-recv (3.0-1~unreleased) unstable; urgency=low
+ke-recv (3.0-1) unstable; urgency=low
 
   * Initial Fremantle version. This is very much broken, basically only
     automatic mounting works. Has some workarounds for HAL bugs.
+  * Temporarily removed some dependencies from debian/control for this
+    basic version.
   * Tuned source headers a bit before open-sourcing (wohoo!).
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 22 Jul 2008 15:11:43 +0300
