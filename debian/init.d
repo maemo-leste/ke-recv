@@ -54,6 +54,9 @@ fi
 
 case "$1" in
   start)
+        modprobe omap_hsmmc
+        modprobe sd_mod
+
 	# Start daemons
 	echo -n "Starting $DESC: "
 

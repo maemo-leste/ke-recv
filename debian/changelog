@@ -1,3 +1,9 @@
+ke-recv (3.0-2) unstable; urgency=low
+
+  * Added missing modprobes.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 25 Jul 2008 10:00:03 +0300
+
 ke-recv (3.0-1) unstable; urgency=low
 
   * Initial Fremantle version. This is very much broken, basically only
