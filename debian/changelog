@@ -3,7 +3,7 @@ ke-recv (3.1-1) unstable; urgency=low
   * Add noatime and nodiratime mount options.
   * Now that HAL is fixed, re-enable slot_name and cover detection code.
   * Added g_nokia to the startup script when detecting usbnet. Fixes: NB#87638
-  * Do not unmount anything on exit. Fixes: NB#87593
+  * Do not unmount anything on exit.
   * Removed unused D-Bus service file. Fixes: NB#87149
   * Removed dependency to libosso-filemanager-interface. Fixes: NB#87254
   * Assume that hildon-desktop is always running to allow automounting.
