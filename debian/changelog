@@ -1,4 +1,4 @@
-ke-recv (3.1-1~unreleased) unstable; urgency=low
+ke-recv (3.1-1) unstable; urgency=low
 
   * Add noatime and nodiratime mount options.
   * Now that HAL is fixed, re-enable slot_name and cover detection code.
@@ -7,6 +7,8 @@ ke-recv (3.1-1~unreleased) unstable; urgency=low
   * Removed unused D-Bus service file. Fixes: NB#87149
   * Removed dependency to libosso-filemanager-interface. Fixes: NB#87254
   * Assume that hildon-desktop is always running to allow automounting.
+    Fixes: NB#88468
+  * Using "-R 38" for formatting.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 03 Oct 2008 12:35:43 +0300
 

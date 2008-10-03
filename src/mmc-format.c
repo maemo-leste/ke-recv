@@ -160,7 +160,7 @@ static gboolean start_format()
         int fd, blk_sz, ret;
         char blk_sz_buf[10], mmc_dev_file_with_part[100];
         const char* args[] = {MMC_FORMAT_COMMAND, NULL, "-n", NULL,
-                              "-S", NULL, "-F", "32", NULL};
+                              "-S", NULL, "-F", "32", "-R", "38", NULL};
 
         ULOG_DEBUG_F("entered");
 
