@@ -6,6 +6,7 @@ ke-recv (3.1-1~unreleased) unstable; urgency=low
   * Do not unmount anything on exit. Fixes: NB#87593
   * Removed unused D-Bus service file. Fixes: NB#87149
   * Removed dependency to libosso-filemanager-interface. Fixes: NB#87254
+  * Assume that hildon-desktop is always running to allow automounting.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 03 Oct 2008 12:35:43 +0300
 

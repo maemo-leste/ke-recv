@@ -3036,6 +3036,10 @@ int main(int argc, char* argv[])
                 first_boot = TRUE;
         }
 
+        /* FIXME: now we assume that desktop is running
+         * (needs rechecking and possibly fixing hildon-desktop) */
+        desktop_started = TRUE;
+
         if (desktop_started || first_boot) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
