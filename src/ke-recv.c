@@ -1167,8 +1167,9 @@ int get_prop_bool(const char *udi, const char *property)
         if (dbus_error_is_set(&error)) {
                 ULOG_ERR_F("D-Bus error: %s", error.message);
                 dbus_error_free(&error);
+                return -1;
         }
-        return prop;
+        return prop ? 1 : 0;
 }
 
 int get_prop_int(const char *udi, const char *property)
@@ -1280,12 +1281,14 @@ static void init_camera_state()
         if (camera_out_udi != NULL) {
                 state = get_prop_bool(camera_out_udi,
                                       "button.state.value");
-                inform_camera_out(state);
+                if (state != -1)
+                        inform_camera_out(state);
         }
         if (camera_turned_udi != NULL) {
                 state = get_prop_bool(camera_turned_udi,
                                       "button.state.value");
-                inform_camera_turned_out(state);
+                if (state != -1)
+                        inform_camera_turned_out(state);
         }
 }
 
@@ -1297,7 +1300,8 @@ static void init_slide_keyboard_state()
                 state = get_prop_bool(slide_keyboard_udi,
                                       "button.state.value");
         }
-        inform_slide_keyboard(state);
+        if (state != -1)
+                inform_slide_keyboard(state);
 }
 
 static int get_storage(const char *udi, char **storage_parent,
@@ -1525,13 +1529,12 @@ static int init_card(const char *udi)
                 int state;
                 state = get_prop_bool(mmc->cover_udi,
                                       "button.state.value");
-                /* FIXME: enable this code when/if the covers start working.
                 if (state) {
+                        /* this case also if get_prop_bool() failed */
                         mmc->state = S_COVER_CLOSED;
                 } else {
                         mmc->state = S_COVER_OPEN;
                 }
-                */
                 mmc->state = S_COVER_CLOSED;
         }
 
@@ -1760,6 +1763,10 @@ static void prop_modified(LibHalContext *ctx,
                 }
 
                 val = get_prop_bool(udi, "button.state.value");
+                if (val == -1) {
+                        ULOG_ERR_F("failed to read button.state.value");
+                        return;
+                }
 
                 if (slide_keyboard_udi != NULL
                     && strcmp(slide_keyboard_udi, udi) == 0) {
@@ -1862,7 +1869,7 @@ static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
 
         l->corrupt = 0;
 
-        if (get_prop_bool(l->udi, "volume.is_partition")) {
+        if (get_prop_bool(l->udi, "volume.is_partition") == 1) {
                 l->volume_number = get_prop_int(l->udi,
                                                 "volume.partition.number");
         } else {
@@ -1975,7 +1982,7 @@ static int usb_mount_helper(volume_list_t *v)
         int mounted;
         /* check if someone else has already mounted it */
         mounted = get_prop_bool(v->udi, "volume.is_mounted");
-        if (mounted) {
+        if (mounted == 1) {
                 ULOG_INFO_F("%s is already mounted by someone",
                             v->dev_name);
                 /* it's mounted, so not corrupted */
@@ -2598,7 +2605,7 @@ static int launch_fm(void)
                                         int mounted;
                                         mounted = get_prop_bool(l->udi,
                                                       "volume.is_mounted");
-                                        if (mounted) {
+                                        if (mounted == 1) {
                                                 mount_point = l->mountpoint;
                                                 goto exit_loops;
                                         }

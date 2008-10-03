@@ -1014,7 +1014,8 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         }
                         break;
                 case E_PLUGGED:
-                        if (get_cable_peripheral() && !device_locked) {
+                        if (!ignore_cable && get_cable_peripheral()
+                            && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
                                 if (!unmount_volumes(&mmc->volumes)) {
                                         ret = 0;
@@ -1024,7 +1025,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         }
                         break;
                 case E_DETACHED:
-                        if (get_cable_peripheral()) {
+                        if (!ignore_cable && get_cable_peripheral()) {
                                 unshare_usb_shared_card(mmc);
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
