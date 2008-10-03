@@ -1525,11 +1525,14 @@ static int init_card(const char *udi)
                 int state;
                 state = get_prop_bool(mmc->cover_udi,
                                       "button.state.value");
+                /* FIXME: enable this code when/if the covers start working.
                 if (state) {
                         mmc->state = S_COVER_CLOSED;
                 } else {
                         mmc->state = S_COVER_OPEN;
                 }
+                */
+                mmc->state = S_COVER_CLOSED;
         }
 
         mmc->unmount_pending_timer_id = 0;
