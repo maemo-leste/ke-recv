@@ -847,7 +847,8 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_DEBUG_F("E_CLOSED for %s", mmc->name);
                         /* notify applications about closed cover */
                         inform_mmc_cover_open(FALSE, mmc);
-                        if (get_cable_peripheral() && !device_locked) {
+                        if (!ignore_cable && get_cable_peripheral()
+                            && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc);
@@ -999,7 +1000,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         /* notify applications about opened cover */
                         inform_mmc_cover_open(TRUE, mmc);
 
-                        if (get_cable_peripheral()) {
+                        if (!ignore_cable && get_cable_peripheral()) {
                                 unshare_usb_shared_card(mmc);
                                 mmc->state = S_COVER_OPEN;
                                 break;
@@ -1043,7 +1044,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_VOLUME_ADDED:
                         ULOG_DEBUG_F("E_VOLUME_ADDED for %s", mmc->name);
-                        if (!get_cable_peripheral()) {
+                        if (ignore_cable || !get_cable_peripheral()) {
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc)) {
                                         if (!mmc->skip_banner) {
@@ -1059,21 +1060,22 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_VOLUME_REMOVED:
                         ULOG_DEBUG_F("E_VOLUME_REMOVED for %s", mmc->name);
-                        if (!get_cable_peripheral()) {
+                        if (ignore_cable || !get_cable_peripheral()) {
                                 discard_volume(mmc, arg);
                         }
                         break;
                 case E_DEVICE_ADDED:
                         ULOG_DEBUG_F("E_DEVICE_ADDED for %s", mmc->name);
                         inform_device_present(TRUE, mmc);
-                        if (get_cable_peripheral() && !device_locked) {
+                        if (!ignore_cable && get_cable_peripheral()
+                            && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         }
                         break;
                 case E_DEVICE_REMOVED:
                         ULOG_DEBUG_F("E_DEVICE_REMOVED for %s", mmc->name);
                         inform_device_present(FALSE, mmc);
-                        if (get_cable_peripheral()) {
+                        if (!ignore_cable && get_cable_peripheral()) {
                                 unshare_usb_shared_card(mmc);
                         } else {
                                 unmount_volumes(&mmc->volumes);
@@ -1093,7 +1095,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_DEBUG_F("E_INIT_CARD for %s", mmc->name);
                         if (mmc->whole_device != NULL) {
                                 inform_device_present(TRUE, mmc);
-                                if (get_cable_peripheral()
+                                if (!ignore_cable && get_cable_peripheral()
                                     && !device_locked) {
                                         usb_share_card(mmc, FALSE);
                                 } else {
@@ -1120,7 +1122,8 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         inform_mmc_cover_open(FALSE, mmc);
                         CLOSE_DIALOG
                         CLOSE_SWAP_DIALOG
-                        if (get_cable_peripheral() && !device_locked) {
+                        if (!ignore_cable && get_cable_peripheral()
+                            && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc); /* re-read volumes */
