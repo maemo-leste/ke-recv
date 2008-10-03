@@ -962,8 +962,7 @@ AC_SUBST($1)dnl
 #-----------------
 glib_DEFUN([GLIB_WITH_NLS],
   dnl NLS is obligatory
-  [AC_REQUIRE([AC_CANONICAL_HOST])dnl
-    USE_NLS=yes
+  [USE_NLS=yes
     AC_SUBST(USE_NLS)
 
     gt_cv_have_gettext=no
@@ -1069,7 +1068,7 @@ glib_DEFUN([GLIB_WITH_NLS],
 	  AC_CHECK_FUNCS(dcgettext)
 	  MSGFMT_OPTS=
 	  AC_MSG_CHECKING([if msgfmt accepts -c])
-	  GLIB_RUN_PROG([msgfmt -c -o /dev/null],[
+	  GLIB_RUN_PROG([$MSGFMT -c -o /dev/null],[
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
