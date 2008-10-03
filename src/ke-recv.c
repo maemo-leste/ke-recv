@@ -1423,10 +1423,10 @@ static void set_device_name_and_mount_point_key()
         mmc_keys_set = TRUE;
 }
 
-static int init_card(const char *udi, int internal)
+static int init_card(const char *udi)
 {
         mmc_info_t *mmc;
-#if 0  /* slot_name is not provided yet */
+        int internal;
         char *slot;
 
         slot = get_prop_string(udi, "mmc_host.slot_name");
@@ -1444,7 +1444,6 @@ static int init_card(const char *udi, int internal)
                 return 0;
         }
         libhal_free_string(slot);
-#endif
 
         /* NOTE: keep these in the same order as in the mmc_info_t
          * struct, so that nothing is missed */
@@ -1523,8 +1522,6 @@ static int init_card(const char *udi, int internal)
         ULOG_DEBUG_F("%s cover_udi == %s", mmc->name, mmc->cover_udi);
 
         if (mmc->cover_udi != NULL) {
-                /* FIXME: this property is missing from HAL */
-#if 0
                 int state;
                 state = get_prop_bool(mmc->cover_udi,
                                       "button.state.value");
@@ -1533,8 +1530,6 @@ static int init_card(const char *udi, int internal)
                 } else {
                         mmc->state = S_COVER_OPEN;
                 }
-#endif
-                mmc->state = S_COVER_CLOSED;
         }
 
         mmc->unmount_pending_timer_id = 0;
@@ -1593,26 +1588,7 @@ static void read_config()
         ULOG_DEBUG_F("number of mmc_hosts: %d", num_hosts);
 
         for (i = 0; i < num_hosts; ++i) {
-                /* FIXME workaround HAL bug for detecting int/ext MMC */
-                char **clist;
-                int internal, nchildren;
-                internal = nchildren = 0;
-                clist = libhal_manager_find_device_string_match(hal_ctx,
-                         "info.parent", list[i], &nchildren, NULL);
-                if (clist != NULL && nchildren == 1) {
-                        char *s;
-                        s = get_prop_string(clist[0], "info.product");
-                        if (s && strcmp(s, "MMC16G") == 0) {
-                                ULOG_DEBUG_F("%s is the internal", list[i]);
-                                internal = 1;
-                        }
-                        libhal_free_string(s);
-                } else {
-                        ULOG_ERR_F("%p, %d children", clist, nchildren);
-                } 
-                libhal_free_string_array(clist);
-
-                init_card(list[i], internal);
+                init_card(list[i]);
         }
 
         if (int_mmc.udi != NULL) {

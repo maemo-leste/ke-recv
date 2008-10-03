@@ -2,7 +2,7 @@
 # 
 # ke-recv	HAL-based automatic mounting etc.
 #
-# Copyright (C) 2004-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -46,9 +46,9 @@ source /etc/osso-af-init/af-defines.sh
 export MMC_MOUNTPOINT='/media/mmc1'
 export INTERNAL_MMC_MOUNTPOINT='/media/mmc2'
 
-/sbin/lsmod | grep g_ether > /dev/null
+/sbin/lsmod | grep g_nokia > /dev/null
 if [ $? = 0 ]; then
-  echo "$DESC: g_ether loaded, ignoring USB cable"
+  echo "$DESC: g_nokia loaded, ignoring USB cable"
   export OSSO_KE_RECV_IGNORE_CABLE=1
 fi
 

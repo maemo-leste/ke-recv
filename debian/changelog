@@ -1,8 +1,10 @@
 ke-recv (3.1-1~unreleased) unstable; urgency=low
 
   * Add noatime and nodiratime mount options.
+  * Now that HAL is fixed, re-enable slot_name and cover detection code.
+  * Use g_nokia instead of g_ether in the startup script.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 14 Aug 2008 15:06:32 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 03 Oct 2008 12:35:43 +0300
 
 ke-recv (3.0-2) unstable; urgency=low
 
