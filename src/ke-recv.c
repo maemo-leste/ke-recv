@@ -32,7 +32,6 @@
 #include "service-launcher.h"
 #include <hildon-mime.h>
 #include <libgen.h>
-#include <ossofilemanagerinterface.h>
 
 #define FDO_SERVICE "org.freedesktop.Notifications"
 #define FDO_OBJECT_PATH "/org/freedesktop/Notifications"
@@ -1537,7 +1536,6 @@ static int init_card(const char *udi)
                 } else {
                         mmc->state = S_COVER_OPEN;
                 }
-                mmc->state = S_COVER_CLOSED;
         }
 
         mmc->unmount_pending_timer_id = 0;
@@ -2584,11 +2582,9 @@ static usb_state_t try_eject()
 static int open_fm_folder(const char *folder)
 {
         DBusMessage* m = NULL;
-        DBusError err;
         dbus_bool_t r;
 
         assert(ses_conn != NULL);
-        dbus_error_init(&err);
 
         m = dbus_message_new_method_call("com.nokia.osso_filemanager",
                 "/com/nokia/osso_filemanager",
@@ -2605,12 +2601,10 @@ static int open_fm_folder(const char *folder)
                 return 0;
         }
 
-        dbus_error_init(&err);
-        r = dbus_connection_send(ses_conn, m, &err);
+        r = dbus_connection_send(ses_conn, m, NULL);
         dbus_message_unref(m);
         if (!r) {
-                ULOG_ERR_F("sending failed: %s", err.message);
-                dbus_error_free(&err);
+                ULOG_ERR_F("dbus_connection_send failed");
                 return 0;
         }
         return 1;

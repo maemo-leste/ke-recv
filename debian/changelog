@@ -2,7 +2,7 @@ ke-recv (3.1-1~unreleased) unstable; urgency=low
 
   * Add noatime and nodiratime mount options.
   * Now that HAL is fixed, re-enable slot_name and cover detection code.
-  * Use g_nokia instead of g_ether in the startup script. Fixes: NB#87638
+  * Added g_nokia to the startup script when detecting usbnet. Fixes: NB#87638
   * Do not unmount anything on exit. Fixes: NB#87593
   * Removed unused D-Bus service file. Fixes: NB#87149
   * Removed dependency to libosso-filemanager-interface. Fixes: NB#87254

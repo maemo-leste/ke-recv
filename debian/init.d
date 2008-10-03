@@ -46,9 +46,9 @@ source /etc/osso-af-init/af-defines.sh
 export MMC_MOUNTPOINT='/media/mmc1'
 export INTERNAL_MMC_MOUNTPOINT='/media/mmc2'
 
-/sbin/lsmod | grep g_nokia > /dev/null
+/sbin/lsmod | grep "\(g_nokia\)\|\(g_ether\)" > /dev/null
 if [ $? = 0 ]; then
-  echo "$DESC: g_nokia loaded, ignoring USB cable"
+  echo "$DESC: USB networking enabled, ignoring USB cable"
   export OSSO_KE_RECV_IGNORE_CABLE=1
 fi
 
