@@ -640,6 +640,7 @@ static DBusHandlerResult check_auto_install(DBusConnection *c,
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+#if 0
 static void prepare_for_shutdown()
 {
         if (usb_state == S_PERIPHERAL) {
@@ -658,6 +659,7 @@ static void prepare_for_shutdown()
         }
         unmount_usb_volumes();
 }
+#endif
 
 static DBusHandlerResult
 sig_handler(DBusConnection *c, DBusMessage *m, void *data)
@@ -2579,12 +2581,47 @@ static usb_state_t try_eject()
         }
 }
 
+static int open_fm_folder(const char *folder)
+{
+        DBusMessage* m = NULL;
+        DBusError err;
+        dbus_bool_t r;
+
+        assert(ses_conn != NULL);
+        dbus_error_init(&err);
+
+        m = dbus_message_new_method_call("com.nokia.osso_filemanager",
+                "/com/nokia/osso_filemanager",
+                "/com/nokia/osso_filemanager", "open_folder");
+        if (m == NULL) {
+                ULOG_ERR_F("couldn't create message");
+                return 0;
+        }
+
+        if (!dbus_message_append_args(m, DBUS_TYPE_STRING, &folder,
+                                      DBUS_TYPE_INVALID)) {
+                ULOG_ERR_F("dbus_message_append_args failed");
+                dbus_message_unref(m);
+                return 0;
+        }
+
+        dbus_error_init(&err);
+        r = dbus_connection_send(ses_conn, m, &err);
+        dbus_message_unref(m);
+        if (!r) {
+                ULOG_ERR_F("sending failed: %s", err.message);
+                dbus_error_free(&err);
+                return 0;
+        }
+        return 1;
+}
+
 static int launch_fm(void)
 {
         storage_info_t *si;
         char *mount_point = NULL;
         char buf[100];
-        osso_return_t ret;
+        int ret;
 
         /* try to find a volume that is mounted and has smallest
          * volume number. FIXME: this algorithm is really stupid... */
@@ -2625,9 +2662,9 @@ exit_loops:
         snprintf(buf, 100, "file://%s", mount_point);
 
         ULOG_DEBUG_F("opening '%s' in File Manager", buf);
-        ret = osso_filemanager_open_folder(osso, buf);
-        if (ret != OSSO_OK) {
-                ULOG_ERR_F("osso_filemanager_open_folder failed");
+        ret = open_fm_folder(buf);
+        if (!ret) {
+                ULOG_ERR_F("open_fm_folder failed");
                 return 1;
         }
         return 1;
@@ -3021,7 +3058,9 @@ int main(int argc, char* argv[])
 
         g_main_loop_run(mainloop); 
         ULOG_DEBUG_L("Returned from the main loop");
+        /*
         prepare_for_shutdown();
+        */
         service_launcher_deinit(&launcher);
     
         exit(0);

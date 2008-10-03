@@ -1,4 +1,3 @@
-../../src/*.service /usr/share/dbus-1/services
 ../../src/*.conf /etc/dbus-1/system.d
 ../../src/*.sh /usr/sbin
 ../../src/*.schemas /etc/gconf/schemas

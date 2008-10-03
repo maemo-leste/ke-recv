@@ -11,14 +11,12 @@ INCLUDES = \
 	`pkg-config --cflags hildon-1` \
 	`pkg-config --cflags hal` \
 	`pkg-config --cflags libhildonmime` \
-	`pkg-config --cflags libossofilemanagerinterface` \
 	-DLOCALEDIR=\"`pkg-config --variable=localedir osso-af-settings`\"
 
 ke_recv_LDFLAGS = \
 	`pkg-config --libs libosso` \
 	`pkg-config --libs hal` \
 	`pkg-config --libs libhildonmime` \
-	`pkg-config --libs libossofilemanagerinterface` \
 	`pkg-config --libs gconf-2.0`
 
 mmc_format_LDFLAGS = \
