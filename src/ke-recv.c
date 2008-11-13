@@ -1436,10 +1436,10 @@ static int init_card(const char *udi)
 
         slot = get_prop_string(udi, "mmc_host.slot_name");
 
-        if (slot == NULL || strcmp(slot, "slot:external") == 0) {
+        if (slot == NULL || strcmp(slot, "external") == 0) {
                 mmc = &ext_mmc;
                 internal = 0;
-        } else if (strcmp(slot, "slot:internal") == 0) {
+        } else if (strcmp(slot, "internal") == 0) {
                 mmc = &int_mmc;
                 internal = 1;
         } else {
