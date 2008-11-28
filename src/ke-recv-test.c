@@ -181,6 +181,46 @@ static void send_swap_on(int mode)
     	ULOG_DEBUG_F("leaving");
 }
 
+static void send_enable_pcsuite()
+{
+	DBusMessage* m = NULL, *reply = NULL;
+	DBusError err;
+    	ULOG_DEBUG_F("entering");
+	assert(sys_conn != NULL);
+	dbus_error_init(&err);
+	  m = dbus_message_new_method_call("com.nokia.ke_recv",
+			"/com/nokia/ke_recv/enable_pcsuite",
+			"com.nokia.ke_recv",
+			"dummy");
+	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
+			20000, &err);
+    	if (reply == NULL) {
+       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+           exit(1);
+        }
+    	ULOG_DEBUG_F("leaving");
+}
+
+static void send_enable_mass_storage()
+{
+	DBusMessage* m = NULL, *reply = NULL;
+	DBusError err;
+    	ULOG_DEBUG_F("entering");
+	assert(sys_conn != NULL);
+	dbus_error_init(&err);
+	  m = dbus_message_new_method_call("com.nokia.ke_recv",
+			"/com/nokia/ke_recv/enable_mass_storage",
+			"com.nokia.ke_recv",
+			"dummy");
+	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
+			20000, &err);
+    	if (reply == NULL) {
+       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+           exit(1);
+        }
+    	ULOG_DEBUG_F("leaving");
+}
+
 static void send_swap_off(int mode)
 {
 	DBusMessage* m = NULL, *reply = NULL;
@@ -348,7 +388,9 @@ int main(int argc, char* argv[])
                    "e - repair (ext-)MMC (" EXT_DEV ")\n"
                    "ei - repair (int-)MMC (" INT_DEV ")\n"
                    "ej - eject USB\n"
-                   "ec - cancel eject USB\n");
+                   "ec - cancel eject USB\n"
+                   "p - enable PC Suite\n"
+                   "m - enable USB mass storage\n");
             exit(1);
     }
     ULOG_OPEN("ke_recv_test");
@@ -381,6 +423,12 @@ int main(int argc, char* argv[])
                 break;
             case 't':
                 send_swap_off(argv[1][1]);
+                break;
+            case 'p':
+                send_enable_pcsuite();
+                break;
+            case 'm':
+                send_enable_mass_storage();
                 break;
             case 'a':
                 if (argv[1][1] == 't') {
