@@ -26,6 +26,9 @@ fi
 
 /etc/init.d/ke-recv stop
 umount $1
+umount ${1}p1
+umount ${1}p2
+umount ${1}p3
 
 sfdisk -D -uM $1 << EOF
 ,512,S

@@ -26,7 +26,7 @@
 #include "ke-recv.h"
 #include <stdio.h>
 
-#define INT_DEV "/dev/mmcblk0p1"
+#define INT_DEV "/dev/mmcblk0p3"
 #define EXT_DEV "/dev/mmcblk1p1"
 
 static DBusConnection *ses_conn = NULL;
