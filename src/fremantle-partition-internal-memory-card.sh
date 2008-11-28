@@ -24,6 +24,9 @@ if [ "x$1" != "x/dev/mmcblk1" -a "x$1" != "x/dev/mmcblk0" ]; then
   exit 1
 fi
 
+/etc/init.d/ke-recv stop
+umount $1
+
 sfdisk -D -uM $1 << EOF
 ,512,S
 ,2048,L
