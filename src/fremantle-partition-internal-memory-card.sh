@@ -32,5 +32,7 @@ sfdisk -D -uM $1 << EOF
 ,2048,L
 ,,b
 EOF
+sync
 
 echo "$0: done."
+echo "$0: please reboot now."
