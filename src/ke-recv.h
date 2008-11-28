@@ -147,15 +147,21 @@ extern "C" {
 #define AK_BROADCAST_OP "/com/nokia/osso_app_killer"
 #define AK_BROADCAST_EXIT "exit"
 
+/* PC suite & mass storage */
+#define ENABLE_PCSUITE_OP "/com/nokia/ke_recv/enable_pcsuite"
+#define ENABLE_MASS_STORAGE_OP "/com/nokia/ke_recv/enable_mass_storage"
+
 #define INVALID_DIALOG_RESPONSE -666
 
 typedef enum {
         S_INVALID_USB_STATE = 0,
         S_CABLE_DETACHED,
-        S_PERIPHERAL,
+        S_PERIPHERAL_WAIT,
         S_HOST,
         S_EJECTING,
-        S_EJECTED
+        S_EJECTED,
+        S_MASS_STORAGE,
+        S_PCSUITE
 } usb_state_t;
 
 typedef enum {
@@ -163,7 +169,9 @@ typedef enum {
         E_EJECT,
         E_EJECT_CANCELLED,
         E_ENTER_HOST_MODE,
-        E_ENTER_PERIPHERAL_MODE
+        E_ENTER_PERIPHERAL_WAIT_MODE,
+        E_ENTER_MASS_STORAGE_MODE,
+        E_ENTER_PCSUITE_MODE
 } usb_event_t;
 
 typedef enum {
@@ -203,6 +211,9 @@ typedef struct {
         mmc_cover_t cover_state;
 
         volume_list_t volumes;
+        int preferred_volume;  /* volume (partition) to do operations on */
+        int control_partitions;  /* whether or not we control the whole
+                                    device, not just one partition */
 
         char desired_label[12];
         const char *mount_point;
@@ -288,7 +299,7 @@ int get_prop_int(const char *udi, const char *property);
 void rm_volume_from_list(volume_list_t *l, const char *udi);
 int init_mmc_volumes(mmc_info_t *mmc);
 void clear_volume_list(volume_list_t *l);
-int get_cable_peripheral(void);
+int in_mass_storage_mode(void);
 usb_state_t get_usb_state(void);
 int check_install_file(const mmc_info_t *mmc);
 

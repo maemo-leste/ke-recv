@@ -37,6 +37,8 @@ extern "C" {
 #define LOAD_USB_DRIVER_COMMAND "/usr/sbin/osso-usb-mass-storage-enable.sh"
 #define UNLOAD_USB_DRIVER_COMMAND "/usr/sbin/osso-usb-mass-storage-disable.sh"
 #define USB_DRIVER_IS_USED_COMMAND "/usr/sbin/osso-usb-mass-storage-is-used.sh"
+#define ENABLE_PCSUITE_COMMAND "/usr/sbin/pcsuite-enable.sh"
+#define DISABLE_PCSUITE_COMMAND "/usr/sbin/pcsuite-disable.sh"
 
 int exec_prog(const char* cmd, const char* args[]);
 
@@ -77,6 +79,20 @@ gboolean load_usb_driver(const char **arg);
   @return true on success.
 */
 gboolean unload_usb_driver(const char **arg);
+
+/**
+  Enable PC Suite mode.
+  Logs errors in case of failure.
+  @return true on success.
+*/
+gboolean enable_pcsuite(void);
+
+/**
+  Disable PC Suite mode.
+  Logs errors in case of failure.
+  @return true on success.
+*/
+gboolean disable_pcsuite(void);
 
 /**
   @return true if USB driver is used, false otherwise.

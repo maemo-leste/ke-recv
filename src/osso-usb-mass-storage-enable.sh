@@ -21,6 +21,12 @@
 
 RC=0
 
+/sbin/lsmod | grep g_nokia > /dev/null
+if [ $? = 0 ]; then
+    echo "$0: removing g_nokia"
+    /sbin/rmmod g_nokia
+fi
+
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_file_storage stall=0 luns=2 removable

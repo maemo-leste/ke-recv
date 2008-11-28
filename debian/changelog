@@ -1,3 +1,12 @@
+ke-recv (3.3-1~unreleased) unstable; urgency=low
+
+  * Added support for PC Suite mode.
+  * Added D-Bus interfaces for enabling PC Suite or mass storage mode when in
+    the new S_PERIPHERAL_WAIT state.
+  * g_nokia is now the default kernel module.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Nov 2008 14:32:03 +0200
+
 ke-recv (3.2-1) unstable; urgency=low
 
   * Slot naming fix, e.g. "slot:internal" -> "internal". Fixes: NB#92323

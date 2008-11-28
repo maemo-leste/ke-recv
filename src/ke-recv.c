@@ -41,6 +41,8 @@
         "/org/freedesktop/Hal/devices/usb_device_0_0_musb_hdrc"
 #define DESKTOP_SVC "com.nokia.hildon-desktop"
 
+#define FREMANTLE_MODE 1
+
 extern GConfClient* gconfclient;
 
 const char* camera_out_udi = NULL;
@@ -586,6 +588,34 @@ static DBusHandlerResult cancel_eject_handler(DBusConnection *c,
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static DBusHandlerResult enable_pcsuite_handler(DBusConnection *c,
+                                                DBusMessage *m,
+                                                void *data)
+{
+        ULOG_DEBUG_F("entered");
+        the_connection = c;
+        the_message = m;
+        handle_usb_event(E_ENTER_PCSUITE_MODE);
+        /* invalidate */
+        the_connection = NULL;
+        the_message = NULL;
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static DBusHandlerResult enable_mass_storage_handler(DBusConnection *c,
+                                                     DBusMessage *m,
+                                                     void *data)
+{
+        ULOG_DEBUG_F("entered");
+        the_connection = c;
+        the_message = m;
+        handle_usb_event(E_ENTER_MASS_STORAGE_MODE);
+        /* invalidate */
+        the_connection = NULL;
+        the_message = NULL;
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 int check_install_file(const mmc_info_t *mmc)
 {
         char buf[100];
@@ -692,13 +722,16 @@ sig_handler(DBusConnection *c, DBusMessage *m, void *data)
                         ULOG_DEBUG_F("device locked signal");
                         device_locked = TRUE;
 	        } else {
-                        usb_state_t state = get_usb_state();
                         ULOG_DEBUG_F("device unlocked signal");
                         device_locked = FALSE;
+#if 0   /* TODO: if dialog is still open, we don't need to do anything;
+           otherwise, we should use the user's decision (saved) */
+                        usb_state_t state = get_usb_state();
                         if (state == S_PERIPHERAL) {
                                 /* possibly USB-share cards */
                                 handle_usb_event(E_ENTER_PERIPHERAL_MODE);
                         }
+#endif
 	        }
         }
         handled = TRUE;
@@ -1497,6 +1530,14 @@ static int init_card(const char *udi)
                 mmc->format_op = INTERNAL_FORMAT_OP;
                 mmc->swap_on_op = INTERNAL_MMC_SWAP_ON_OP;
                 mmc->swap_off_op = INTERNAL_MMC_SWAP_OFF_OP;
+
+#ifdef FREMANTLE_MODE
+                mmc->preferred_volume = 3;
+                mmc->control_partitions = 0;
+#else
+                mmc->preferred_volume = 1;
+                mmc->control_partitions = 1;
+#endif
         } else {
                 mmc->volume_label_file = VOLUME_LABEL_FILE;
                 mmc->presence_key = MMC_PRESENT_KEY;
@@ -1508,6 +1549,9 @@ static int init_card(const char *udi)
                 mmc->format_op = FORMAT_OP;
                 mmc->swap_on_op = MMC_SWAP_ON_OP;
                 mmc->swap_off_op = MMC_SWAP_OFF_OP;
+
+                mmc->preferred_volume = 1;
+                mmc->control_partitions = 1;
         }
 
         if (get_storage(mmc->udi, &mmc->storage_parent_udi,
@@ -1560,7 +1604,7 @@ usb_state_t get_usb_state(void)
                 ret = S_INVALID_USB_STATE;
         } else if (strcmp(prop, "b_peripheral") == 0 ||
                    strcmp(prop, "a_peripheral") == 0) {
-                ret = S_PERIPHERAL;
+                ret = S_PERIPHERAL_WAIT;
         } else if (strcmp(prop, "a_host") == 0 ||
                    strcmp(prop, "b_host") == 0) {
                 ret = S_HOST;
@@ -1690,8 +1734,8 @@ static usb_state_t check_usb_cable(void)
         state = get_usb_state();
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
-        } else if (state == S_PERIPHERAL) {
-                handle_usb_event(E_ENTER_PERIPHERAL_MODE);
+        } else if (state == S_PERIPHERAL_WAIT) {
+                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1722,9 +1766,9 @@ static gboolean init_usb_cable_status(gpointer data)
                 if (usb_state == S_HOST) {
                         mount_usb_volumes();
                         set_usb_mode_key("host");
-                } else if (usb_state == S_PERIPHERAL) {
+                } else if (usb_state == S_PERIPHERAL_WAIT) {
                         if (do_e_plugged) {
-                                e_plugged_helper();
+                                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
                         }
                         set_usb_mode_key("peripheral");
                 } else {
@@ -2702,9 +2746,9 @@ static void handle_usb_event(usb_event_t e)
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in S_HOST");
                                 dismantle_usb_mount_timeout();
                                 unmount_usb_volumes();
-                        } else if (usb_state == S_PERIPHERAL) {
+                        } else if (usb_state == S_MASS_STORAGE) {
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in"
-                                             " S_PERIPHERAL");
+                                             " S_MASS_STORAGE");
                                 handle_event(E_DETACHED, &ext_mmc, NULL);
                                 if (int_mmc_enabled) {
                                         handle_event(E_DETACHED, &int_mmc,
@@ -2721,8 +2765,16 @@ static void handle_usb_event(usb_event_t e)
                                 ULOG_INFO_F("E_CABLE_DETACHED in S_EJECTING");
                                 dismantle_usb_unmount_pending();
                                 unmount_usb_volumes();
+                        } else if (usb_state == S_PERIPHERAL_WAIT) {
+                                ULOG_INFO_F("E_CABLE_DETACHED in "
+                                            "S_PERIPHERAL_WAIT");
+                        } else if (usb_state == S_PCSUITE) {
+                                ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
+                                if (!disable_pcsuite()) {
+                                        ULOG_ERR_F("disable_pcsuite() failed");
+                                }
                         } else {
-                                ULOG_WARN_F("E_CABLE_DETACHED in %d",
+                                ULOG_WARN_F("E_CABLE_DETACHED in %d!",
                                             usb_state);
                         }
                         usb_state = S_CABLE_DETACHED;
@@ -2776,11 +2828,11 @@ static void handle_usb_event(usb_event_t e)
                                 setup_usb_mount_timeout(15);
                                 usb_state = S_HOST;
                         } else {
-                                ULOG_WARN_F("E_ENTER_HOST_MODE in %d",
+                                ULOG_WARN_F("E_ENTER_HOST_MODE in %d!",
                                             usb_state);
                         }
                         break;
-                case E_ENTER_PERIPHERAL_MODE:
+                case E_ENTER_PERIPHERAL_WAIT_MODE:
                         /* clear the name */
                         free(usb_device_name);
                         usb_device_name = NULL;
@@ -2788,17 +2840,36 @@ static void handle_usb_event(usb_event_t e)
 
                         set_usb_mode_key("peripheral");
                         inform_usb_cable_attached(TRUE);
-                        if (usb_state == S_CABLE_DETACHED
-                            || usb_state == S_PERIPHERAL) {
-                                /* we could be in S_PERIPHERAL already
+                        if (usb_state == S_CABLE_DETACHED ||
+                            usb_state == S_PERIPHERAL_WAIT) {
+                                /* we could be in S_PERIPHERAL_WAIT already
                                  * because of the device lock */
-                                ULOG_DEBUG_F("E_ENTER_PERIPHERAL_MODE"
+                                ULOG_DEBUG_F("E_ENTER_PERIPHERAL_WAIT_MODE"
                                              " in S_CABLE_DETACHED or "
-                                             "S_PERIPHERAL");
-                                usb_state = S_PERIPHERAL;
+                                             "S_PERIPHERAL_WAIT");
+                                usb_state = S_PERIPHERAL_WAIT;
+                        } else {
+                                ULOG_WARN_F("E_ENTER_PERIPHERAL_WAIT_MODE"
+                                            " in %d!", usb_state);
+                        }
+                        break;
+                case E_ENTER_MASS_STORAGE_MODE:
+                        if (usb_state == S_PERIPHERAL_WAIT) {
+                                usb_state = S_MASS_STORAGE;
                                 e_plugged_helper();
                         } else {
-                                ULOG_WARN_F("E_ENTER_PERIPHERAL_MODE in %d",
+                                ULOG_WARN_F("E_ENTER_MASS_STORAGE_MODE in %d!",
+                                            usb_state);
+                        }
+                        break;
+                case E_ENTER_PCSUITE_MODE:
+                        if (usb_state == S_PERIPHERAL_WAIT) {
+                                usb_state = S_PCSUITE;
+                                if (!enable_pcsuite()) {
+                                        ULOG_ERR_F("Couldn't enable PC Suite");
+                                }
+                        } else {
+                                ULOG_WARN_F("E_ENTER_PCSUITE_MODE in %d!",
                                             usb_state);
                         }
                         break;
@@ -2821,9 +2892,9 @@ static void add_prop_watch(const char *udi)
         }
 }
 
-int get_cable_peripheral(void)
+int in_mass_storage_mode(void)
 {
-        return usb_state == S_PERIPHERAL;
+        return usb_state == S_MASS_STORAGE;
 }
 
 static void sigterm(int signo)
@@ -2998,6 +3069,14 @@ int main(int argc, char* argv[])
         vtable.message_function = cancel_eject_handler;
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/usb_cancel_eject", NULL);
+
+        /* D-Bus interface for PC suite selection */
+        vtable.message_function = enable_pcsuite_handler;
+        register_op(sys_conn, &vtable, ENABLE_PCSUITE_OP, NULL);
+
+        /* D-Bus interface for USB mass storage mode selection */
+        vtable.message_function = enable_mass_storage_handler;
+        register_op(sys_conn, &vtable, ENABLE_MASS_STORAGE_OP, NULL);
 
         add_prop_watch(ext_mmc.cover_udi);
         add_prop_watch(int_mmc.cover_udi);

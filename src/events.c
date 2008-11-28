@@ -45,6 +45,7 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show);
 static int mount_volumes(mmc_info_t *mmc);
 static int do_unmount(const char *mountpoint);
 static void open_dialog_helper(mmc_info_t *mmc);
+static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n);
 
 #define CLOSE_DIALOG if (mmc->dialog_id == -1) { \
                              ULOG_WARN_F("%s dialog_id is invalid", \
@@ -523,18 +524,29 @@ void do_global_init(void)
 void unshare_usb_shared_card(mmc_info_t *mmc)
 {
         const char *args[] = {NULL, NULL}; 
+        char *dev;
 
-        ULOG_DEBUG_F("entered");
+        if (!mmc->control_partitions) {
+                volume_list_t *vol;
 
-        if (mmc->whole_device == NULL) {
-                ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
+                if (vol == NULL) {
+                        ULOG_ERR_F("volume %d not found from %s",
+                                   mmc->preferred_volume, mmc->name);
+                        return;
+                }
+                dev = vol->dev_name;
+        } else
+                dev = mmc->whole_device;
+
+        if (dev == NULL) {
+                ULOG_DEBUG_F("dev unknown for %s", mmc->name);
                 return;
         }
 
-        args[0] = mmc->whole_device;
+        args[0] = dev;
         if (!unload_usb_driver(args)) {
-                ULOG_ERR_F("failed to unload the USB module for %s",
-                           mmc->whole_device);
+                ULOG_ERR_F("failed to unload the USB module for %s", dev);
                 /* there seems to be no way to recover from this... */
         } else {
                 inform_mmc_used_over_usb(FALSE, mmc);
@@ -544,9 +556,23 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
 static void usb_share_card(mmc_info_t *mmc, gboolean show)
 {
         const char *args[] = {NULL, NULL};
+        char *dev;
 
-        if (mmc->whole_device == NULL) {
-                ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
+        if (!mmc->control_partitions) {
+                volume_list_t *vol;
+
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
+                if (vol == NULL) {
+                        ULOG_ERR_F("volume %d not found from %s",
+                                   mmc->preferred_volume, mmc->name);
+                        return;
+                }
+                dev = vol->dev_name;
+        } else
+                dev = mmc->whole_device;
+
+        if (dev == NULL) {
+                ULOG_DEBUG_F("dev unknown for %s", mmc->name);
                 return;
         }
 
@@ -555,17 +581,16 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
                 return;
         }
 
-        args[0] = mmc->whole_device;
+        args[0] = dev;
         if (load_usb_driver(args)) {
-                ULOG_INFO_F("USB mass storage module loaded for %s",
-                            mmc->whole_device);
+                ULOG_INFO_F("USB mass storage module loaded for %s", dev);
                 if (show) {
                         display_dialog(MSG_DEVICE_CONNECTED_VIA_USB);
                 }
                 inform_mmc_used_over_usb(TRUE, mmc);
         } else {
                 ULOG_ERR_F("failed to load USB mass storage module for %s",
-                           mmc->whole_device);
+                           dev);
         }
 }
 
@@ -623,25 +648,66 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
         }
 }
 
+static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n)
+{
+        volume_list_t *l, *ret = NULL;
+
+        for (l = &mmc->volumes; l != NULL; l = l->next) {
+                if (l->udi != NULL && l->volume_number == n) {
+                        ret = l;
+                        break;
+                }
+        }
+        return ret;
+}
+
 static void handle_e_format(mmc_info_t *mmc)
 {
         int ret;
-        const char* args[] = {MMC_FORMAT_PROG, NULL, NULL, NULL};
+        const char* args[] = {MMC_FORMAT_PROG, NULL, NULL, NULL, NULL};
+        volume_list_t *vol;
 
         ULOG_DEBUG_F("label for %s is '%s'", mmc->name, mmc->desired_label);
-        args[1] = mmc->whole_device;
-        args[2] = mmc->desired_label;
 
-        ret = unmount_volumes(&mmc->volumes);
+        vol = get_nth_volume(mmc, mmc->preferred_volume);
+
+        if (vol == NULL || vol->dev_name == NULL) {
+                ULOG_ERR_F("could not find partition number %d",
+                           mmc->preferred_volume);
+                return;
+        }
+
+        if (!mmc->control_partitions) {
+                args[1] = vol->dev_name;
+                args[2] = mmc->desired_label;
+
+                if (vol->mountpoint != NULL)
+                        ret = do_unmount(vol->mountpoint);
+                else {
+                        ULOG_DEBUG_F("no mountpoint, using dev_name");
+                        ret = do_unmount(vol->dev_name);
+                }
+        } else {
+                args[1] = mmc->whole_device;
+                args[2] = vol->dev_name;
+                args[3] = mmc->desired_label;
+
+                ret = unmount_volumes(&mmc->volumes);
+        }
         if (!ret) {
                 ULOG_INFO_F("memory card %s is in use", mmc->name);
                 display_system_note(dgettext("osso-filemanager",
                                     "sfil_ni_mmc_format_mmc_in_use"));
-                mount_volumes(mmc);
+                if (mmc->control_partitions)
+                        /* we could have unmounted some other volumes */
+                        mount_volumes(mmc);
                 return;
         }
 
-        clear_volume_list(&mmc->volumes); /* clear existing volume info */
+        if (mmc->control_partitions)
+                /* partition table will be cleared, clear volume info */
+                clear_volume_list(&mmc->volumes);
+
         ret = exec_prog(MMC_FORMAT_PROG, args);
         if (ret != 0) {
                 ULOG_INFO_F("format of %s failed, rc=%d", mmc->name, ret);
@@ -660,16 +726,12 @@ static void handle_e_repair(mmc_info_t *mmc)
         volume_list_t *l;
         const char* args[] = {"/usr/sbin/mmc-check", NULL, NULL};
 
-        /* find out the device name of the first partition */
-        for (l = &mmc->volumes; l != NULL; l = l->next) {
-                if (l->udi != NULL && l->volume_number == 1) {
-                        part_device = l->dev_name;
-                        udi = l->udi;
-                        break;
-                }
-        }
+        l = get_nth_volume(mmc, mmc->preferred_volume);
+        part_device = l != NULL ? l->dev_name : NULL;
+        udi = l->udi;
+
         if (part_device == NULL) {
-                ULOG_ERR_F("device name for first partition not found");
+                ULOG_ERR_F("device name for the partition not found");
                 display_system_note(MSG_UNABLE_TO_REPAIR);
                 return;
         }
@@ -717,21 +779,20 @@ static int mount_volumes(mmc_info_t *mmc)
         const char *udi = NULL, *device = NULL;
         int ret, count = 0;
        
-        /* we currently only consider the partition number 1
-         * for mounting */
-        for (l = &mmc->volumes; l != NULL; l = l->next) {
-                ULOG_DEBUG_F("%s %d %s", mmc->name, l->volume_number, l->udi);
-                if (l->udi != NULL && l->volume_number == 1
-                    && !l->corrupt) {
-                        udi = l->udi;
-                        device = l->dev_name;
-                        break;
-                }
-        }
-        if (udi == NULL) {
-                ULOG_DEBUG_F("first partition not found or marked corrupt");
+        l = get_nth_volume(mmc, mmc->preferred_volume);
+        if (l && l->corrupt) {
+                ULOG_DEBUG_F("partition %d is corrupt",
+                             mmc->preferred_volume);
                 return 0;
         }
+
+        if (l == NULL || l->udi == NULL) {
+                ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
+                return 0;
+        }
+        udi = l->udi;
+        device = l->dev_name;
+
         if (device == NULL) {
                 ULOG_ERR_F("couldn't get device for %s", udi);
                 return 0;
@@ -847,7 +908,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_DEBUG_F("E_CLOSED for %s", mmc->name);
                         /* notify applications about closed cover */
                         inform_mmc_cover_open(FALSE, mmc);
-                        if (!ignore_cable && get_cable_peripheral()
+                        if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         } else {
@@ -1000,7 +1061,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         /* notify applications about opened cover */
                         inform_mmc_cover_open(TRUE, mmc);
 
-                        if (!ignore_cable && get_cable_peripheral()) {
+                        if (!ignore_cable && in_mass_storage_mode()) {
                                 unshare_usb_shared_card(mmc);
                                 mmc->state = S_COVER_OPEN;
                                 break;
@@ -1015,7 +1076,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         }
                         break;
                 case E_PLUGGED:
-                        if (!ignore_cable && get_cable_peripheral()
+                        if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
                                 if (!unmount_volumes(&mmc->volumes)) {
@@ -1026,7 +1087,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         }
                         break;
                 case E_DETACHED:
-                        if (!ignore_cable && get_cable_peripheral()) {
+                        if (!ignore_cable && in_mass_storage_mode()) {
                                 unshare_usb_shared_card(mmc);
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
@@ -1044,7 +1105,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_VOLUME_ADDED:
                         ULOG_DEBUG_F("E_VOLUME_ADDED for %s", mmc->name);
-                        if (ignore_cable || !get_cable_peripheral()) {
+                        if (ignore_cable || !in_mass_storage_mode()) {
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc)) {
                                         if (!mmc->skip_banner) {
@@ -1060,14 +1121,14 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_VOLUME_REMOVED:
                         ULOG_DEBUG_F("E_VOLUME_REMOVED for %s", mmc->name);
-                        if (ignore_cable || !get_cable_peripheral()) {
+                        if (ignore_cable || !in_mass_storage_mode()) {
                                 discard_volume(mmc, arg);
                         }
                         break;
                 case E_DEVICE_ADDED:
                         ULOG_DEBUG_F("E_DEVICE_ADDED for %s", mmc->name);
                         inform_device_present(TRUE, mmc);
-                        if (!ignore_cable && get_cable_peripheral()
+                        if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         }
@@ -1075,7 +1136,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                 case E_DEVICE_REMOVED:
                         ULOG_DEBUG_F("E_DEVICE_REMOVED for %s", mmc->name);
                         inform_device_present(FALSE, mmc);
-                        if (!ignore_cable && get_cable_peripheral()) {
+                        if (!ignore_cable && in_mass_storage_mode()) {
                                 unshare_usb_shared_card(mmc);
                         } else {
                                 unmount_volumes(&mmc->volumes);
@@ -1095,7 +1156,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_DEBUG_F("E_INIT_CARD for %s", mmc->name);
                         if (mmc->whole_device != NULL) {
                                 inform_device_present(TRUE, mmc);
-                                if (!ignore_cable && get_cable_peripheral()
+                                if (!ignore_cable && in_mass_storage_mode()
                                     && !device_locked) {
                                         usb_share_card(mmc, FALSE);
                                 } else {
@@ -1122,7 +1183,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         inform_mmc_cover_open(FALSE, mmc);
                         CLOSE_DIALOG
                         CLOSE_SWAP_DIALOG
-                        if (!ignore_cable && get_cable_peripheral()
+                        if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 usb_share_card(mmc, TRUE);
                         } else {

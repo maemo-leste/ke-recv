@@ -41,6 +41,7 @@ const char* mmc_volume_label = NULL;
 
 /* device file names for mounting, renaming, formatting */
 const char* mmc_dev_file_without_part = NULL;
+const char* mmc_dev_file_with_part = NULL;
 
 static pid_t child_pid = -1;
 static int pipe_fd = -1;
@@ -158,21 +159,19 @@ static gboolean prepare_partition()
 static gboolean start_format()
 {
         int fd, blk_sz, ret;
-        char blk_sz_buf[10], mmc_dev_file_with_part[100];
+        char blk_sz_buf[10];
         const char* args[] = {MMC_FORMAT_COMMAND, NULL, "-n", NULL,
                               "-S", NULL, "-F", "32", "-R", "38", NULL};
 
         ULOG_DEBUG_F("entered");
 
-        /* prepare partition table */
-        if (!prepare_partition()) {
-                return FALSE;
+        if (mmc_dev_file_without_part != NULL) {
+                /* prepare partition table */
+                if (!prepare_partition()) {
+                        return FALSE;
+                }
+                ULOG_DEBUG_F("partition prepared");
         }
-        ULOG_DEBUG_F("partition prepared");
-
-        /* FIXME: should use HAL to get this... */
-        snprintf(mmc_dev_file_with_part, 100, "%sp1",
-                 mmc_dev_file_without_part);
 
         args[1] = mmc_dev_file_with_part;
         args[3] = mmc_volume_label;
@@ -258,8 +257,9 @@ int main(int argc, char* argv[])
         ULOG_OPEN(MMC_FORMAT_PROG_NAME);
         ULOG_DEBUG_L("entered");
 
-        if (argc != 3) {
-                ULOG_CRIT_L("Usage: %s <device> <volume label>", argv[0]);
+        if (argc != 3 && argc != 4) {
+                ULOG_CRIT_L("Usage: %s [<device>] <partition> <volume label>",
+                            argv[0]);
                 exit(1);
         }
         sa.sa_handler = sig_handler;
@@ -280,8 +280,14 @@ int main(int argc, char* argv[])
                 ULOG_ERR_L("textdomain() failed");
         }
 
-        mmc_dev_file_without_part = argv[1];
-        mmc_volume_label = argv[2];
+        if (argc == 4) {
+                mmc_dev_file_without_part = argv[1];
+                mmc_dev_file_with_part = argv[2];
+                mmc_volume_label = argv[3];
+        } else {
+                mmc_dev_file_with_part = argv[1];
+                mmc_volume_label = argv[2];
+        }
 
         if (!gtk_init_check(&argc, &argv)) {
                 ULOG_CRIT_L("gtk_init failed");

@@ -181,6 +181,22 @@ gboolean unload_usb_driver(const char **arg)
         }
 }
 
+gboolean enable_pcsuite(void)
+{
+        static const char *args[] = {ENABLE_PCSUITE_COMMAND, NULL};
+        int ret;
+        ret = exec_prog(args[0], args);
+        return ret != 0 ? FALSE : TRUE;
+}
+
+gboolean disable_pcsuite(void)
+{
+        static const char *args[] = {DISABLE_PCSUITE_COMMAND, NULL};
+        int ret;
+        ret = exec_prog(args[0], args);
+        return ret != 0 ? FALSE : TRUE;
+}
+
 gboolean usb_driver_is_used(void)
 {
         static const char *args[] = {USB_DRIVER_IS_USED_COMMAND, NULL};
