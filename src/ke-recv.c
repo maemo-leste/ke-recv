@@ -568,7 +568,6 @@ static DBusHandlerResult eject_handler(DBusConnection *c,
         the_connection = c;
         the_message = m;
         handle_usb_event(E_EJECT);
-        send_reply();
         /* invalidate */
         the_connection = NULL;
         the_message = NULL;
@@ -583,7 +582,6 @@ static DBusHandlerResult cancel_eject_handler(DBusConnection *c,
         the_connection = c;
         the_message = m;
         handle_usb_event(E_EJECT_CANCELLED);
-        send_reply();
         /* invalidate */
         the_connection = NULL;
         the_message = NULL;
