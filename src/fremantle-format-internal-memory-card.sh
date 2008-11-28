@@ -35,6 +35,9 @@ sfdisk -D -uM $1 << EOF
 ,2048,L
 ,,b
 EOF
+
+mkdosfs -F 32 -R 38 ${1}p3
+
 sync
 
 echo "$0: done."
