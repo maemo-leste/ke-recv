@@ -624,6 +624,7 @@ static void handle_e_rename(mmc_info_t *mmc)
                         return;
         }
 
+        ULOG_DEBUG_F("using device file %s", vol->dev_name);
         args[1] = vol->dev_name;
         args[2] = mmc->desired_label;
 
