@@ -322,11 +322,9 @@ static mmc_info_t *mmc_from_dev_name(const char *dev)
 static DBusHandlerResult rename_handler(DBusConnection *c,
                                         DBusMessage *m, void *data)
 {
-        volume_list_t *l;
         mmc_info_t *mmc;
         DBusMessageIter iter;
         char* dev = NULL, *label = NULL;
-        const char *udi = NULL;
 
         ULOG_DEBUG_F("entered");
         the_connection = c;
