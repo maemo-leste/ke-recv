@@ -706,6 +706,7 @@ static void handle_e_format(mmc_info_t *mmc)
         if (!mmc->control_partitions) {
                 args[1] = vol->dev_name;
                 args[2] = mmc->desired_label;
+                ULOG_DEBUG_F("%s: using device file %s", args[1]);
 
                 if (vol->mountpoint != NULL)
                         ret = do_unmount(vol->mountpoint);
@@ -721,6 +722,7 @@ static void handle_e_format(mmc_info_t *mmc)
                         args[2] = buf;
                 } else
                         args[2] = vol->dev_name;
+                ULOG_DEBUG_F("%s: using device file %s", args[2]);
                 args[3] = mmc->desired_label;
 
                 ret = unmount_volumes(&mmc->volumes);
