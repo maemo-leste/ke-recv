@@ -110,15 +110,24 @@ void update_mmc_label(mmc_info_t *mmc)
         char *part_device = NULL;
         volume_list_t *l;
 
-        /* find out the device name of the first partition */
-        for (l = &mmc->volumes; l != NULL; l = l->next) {
-                if (l->udi != NULL && l->volume_number == 1) {
-                        part_device = l->dev_name;
-                        break;
-                }
+        vol = get_nth_volume(mmc, mmc->preferred_volume);
+        if (vol == NULL) {
+                ULOG_ERR_F("could not find partition number %d",
+                           mmc->preferred_volume);
+                if (mmc->preferred_volume != 1 && mmc->internal_card) {
+                        /* workaround for not yet partitioned systems */
+                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        vol = get_nth_volume(mmc, 1);
+                        if (vol == NULL)
+                                return;
+                } else
+                        return;
         }
+        part_device = vol->dev_name;
+
         if (part_device == NULL) {
-                ULOG_ERR_F("device name for first partition not found");
+                ULOG_ERR_F("device name for partition number %d not found",
+                           vol->volume_number);
                 empty_file(mmc->volume_label_file);
                 set_localised_label(mmc);
                 return;
