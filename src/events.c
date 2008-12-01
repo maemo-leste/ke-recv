@@ -603,17 +603,28 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
         }
 }
 
-static void handle_e_rename(mmc_info_t *mmc, const char *udi)
+static void handle_e_rename(mmc_info_t *mmc)
 {
         const char* args[] = {MMC_RENAME_PROG, NULL, NULL, NULL};
         int ret;
-        char *dev;
+        volume_list_t *vol;
 
-        dev = get_prop_string(udi, "block.device");
-        if (dev == NULL) {
-                return;
+        vol = get_nth_volume(mmc, mmc->preferred_volume);
+
+        if (vol == NULL || vol->dev_name == NULL) {
+                ULOG_ERR_F("could not find partition number %d",
+                           mmc->preferred_volume);
+                if (mmc->preferred_volume != 1 && mmc->internal_card) {
+                        /* workaround for not yet partitioned systems */
+                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        vol = get_nth_volume(mmc, 1);
+                        if (vol == NULL || vol->dev_name == NULL)
+                                return;
+                } else
+                        return;
         }
-        args[1] = dev;
+
+        args[1] = vol->dev_name;
         args[2] = mmc->desired_label;
 
         /* check validity of volume label */
@@ -621,11 +632,9 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
         assert(ret < 1 && ret > -3);
         if (ret == -1) {
                 ULOG_ERR_F("too long name");
-                libhal_free_string(dev);
                 return;
         } else if (ret == -2) {
                 ULOG_ERR_F("invalid characters");
-                libhal_free_string(dev);
                 return;
         }
 
@@ -641,7 +650,6 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
                         /* even if renaming failed it makes sense to
                          * try mounting the card */
                 }
-                libhal_free_string(dev);
 
                 update_mmc_label(mmc);
                 ULOG_DEBUG_F("successful renaming");
@@ -650,7 +658,6 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
                         display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
         } else {
-                libhal_free_string(dev);
                 ULOG_DEBUG_F("umount failed");
                 display_system_note(dgettext("osso-filemanager",
                                     "sfil_ni_mmc_rename_mmc_in_use"));
@@ -1125,7 +1132,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         }
                         break;
                 case E_RENAME:
-                        handle_e_rename(mmc, arg);
+                        handle_e_rename(mmc);
                         break;
                 case E_FORMAT:
                         handle_e_format(mmc);

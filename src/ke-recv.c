@@ -365,19 +365,6 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
 
         send_reply();
 
-        l = &mmc->volumes;
-        while (l != NULL) {
-                if (l->udi != NULL && l->volume_number == 1) {
-                        udi = l->udi;
-                        break;
-                }
-                l = l->next;
-        }
-        if (udi == NULL) {
-                ULOG_ERR_F("could not find udi for first partition");
-                goto rename_exit;
-        }
-
         if (label[0] == '\0') {
                 /* empty label */
                 strncpy(mmc->desired_label, "           ", 11);
@@ -387,7 +374,7 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
         mmc->desired_label[11] = '\0';
         ULOG_DEBUG_F("got label: '%s'", mmc->desired_label);
         /* validity of the label is checked later */
-        handle_event(E_RENAME, mmc, udi);
+        handle_event(E_RENAME, mmc, NULL);
 
 rename_exit:
         /* invalidate */
