@@ -31,7 +31,7 @@ umount ${1}p2
 umount ${1}p3
 
 sfdisk -D -uM $1 << EOF
-,512,S
+,768,S
 ,2048,L
 ,,b
 EOF

@@ -4,7 +4,7 @@ ke-recv (3.3-1~unreleased) unstable; urgency=low
   * Added D-Bus interfaces for enabling PC Suite or mass storage mode when in
     the new S_PERIPHERAL_WAIT state.
   * g_nokia is now the default kernel module.
-  * Add dosfstools dependency.
+  * Add dosfstools and mtools dependency.
   * Added a shell script for partitioning the internal memory card.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Nov 2008 14:32:03 +0200

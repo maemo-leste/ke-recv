@@ -666,15 +666,24 @@ static void handle_e_format(mmc_info_t *mmc)
         int ret;
         const char* args[] = {MMC_FORMAT_PROG, NULL, NULL, NULL, NULL};
         volume_list_t *vol;
+        char buf[100];
 
         ULOG_DEBUG_F("label for %s is '%s'", mmc->name, mmc->desired_label);
 
         vol = get_nth_volume(mmc, mmc->preferred_volume);
 
-        if (vol == NULL || vol->dev_name == NULL) {
+        if ((vol == NULL || vol->dev_name == NULL)
+            && !mmc->control_partitions) {
                 ULOG_ERR_F("could not find partition number %d",
                            mmc->preferred_volume);
-                return;
+                if (mmc->preferred_volume != 1 && mmc->internal_card) {
+                        /* workaround for not yet partitioned systems */
+                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        vol = get_nth_volume(mmc, 1);
+                        if (vol == NULL || vol->dev_name == NULL)
+                                return;
+                } else
+                        return;
         }
 
         if (!mmc->control_partitions) {
@@ -689,7 +698,12 @@ static void handle_e_format(mmc_info_t *mmc)
                 }
         } else {
                 args[1] = mmc->whole_device;
-                args[2] = vol->dev_name;
+                if (vol == NULL || vol->dev_name == NULL) {
+                        snprintf(buf, 100, "%sp%d", mmc->whole_device,
+                                 mmc->preferred_volume);
+                        args[2] = buf;
+                } else
+                        args[2] = vol->dev_name;
                 args[3] = mmc->desired_label;
 
                 ret = unmount_volumes(&mmc->volumes);
@@ -788,7 +802,14 @@ static int mount_volumes(mmc_info_t *mmc)
 
         if (l == NULL || l->udi == NULL) {
                 ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
-                return 0;
+                if (mmc->preferred_volume != 1 && mmc->internal_card) {
+                        /* workaround for not yet partitioned systems */
+                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        l = get_nth_volume(mmc, 1);
+                        if (l == NULL || l->udi == NULL)
+                                return 0;
+                } else
+                        return 0;
         }
         udi = l->udi;
         device = l->dev_name;
