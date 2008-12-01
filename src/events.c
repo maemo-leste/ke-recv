@@ -108,7 +108,7 @@ void update_mmc_label(mmc_info_t *mmc)
         gchar* buf = NULL;
         GError* err = NULL;
         char *part_device = NULL;
-        volume_list_t *l;
+        volume_list_t *vol;
 
         vol = get_nth_volume(mmc, mmc->preferred_volume);
         if (vol == NULL) {
