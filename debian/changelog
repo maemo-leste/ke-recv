@@ -1,4 +1,4 @@
-ke-recv (3.3-1~unreleased) unstable; urgency=low
+ke-recv (3.3-1) unstable; urgency=low
 
   * Added support for PC Suite mode.
   * Added D-Bus interfaces for enabling PC Suite or mass storage mode when in
@@ -6,8 +6,10 @@ ke-recv (3.3-1~unreleased) unstable; urgency=low
   * g_nokia is now the default kernel module.
   * Add dosfstools and mtools dependency.
   * Added a shell script for partitioning the internal memory card.
+  * Workaround for not yet partitioned internal memory cards.
+  * Added awesome script fremantle-format-internal-memory-card.sh.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Nov 2008 14:32:03 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 01 Dec 2008 10:57:34 +0200
 
 ke-recv (3.2-1) unstable; urgency=low
 
