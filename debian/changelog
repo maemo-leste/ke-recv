@@ -1,3 +1,9 @@
+ke-recv (3.4-1) unstable; urgency=low
+
+  * Fix segfaulting ULOG_DEBUG_F calls.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu,  4 Dec 2008 15:30:52 +0200
+
 ke-recv (3.3-1) unstable; urgency=low
 
   * Added support for PC Suite mode.

@@ -116,7 +116,7 @@ void update_mmc_label(mmc_info_t *mmc)
                            mmc->preferred_volume);
                 if (mmc->preferred_volume != 1 && mmc->internal_card) {
                         /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        ULOG_DEBUG_F("falling back to partition 1!");
                         vol = get_nth_volume(mmc, 1);
                         if (vol == NULL)
                                 return;
@@ -616,7 +616,7 @@ static void handle_e_rename(mmc_info_t *mmc)
                            mmc->preferred_volume);
                 if (mmc->preferred_volume != 1 && mmc->internal_card) {
                         /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        ULOG_DEBUG_F("falling back to partition 1!");
                         vol = get_nth_volume(mmc, 1);
                         if (vol == NULL || vol->dev_name == NULL)
                                 return;
@@ -695,7 +695,7 @@ static void handle_e_format(mmc_info_t *mmc)
                            mmc->preferred_volume);
                 if (mmc->preferred_volume != 1 && mmc->internal_card) {
                         /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        ULOG_DEBUG_F("falling back to partition 1!");
                         vol = get_nth_volume(mmc, 1);
                         if (vol == NULL || vol->dev_name == NULL)
                                 return;
@@ -823,7 +823,7 @@ static int mount_volumes(mmc_info_t *mmc)
                 ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
                 if (mmc->preferred_volume != 1 && mmc->internal_card) {
                         /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("%s: falling back to partition 1!");
+                        ULOG_DEBUG_F("falling back to partition 1!");
                         l = get_nth_volume(mmc, 1);
                         if (l == NULL || l->udi == NULL)
                                 return 0;
