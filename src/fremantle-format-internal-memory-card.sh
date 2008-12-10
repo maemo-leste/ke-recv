@@ -29,14 +29,16 @@ umount $1
 umount ${1}p1
 umount ${1}p2
 umount ${1}p3
+umount ${1}p4
 
 sfdisk -D -uM $1 << EOF
 ,768,S
+,4,L
 ,2048,L
 ,,b
 EOF
 
-mkdosfs -F 32 -R 38 ${1}p3
+mkdosfs -F 32 -R 38 ${1}p4
 
 sync
 
