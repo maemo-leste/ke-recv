@@ -26,19 +26,15 @@
 #include "ke-recv.h"
 #include <stdio.h>
 
-#define INT_DEV "/dev/mmcblk0p3"
-#define EXT_DEV "/dev/mmcblk1p1"
-
 static DBusConnection *ses_conn = NULL;
 static DBusConnection *sys_conn = NULL;
 
-static void format_mmc(int mode)
+static void format_mmc(const char *device)
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	dbus_bool_t ret = FALSE;
 	DBusError err;
 	const char* label = "";
-        char *dev;
 
     	ULOG_DEBUG_F("entering");
 	dbus_error_init(&err);
@@ -47,13 +43,8 @@ static void format_mmc(int mode)
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(m != NULL);
-        if (mode == 'i') {
-                dev = INT_DEV;
-        } else {
-                dev = EXT_DEV;
-        }
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
-			&dev, DBUS_TYPE_INVALID);
+			&device, DBUS_TYPE_INVALID);
     	if (!ret) {
        	   ULOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
@@ -110,13 +101,12 @@ static void send_device_unlocked()
         dbus_connection_send(sys_conn, m, NULL);
 }
 
-static void rename_mmc(int mode)
+static void rename_mmc(const char *device)
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	dbus_bool_t ret = FALSE;
 	DBusError err;
 	const char* label = "KERECVTEST";
-        char *dev;
 
     	ULOG_DEBUG_F("entering");
 	dbus_error_init(&err);
@@ -126,13 +116,8 @@ static void rename_mmc(int mode)
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(m != NULL);
-        if (mode == 'i') {
-                dev = INT_DEV;
-        } else {
-                dev = EXT_DEV;
-        }
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
-			&dev, DBUS_TYPE_INVALID);
+			&device, DBUS_TYPE_INVALID);
     	if (!ret) {
        	   ULOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
@@ -309,7 +294,7 @@ static void detach_usb()
     	ULOG_DEBUG_F("leaving");
 }
 
-static void repair_card(const char *type)
+static void repair_card(const char *device)
 {
 	DBusMessage* m = NULL;
     	ULOG_DEBUG_F("entering");
@@ -319,7 +304,7 @@ static void repair_card(const char *type)
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
         dbus_message_append_args(m, DBUS_TYPE_STRING,
-                                 &type, DBUS_TYPE_INVALID);
+                                 &device, DBUS_TYPE_INVALID);
 	dbus_connection_send(sys_conn, m, NULL);
     	ULOG_DEBUG_F("leaving");
 }
@@ -369,14 +354,12 @@ static void init()
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2) {
-            printf("Usage: %s <command>\n", argv[0]);
+    if (argc != 2 && argc != 3) {
+            printf("Usage: %s <command> [/dev/mmcblk(1|0)]\n", argv[0]);
             printf("cb - close battery cover signal\n"
                    "ob - open battery cover signal\n"
-                   "f - format (ext-)MMC (Note: hard-coded to " EXT_DEV ")\n"
-                   "fi - format (int-)MMC (Note: hard-coded to " INT_DEV ")\n"
-                   "r - rename (ext-)MMC (" EXT_DEV ")\n"
-                   "ri - rename (int-)MMC (" INT_DEV ")\n"
+                   "f - format device <arg>\n"
+                   "r - rename device <arg>\n"
                    "l - send device locked signal\n"
                    "u - send device unlocked signal\n"
                    "at - send USB attached signal\n"
@@ -385,8 +368,7 @@ int main(int argc, char* argv[])
                    "si - swap on (int-)MMC\n"
                    "t - swap off (ext-)MMC\n"
                    "ti - swap off (int-)MMC\n"
-                   "e - repair (ext-)MMC (" EXT_DEV ")\n"
-                   "ei - repair (int-)MMC (" INT_DEV ")\n"
+                   "e - repair device <arg>\n"
                    "ej - eject USB\n"
                    "ec - cancel eject USB\n"
                    "p - enable PC Suite\n"
@@ -407,10 +389,10 @@ int main(int argc, char* argv[])
                 }
 		break;
 	    case 'f':
-		format_mmc(argv[1][1]);
+		format_mmc(argv[2]);
 		break;
 	    case 'r':
-		rename_mmc(argv[1][1]);
+		rename_mmc(argv[2]);
 		break;
             case 'l':
                 send_device_locked();
@@ -441,14 +423,12 @@ int main(int argc, char* argv[])
                 }
                 break;
             case 'e':
-                if (argv[1][1] == 'i') {
-                        repair_card(INT_DEV);
-                } else if (argv[1][1] == 'j') {
+                if (argv[1][1] == 'j') {
                         usb_eject();
                 } else if (argv[1][1] == 'c') {
                         usb_cancel_eject();
                 } else {
-                        repair_card(EXT_DEV);
+                        repair_card(argv[2]);
                 }
                 break;
 	    default:

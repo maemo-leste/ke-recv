@@ -24,9 +24,15 @@ RC=0
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? = 0 ]; then
     echo "$0: removing g_nokia"
-    # kill pnatd to make it release its grip on g_nokia
-    kill `pidof pnatd`
-    sleep 1
+
+    PNATD_PID=`pidof pnatd`
+    if [ $? = 0 ]; then
+        # kill pnatd to make it release its grip on g_nokia
+        kill $PNATD_PID
+        sleep 1
+    else
+        echo "$0: pnatd is not running"
+    fi
     /sbin/rmmod g_nokia
 fi
 

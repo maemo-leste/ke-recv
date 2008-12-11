@@ -3,6 +3,8 @@ ke-recv (3.5-1~unreleased) unstable; urgency=low
   * Fourth partition is now FAT.
   * Send TERM to pnatd before trying to remove g_nokia.
   * Updated the unofficial partitioning script for internal memory card.
+  * Fixed ke-recv-test to provide correct device parameters for rename,
+    format and repair messages.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 10 Dec 2008 14:59:10 +0200
 
