@@ -745,7 +745,14 @@ static void handle_e_format(mmc_info_t *mmc)
         if (ret != 0) {
                 ULOG_INFO_F("format of %s failed, rc=%d", mmc->name, ret);
         } else {
-                mmc->skip_banner = TRUE;
+                /* mount the newly formatted volume if we did not re-partition
+                 * the device; otherwise it is mounted later when the new
+                 * partition table is discovered */
+                if (!mmc->control_partitions) {
+                        mount_volumes(mmc);
+                } else {
+                        mmc->skip_banner = TRUE;
+                }
                 display_dialog(MSG_FORMATTING_COMPLETE);
         }
 }
