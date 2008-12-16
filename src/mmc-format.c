@@ -160,8 +160,13 @@ static gboolean start_format()
 {
         int fd, blk_sz, ret;
         char blk_sz_buf[10];
-        const char* args[] = {MMC_FORMAT_COMMAND, NULL, "-n", NULL,
-                              "-S", NULL, "-F", "32", "-R", "38", NULL};
+        const char* args[] = {MMC_FORMAT_COMMAND, NULL,
+                              "-n", NULL,  /* volume label */
+                              "-S", NULL,  /* logical sector size */
+                              "-F", "32",  /* FAT32 */
+                              "-R", "38",  /* reserved sectors */
+                              "-s", "128", /* sectors per cluster */
+                              NULL};
 
         ULOG_DEBUG_F("entered");
 
