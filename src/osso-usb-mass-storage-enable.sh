@@ -27,12 +27,23 @@ if [ $? = 0 ]; then
 
     PNATD_PID=`pidof pnatd`
     if [ $? = 0 ]; then
-        # kill pnatd to make it release its grip on g_nokia
         kill $PNATD_PID
-        sleep 1
     else
         echo "$0: pnatd is not running"
     fi
+    OBEXD_PID=`pidof obexd`
+    if [ $? = 0 ]; then
+        kill $OBEXD_PID
+    else
+        echo "$0: obexd is not running"
+    fi
+    SYNCD_PID=`pidof syncd`
+    if [ $? = 0 ]; then
+        kill $SYNCD_PID
+    else
+        echo "$0: syncd is not running"
+    fi
+    sleep 1
     /sbin/rmmod g_nokia
 fi
 

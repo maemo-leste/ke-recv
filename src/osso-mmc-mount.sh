@@ -47,7 +47,8 @@ fi
 
 mmc-mount $PDEV $MP
 RC=$?
-if [ $RC != 0 ]; then
+#if [ $RC != 0 ]; then
+if false; then
 
   # Let's try ext3 - need to load modules
   KERNEL_VERSION=`uname -r`

@@ -1,14 +1,16 @@
-ke-recv (3.5-1~unreleased) unstable; urgency=low
+ke-recv (3.5-1) unstable; urgency=low
 
   * Fourth partition is now FAT (fallback is the first partition).
-    Fixes: NB#93522
+    Fixes: NB#93522, NB#93525
   * Send TERM to pnatd before trying to remove g_nokia. Fixes: NB#93864
+  * Send TERM to obexd and syncd as well.
   * Updated the unofficial partitioning script for internal memory card.
   * Fixed ke-recv-test to provide correct device parameters for rename,
     format and repair messages.
   * Use 128 sectors per cluster when formatting. Fixes: NB#93517
+  * Disable Gabe's fallback code from osso-mmc-mount.sh, it needs some fixing.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 16 Dec 2008 14:26:56 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 09 Jan 2009 17:22:05 +0200
 
 ke-recv (3.4-1) unstable; urgency=low
 
