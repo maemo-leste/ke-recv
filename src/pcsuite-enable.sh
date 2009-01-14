@@ -1,7 +1,7 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2008 Nokia Corporation. All rights reserved.
+# Copyright (C) 2008-2009 Nokia Corporation. All rights reserved.
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -43,8 +43,9 @@ fi
 
 OBEXD_PID=`pidof obexd`
 if [ $? != 0 ]; then
-    echo "$0: failed to get obexd's PID"
-    exit 1
+    echo "$0: obexd is not running"
+else
+    kill -USR1 $OBEXD_PID
 fi
 
 SYNCD_PID=`pidof syncd`
@@ -53,7 +54,6 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-kill -USR1 $OBEXD_PID
 kill -USR1 $SYNCD_PID
 
 exit 0
