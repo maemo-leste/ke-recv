@@ -1677,7 +1677,7 @@ static void read_config()
         libhal_free_string_array(list);
 
         if (usb_cable_udi != NULL) {
-                init_usb_cable_status(NULL);
+                init_usb_cable_status((void*)1);
         } else {
                 usb_state = S_CABLE_DETACHED;
                 inform_usb_cable_attached(FALSE);
@@ -1734,6 +1734,7 @@ static gboolean init_usb_cable_status(gpointer data)
         gboolean do_e_plugged = (gboolean)data;
 
         ULOG_DEBUG_F("entered");
+
         if (usb_state != S_INVALID_USB_STATE) {
                 ULOG_DEBUG_F("usb_state is already valid"); 
                 return FALSE;
@@ -1754,12 +1755,29 @@ static gboolean init_usb_cable_status(gpointer data)
                         mount_usb_volumes();
                         set_usb_mode_key("host");
                 } else if (usb_state == S_PERIPHERAL_WAIT) {
-                        if (do_e_plugged) {
-                                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+                        if (usb_driver_is_used()) {
+                                ULOG_DEBUG_F("cards are already USB-shared");
+                                usb_state = S_MASS_STORAGE;
+                                /* should reset gconf keys here */
+                        } else {
+                                if (do_e_plugged) {
+                                        handle_usb_event(
+                                                E_ENTER_PERIPHERAL_WAIT_MODE);
+                                }
                         }
                         set_usb_mode_key("peripheral");
                 } else {
                         set_usb_mode_key("idle");
+                }
+
+                if (!mmc_initialised) {
+                        /* initialise GConf keys and possibly mount or
+                         * USB-share */
+                        if (int_mmc_enabled) {
+                                handle_event(E_INIT_CARD, &int_mmc, NULL);
+                        }
+                        handle_event(E_INIT_CARD, &ext_mmc, NULL);
+                        mmc_initialised = TRUE;
                 }
                 return FALSE;
         }
@@ -2884,6 +2902,11 @@ int in_mass_storage_mode(void)
         return usb_state == S_MASS_STORAGE;
 }
 
+int in_peripheral_wait_mode(void)
+{
+        return usb_state == S_PERIPHERAL_WAIT;
+}
+
 static void sigterm(int signo)
 {
         ULOG_INFO_L("got SIGTERM");
@@ -3106,7 +3129,8 @@ int main(int argc, char* argv[])
          * (needs rechecking and possibly fixing hildon-desktop) */
         desktop_started = TRUE;
 
-        if (desktop_started || first_boot) {
+        if (usb_state != S_INVALID_USB_STATE  /* valid USB state is required */
+            && (desktop_started || first_boot)) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
                         handle_event(E_INIT_CARD, &int_mmc, NULL);

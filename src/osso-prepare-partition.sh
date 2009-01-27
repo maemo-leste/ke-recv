@@ -1,9 +1,9 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2006-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2006-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -32,5 +32,10 @@ if [ $? != 0 ]; then
   exit 1
 else
   echo "$0: successfully created the partition"
+  # make the kernel to detect the new partition table
+  sfdisk -R $DEV
+  # magic sleep to give time to udev (would be better to wait
+  # for the partition file in a loop)
+  sleep 1
   exit 0
 fi

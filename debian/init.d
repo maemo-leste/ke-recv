@@ -2,7 +2,7 @@
 # 
 # ke-recv	HAL-based automatic mounting etc.
 #
-# Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
+# Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -44,7 +44,7 @@ source /etc/osso-af-init/af-defines.sh
 
 # FIXME: these should come from startup scripts
 export MMC_MOUNTPOINT='/media/mmc1'
-export INTERNAL_MMC_MOUNTPOINT='/media/mmc2'
+export INTERNAL_MMC_MOUNTPOINT='/home/user/MyDocs'
 
 /sbin/lsmod | grep "\(g_ether\)" > /dev/null
 if [ $? = 0 ]; then

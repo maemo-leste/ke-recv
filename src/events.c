@@ -540,9 +540,14 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
 
                 vol = get_nth_volume(mmc, mmc->preferred_volume);
                 if (vol == NULL) {
-                        ULOG_ERR_F("volume %d not found from %s",
-                                   mmc->preferred_volume, mmc->name);
-                        return;
+                        if (mmc->preferred_volume != 1) {
+                                /* workaround for not yet partitioned systems */
+                                ULOG_DEBUG_F("falling back to partition 1!");
+                                vol = get_nth_volume(mmc, 1);
+                                if (vol == NULL || vol->dev_name == NULL)
+                                        return;
+                        } else
+                                return;
                 }
                 dev = vol->dev_name;
         } else
@@ -1213,7 +1218,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 if (!ignore_cable && in_mass_storage_mode()
                                     && !device_locked) {
                                         usb_share_card(mmc, FALSE);
-                                } else {
+                                } else if (!in_peripheral_wait_mode()) {
                                         update_mmc_label(mmc);
                                         mount_volumes(mmc);
                                 }
