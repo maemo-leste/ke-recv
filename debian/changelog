@@ -1,4 +1,4 @@
-ke-recv (3.7-1~unreleased) unstable; urgency=low
+ke-recv (3.7-1) unstable; urgency=low
 
   * Fall back to partition 1 when removing USB-sharing. Fixes: NB#98340
   * Mount internal FAT partition under /home/user/MyDocs instead of
