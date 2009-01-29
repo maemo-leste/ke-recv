@@ -42,9 +42,7 @@ ke_recv_SOURCES = \
 	events.c \
 	swap_mgr.c \
 	camera.c \
-	fat-tools.c \
-	service-launcher.h \
-	service-launcher.c
+	fat-tools.c
 
 ke_recv_test_SOURCES = \
         ke-recv.h \

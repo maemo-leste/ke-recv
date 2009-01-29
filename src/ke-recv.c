@@ -29,7 +29,6 @@
 #include "gui.h"
 #include "events.h"
 #include "camera.h"
-#include "service-launcher.h"
 #include <hildon-mime.h>
 #include <libgen.h>
 
@@ -80,8 +79,6 @@ static DBusMessage* the_message = NULL;
 osso_context_t *osso;
 static LibHalContext *hal_ctx;
 static GMainLoop *mainloop;
-
-static ServiceLauncher launcher;
 
 void send_error(const char* s);
 static void add_volume(volume_list_t *l, const char *udi);
@@ -1839,12 +1836,6 @@ static void prop_modified(LibHalContext *ctx,
                            && strcmp(camera_out_udi, udi) == 0) {
                         ULOG_DEBUG_F("CAMERA_OUT %d", val);
                         inform_camera_out(val);
-
-                        /* possibly launch something here */
-                        if (val &&
-                            service_launcher_is_authorized(&launcher)) {
-                                service_launcher_launch_services(&launcher);
-                        }
                 } else if (camera_turned_udi != NULL
                            && strcmp(camera_turned_udi, udi) == 0) {
                         ULOG_DEBUG_F("CAMERA_TURNED %d", val);
@@ -2970,8 +2961,6 @@ int main(int argc, char* argv[])
 	        exit(1);
         }
 
-        service_launcher_init(&launcher);
-
         conn = (DBusConnection*) osso_get_sys_dbus_connection(osso);
         if (conn == NULL) {
                 ULOG_CRIT_L("Failed to get system bus connection");
@@ -3149,7 +3138,6 @@ int main(int argc, char* argv[])
         /*
         prepare_for_shutdown();
         */
-        service_launcher_deinit(&launcher);
     
         exit(0);
 }
