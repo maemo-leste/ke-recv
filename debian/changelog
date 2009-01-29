@@ -1,4 +1,4 @@
-ke-recv (3.8-1~unreleased) unstable; urgency=low
+ke-recv (3.8-1) unstable; urgency=low
 
   * Remove unused service-launcher code. Fixes: NB#99635
   * Create dot directories to the user's partition on mounting.
