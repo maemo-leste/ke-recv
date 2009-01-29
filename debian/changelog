@@ -1,6 +1,7 @@
 ke-recv (3.8-1~unreleased) unstable; urgency=low
 
   * Remove unused service-launcher code. Fixes: NB#99635
+  * Create dot directories to the user's partition on mounting.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 29 Jan 2009 09:10:17 +0200
 

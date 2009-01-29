@@ -45,8 +45,21 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
+
 mmc-mount $PDEV $MP
 RC=$?
+
+if [ $RC = 0 ]; then
+  # create some special directories for user's partition
+  if [ "x$MP" = "x/home/user/MyDocs" -a -w $MP ]; then
+    for d in .sounds .videos .documents .images .maps; do
+      mkdir -p $MP/$d
+    done
+  else
+    echo "$0: '$MP' is not writable"
+  fi
+fi
+
 #if [ $RC != 0 ]; then
 if false; then
 
