@@ -986,11 +986,13 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc)) {
+                                        /*
                                         display_dialog(
                                                 MSG_MEMORY_CARD_AVAILABLE);
                                         if (desktop_started) {
                                                 check_install_file(mmc);
                                         }
+                                                */
                                 }
                         }
                         mmc->state = S_COVER_CLOSED;
@@ -1179,6 +1181,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (ignore_cable || !in_mass_storage_mode()) {
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc)) {
+                                        /*
                                         if (!mmc->skip_banner) {
                                                 display_dialog(
                                                  MSG_MEMORY_CARD_AVAILABLE);
@@ -1186,6 +1189,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                         if (desktop_started) {
                                                 check_install_file(mmc);
                                         }
+                                        */
                                 }
                         }
                         if (mmc->skip_banner) mmc->skip_banner = FALSE;

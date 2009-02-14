@@ -600,6 +600,7 @@ static DBusHandlerResult enable_mass_storage_handler(DBusConnection *c,
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+#if 0
 int check_install_file(const mmc_info_t *mmc)
 {
         char buf[100];
@@ -621,12 +622,15 @@ int check_install_file(const mmc_info_t *mmc)
         }
         return started;
 }
+#endif
 
 static void possibly_start_am(void)
 {
+        /*
         if (!check_install_file(&ext_mmc) && int_mmc_enabled) {
                 check_install_file(&int_mmc);
         }
+        */
 }
 
 /* Handler for checking for the .auto.install file on demand */

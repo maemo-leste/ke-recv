@@ -302,7 +302,9 @@ void clear_volume_list(volume_list_t *l);
 int in_mass_storage_mode(void);
 int in_peripheral_wait_mode(void);
 usb_state_t get_usb_state(void);
+/*
 int check_install_file(const mmc_info_t *mmc);
+*/
 
 #ifdef __cplusplus
 }
