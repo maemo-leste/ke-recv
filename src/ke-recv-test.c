@@ -103,7 +103,7 @@ static void send_device_unlocked()
 
 static void rename_mmc(const char *device)
 {
-	DBusMessage* m = NULL, *reply = NULL;
+	DBusMessage* m = NULL;
 	dbus_bool_t ret = FALSE;
 	DBusError err;
 	const char* label = "KERECVTEST";
@@ -130,8 +130,7 @@ static void rename_mmc(const char *device)
         }
 
 	assert(ses_conn != NULL);
-	reply = dbus_connection_send_with_reply_and_block(ses_conn, m,
-			20000, &err);
+	dbus_connection_send_with_reply_and_block(ses_conn, m, 20000, &err);
     	if (dbus_error_is_set(&err)) {
        	   ULOG_CRIT_F("error reply: %s", err.message);
            exit(1);

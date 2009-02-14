@@ -143,8 +143,8 @@ void update_mmc_label(mmc_info_t *mmc)
 
         /* read the volume label from the file */
 
-        g_file_get_contents(mmc->volume_label_file, &buf, NULL, &err);
-        if (err != NULL) {
+        if (!g_file_get_contents(mmc->volume_label_file, &buf, NULL, &err)
+            || err != NULL) {
                 ULOG_ERR_F("couldn't read volume label file %s",
                            mmc->volume_label_file);
                 g_error_free(err);
@@ -659,7 +659,11 @@ static void handle_e_rename(mmc_info_t *mmc)
                 if (ret != 0) {
                         ULOG_ERR_F("mlabel failed: exec_prog returned %d",
                                    ret);
-                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                        if (mmc->internal_card)
+                                display_dialog(
+                                        MSG_MEMORY_CARD_IS_CORRUPTED_INT);
+                        else
+                                display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                         /* even if renaming failed it makes sense to
                          * try mounting the card */
                 }
@@ -668,7 +672,11 @@ static void handle_e_rename(mmc_info_t *mmc)
                 ULOG_DEBUG_F("successful renaming");
                 if (!mount_volumes(mmc)) {
                         ULOG_ERR_F("could not mount it");
-                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                        if (mmc->internal_card)
+                                display_dialog(
+                                        MSG_MEMORY_CARD_IS_CORRUPTED_INT);
+                        else
+                                display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
         } else {
                 ULOG_DEBUG_F("umount failed");
@@ -779,10 +787,11 @@ static void handle_e_repair(mmc_info_t *mmc)
         const char* args[] = {"/usr/sbin/mmc-check", NULL, NULL};
 
         l = get_nth_volume(mmc, mmc->preferred_volume);
-        part_device = l != NULL ? l->dev_name : NULL;
-        udi = l->udi;
 
-        if (part_device == NULL) {
+        if (l && l->dev_name && l->udi) {
+                part_device = l->dev_name;
+                udi = l->udi;
+        } else {
                 ULOG_ERR_F("device name for the partition not found");
                 display_system_note(MSG_UNABLE_TO_REPAIR);
                 return;
@@ -872,7 +881,10 @@ static int mount_volumes(mmc_info_t *mmc)
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
-                display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                if (mmc->internal_card)
+                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED_INT);
+                else
+                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
         }
         inform_mmc_used_over_usb(FALSE, mmc);
         return count;

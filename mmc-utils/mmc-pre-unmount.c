@@ -71,9 +71,11 @@ static int check_volume (const char *vol)
                 if (v != NULL) {
                         char *s;
                         s = gnome_vfs_volume_get_activation_uri (v);
-                        if (strstr(s, vol) != NULL) {
+                        if (s && strstr(s, vol) != NULL) {
+                                g_free (s);
                                 return 1;
                         }
+                        if (s) g_free (s);
                 }
         }
         return 0;
