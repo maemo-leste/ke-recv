@@ -5,7 +5,7 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Move GConf schema file from /etc/gconf/schemas to
     /usr/share/gconf/schemas.
   * Disabled Application Manager auto-start feature.
-  * Disabled 'memory card available' banner. Fixes: NB#101300
+  * Disabled 'memory card available' banner. Fixes: NB#101300, NB#101094
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 13 Feb 2009 11:00:18 +0200
 
