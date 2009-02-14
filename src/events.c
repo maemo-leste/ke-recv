@@ -47,12 +47,15 @@ static int do_unmount(const char *mountpoint);
 static void open_dialog_helper(mmc_info_t *mmc);
 static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n);
 
+#if 0
 #define CLOSE_DIALOG if (mmc->dialog_id == -1) { \
                              ULOG_WARN_F("%s dialog_id is invalid", \
                                          mmc->name); \
                      } else { \
                              close_closeable_dialog(mmc->dialog_id); \
                      }
+#endif
+#define CLOSE_DIALOG
 
 #define CLOSE_SWAP_DIALOG \
             if (mmc->swap_dialog_id != -1) { \
@@ -1118,10 +1121,12 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex)
 
 static void open_dialog_helper(mmc_info_t *mmc)
 {
+        /*
         if (mmc->dialog_id == -1 && mmc->swap_dialog_id == -1) {
                 mmc->dialog_id = open_closeable_dialog(OSSO_GN_WARNING,
                                      MSG_UNMOUNT_MEMORY_CARD_IN_USE, "");
         }
+        */
 }
 
 static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
