@@ -298,7 +298,7 @@ static void repair_card(const char *device)
 	DBusMessage* m = NULL;
     	ULOG_DEBUG_F("entering");
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
-			"/com/nokia/ke_recv/repair_card",
+			"/com/nokia/ke_recv/check_card",
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
                    "si - swap on (int-)MMC\n"
                    "t - swap off (ext-)MMC\n"
                    "ti - swap off (int-)MMC\n"
-                   "e - repair device <arg>\n"
+                   "e - check device <arg>\n"
                    "ej - eject USB\n"
                    "ec - cancel eject USB\n"
                    "p - enable PC Suite\n"

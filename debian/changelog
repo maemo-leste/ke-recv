@@ -10,6 +10,8 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Do a time-limited memory card check before trying to mount it read-write.
   * Add D-Bus interface for full memory card check.
   * Disable D-Bus interface for memory card repairing.
+  * Replace the memory card repair interface test with check interface test
+    in ke-recv-test.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 13 Feb 2009 11:00:18 +0200
 
