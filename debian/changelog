@@ -7,6 +7,9 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Disabled Application Manager auto-start feature.
   * Disabled 'memory card available' banner. Fixes: NB#101300, NB#101094
   * Disabled 'memory card in use' dialog. Fixes: NB#100744
+  * Do a time-limited memory card check before trying to mount it read-write.
+  * Add D-Bus interface for full memory card check.
+  * Disable D-Bus interface for memory card repairing.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 13 Feb 2009 11:00:18 +0200
 

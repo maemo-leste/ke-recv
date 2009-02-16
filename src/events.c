@@ -809,7 +809,7 @@ static void handle_e_repair(mmc_info_t *mmc)
 
         args[1] = part_device;
 
-        /* exec mmc-format */
+        /* exec mmc-check */
         ret = exec_prog(args[0], args);
 
         if (ret > 2) {
@@ -834,6 +834,62 @@ static void handle_e_repair(mmc_info_t *mmc)
         } else {
                 display_system_note(MSG_UNABLE_TO_REPAIR);
         }
+}
+
+static void handle_e_check(mmc_info_t *mmc)
+{
+        int ret, mounted;
+        char *part_device = NULL, *udi = NULL;
+        volume_list_t *l;
+        const char* args[] = {"/usr/sbin/mmc-check", NULL, NULL};
+
+        l = get_nth_volume(mmc, mmc->preferred_volume);
+
+        if (l && l->dev_name && l->udi) {
+                part_device = l->dev_name;
+                udi = l->udi;
+        } else {
+                ULOG_ERR_F("device name for the partition not found");
+                display_system_note("Partition not found");
+                return;
+        }
+
+        /* check if someone else has already mounted it */
+        mounted = get_prop_bool(udi, "volume.is_mounted");
+        if (mounted) {
+                ULOG_INFO_F("%s is mounted", part_device);
+                return;
+        }
+
+        args[1] = part_device;
+
+        /* exec mmc-check */
+        ret = exec_prog(args[0], args);
+
+        if (ret > 2) {
+                ULOG_ERR_F("dosfsck returned: %d", ret - 2);
+                display_system_note("dosfsck failed");
+                /* TODO: set corrupt flag */
+                return;
+        } else if (ret > 0) {
+                ULOG_ERR_F("mmc-check error code: %d", ret);
+                display_system_note("mmc-check failed");
+                return;
+        } else if (ret < 0) {
+                ULOG_ERR_F("exec_prog error code: %d", ret);
+                display_system_note("exec_prog failed");
+                return;
+        }
+#if 0
+        l->corrupt = 0;
+        set_mmc_corrupted_flag(FALSE, mmc);
+
+        if (mount_volumes(mmc)) {
+                display_system_note(_("card_memory_card_repaired"));
+        } else {
+                display_system_note(MSG_UNABLE_TO_REPAIR);
+        }
+#endif
 }
 
 static int mount_volumes(mmc_info_t *mmc)
@@ -1007,6 +1063,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_WARN_F("improper state");
                         break;
                 case E_REPAIR:
+                case E_CHECK:
                         ULOG_WARN_F("improper state");
                         break;
                 case E_VOLUME_REMOVED:
@@ -1181,6 +1238,9 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                 case E_REPAIR:
                         handle_e_repair(mmc);
                         break;
+                case E_CHECK:
+                        handle_e_check(mmc);
+                        break;
                 case E_VOLUME_ADDED:
                         ULOG_DEBUG_F("E_VOLUME_ADDED for %s", mmc->name);
                         if (ignore_cable || !in_mass_storage_mode()) {
@@ -1279,6 +1339,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_WARN_F("improper state");
                         break;
                 case E_REPAIR:
+                case E_CHECK:
                         ULOG_WARN_F("improper state");
                         break;
                 case E_UNMOUNT_TIMEOUT:

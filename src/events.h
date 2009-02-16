@@ -70,6 +70,7 @@ typedef enum {
         E_RENAME,
         E_FORMAT,
         E_REPAIR,
+        E_CHECK,
         E_UNMOUNT_TIMEOUT,
        	E_VOLUME_ADDED,
        	E_VOLUME_REMOVED,

@@ -1,7 +1,7 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2005-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2005-2009 Nokia Corporation. All rights reserved.
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -45,6 +45,18 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
+/sbin/dosfsck -T 10 $PDEV
+if [ $? != 0 ]; then
+  echo "$0: $PDEV is corrupt, trying to mount it read-only"
+  mount -t vfat -o ro,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133 $PDEV $MP > /dev/null
+  if [ $? = 0 ]; then
+    echo "$0: $PDEV mounted read-only"
+    exit 0
+  else
+    echo "$0: Couldn't mount $PDEV read-only"
+    exit 1
+  fi
+fi
 
 mmc-mount $PDEV $MP
 RC=$?

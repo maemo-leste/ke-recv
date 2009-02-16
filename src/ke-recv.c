@@ -487,6 +487,40 @@ static DBusHandlerResult disable_mmc_swap_handler(DBusConnection *c,
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static DBusHandlerResult card_check_handler(DBusConnection *c,
+                                             DBusMessage *m,
+                                             void *data)
+{
+        DBusMessageIter iter;
+        char *s = NULL;
+        mmc_info_t *mmc;
+
+        ULOG_DEBUG_F("entered");
+        the_connection = c;
+        the_message = m;
+        if (!dbus_message_iter_init(m, &iter)) {
+                ULOG_ERR_F("no device name argument");
+                send_error("no_argument");
+                goto away;
+        }
+        dbus_message_iter_get_basic(&iter, &s);
+
+        mmc = mmc_from_dev_name(s);
+        if (mmc == NULL) {
+                ULOG_ERR_F("bad device name '%s'", s);
+                send_error("bad_argument");
+        } else {
+                send_reply();
+                handle_event(E_CHECK, mmc, NULL);
+        }
+away:
+        /* invalidate */
+        the_connection = NULL;
+        the_message = NULL;
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+#if 0
 static DBusHandlerResult card_repair_handler(DBusConnection *c,
                                              DBusMessage *m,
                                              void *data)
@@ -519,6 +553,7 @@ away:
         the_message = NULL;
         return DBUS_HANDLER_RESULT_HANDLED;
 }
+#endif
 
 /* This function is for testing only. Allows emulating the USB cable
  * attaching and detaching. */
@@ -3058,10 +3093,17 @@ int main(int argc, char* argv[])
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/check_auto_install", NULL);
 
+#if 0
         /* D-Bus interface for repairing memory cards */
         vtable.message_function = card_repair_handler;
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/repair_card", NULL);
+#endif
+
+        /* D-Bus interface for repairing memory cards */
+        vtable.message_function = card_check_handler;
+        register_op(sys_conn, &vtable,
+                    "/com/nokia/ke_recv/check_card", NULL);
 
         /* D-Bus interface for 'ejecting' USB mass storages */
         vtable.message_function = eject_handler;

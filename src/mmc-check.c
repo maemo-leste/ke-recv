@@ -41,6 +41,7 @@ extern char **environ;
 static pid_t child_pid = -1;
 static int pipe_fd = -1;
 static HildonBanner *hildon_banner = NULL;
+static int quick_check = 0;
 
 static void sig_handler(int signo)
 {
@@ -62,7 +63,6 @@ static void sig_handler(int signo)
                 } else if (WEXITSTATUS(child_status) == 2) {
                         exit(4);
                 }
-                sync();  /* sync before exit */
                 exit(0);
         } else {
                 ULOG_WARN_F("child terminated abnormally");
@@ -144,25 +144,36 @@ static gboolean gio_func(GIOChannel* ch, GIOCondition cond, gpointer p)
 
 static gboolean start_repair(const char *dev)
 {
-        const char* args[] = {"/sbin/dosfsck", "-a", NULL, NULL};
+        const char* args[] = {"/sbin/dosfsck", NULL, NULL, NULL, NULL, NULL};
 
         ULOG_DEBUG_F("entered");
 
-        args[2] = dev;
+        if (quick_check) {
+                /* time-limited check */
+                args[1] = "-T";
+                args[2] = "10";
+                args[3] = dev;
+        } else {
+                /* full check */
+                args[1] = "-n";
+                args[2] = dev;
+        }
 
         if (no_wait_exec(args[0], args) > 0) {
-                /* set up reading from the pipe */
-                GError* err = NULL;
-                GIOChannel* ch = g_io_channel_unix_new(pipe_fd);
-                if (g_io_channel_set_encoding(ch, NULL, &err) !=
-                                G_IO_STATUS_NORMAL) {
-                        ULOG_ERR_F("failed to set encoding");
+                if (!quick_check) {
+                        /* set up reading from the pipe */
+                        GError* err = NULL;
+                        GIOChannel* ch = g_io_channel_unix_new(pipe_fd);
+                        if (g_io_channel_set_encoding(ch, NULL, &err) !=
+                                        G_IO_STATUS_NORMAL) {
+                                ULOG_ERR_F("failed to set encoding");
+                        }
+                        /*
+                        g_io_channel_set_buffered(ch, FALSE);
+                        */
+                        g_io_add_watch(ch, G_IO_IN | G_IO_ERR | G_IO_HUP,
+                                       gio_func, NULL);
                 }
-                /*
-                g_io_channel_set_buffered(ch, FALSE);
-                */
-                g_io_add_watch(ch, G_IO_IN | G_IO_ERR | G_IO_HUP,
-                               gio_func, NULL);
                 return TRUE;
         } else {
                 return FALSE;
@@ -176,9 +187,12 @@ int main(int argc, char* argv[])
         ULOG_OPEN("mmc-check");
         ULOG_DEBUG_L("entered");
 
-        if (argc != 2) {
-                ULOG_CRIT_L("Usage: %s <device>", argv[0]);
+        if (argc != 2 && argc != 3) {
+                ULOG_CRIT_L("Usage: %s <device> [-q]", argv[0]);
                 exit(1);
+        }
+        if (argc == 3) {
+                quick_check = 1;
         }
 
         sa.sa_handler = sig_handler;
@@ -189,35 +203,42 @@ int main(int argc, char* argv[])
                 exit(1);
         }
 
-        if (setlocale(LC_ALL, "") == NULL) {
-                ULOG_CRIT_L("could not set locale");
-                exit(1);
-        }
-        if (bindtextdomain(PACKAGE, LOCALEDIR) == NULL) {
-                ULOG_ERR_L("bindtextdomain() failed");
-        }
-        if (textdomain(PACKAGE) == NULL) {
-                ULOG_ERR_L("textdomain() failed");
-        }
+        if (!quick_check) {
+                if (setlocale(LC_ALL, "") == NULL) {
+                        ULOG_CRIT_L("could not set locale");
+                        exit(1);
+                }
+                if (bindtextdomain(PACKAGE, LOCALEDIR) == NULL) {
+                        ULOG_ERR_L("bindtextdomain() failed");
+                }
+                if (textdomain(PACKAGE) == NULL) {
+                        ULOG_ERR_L("textdomain() failed");
+                }
 
-        if (!gtk_init_check(&argc, &argv)) {
-                ULOG_CRIT_L("gtk_init failed");
-                exit(1);
-        }
+                if (!gtk_init_check(&argc, &argv)) {
+                        ULOG_CRIT_L("gtk_init failed");
+                        exit(1);
+                }
 
-        hildon_banner = (HildonBanner*)hildon_banner_show_progress(NULL, NULL,
+                hildon_banner =
+                        (HildonBanner*)hildon_banner_show_progress(NULL, NULL,
                                 _("card_repairing_memory_card"));
-        hildon_banner_set_fraction(hildon_banner, 0.0);
-        gtk_widget_show(GTK_WIDGET(hildon_banner));
+                hildon_banner_set_fraction(hildon_banner, 0.0);
+                gtk_widget_show(GTK_WIDGET(hildon_banner));
+        }
 
         if (start_repair(argv[1])) {
-                ULOG_DEBUG_L("going to main loop");
-                gtk_main();
-                ULOG_WARN_L("returned from main loop");
-                sync();  /* sync before exit */
+                if (quick_check) {
+                        ULOG_DEBUG_L("waiting for child");
+                        sleep(20000);  /* FIXME */
+                } else {
+                        ULOG_DEBUG_L("going to main loop");
+                        gtk_main();
+                        ULOG_WARN_L("returned from main loop");
+                }
                 exit(0);
         } else {
-                ULOG_CRIT_L("could not start repairing");
+                ULOG_CRIT_L("could not start repairing/checking");
                 exit(1);
         }
 }
