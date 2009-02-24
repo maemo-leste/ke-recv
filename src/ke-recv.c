@@ -1627,7 +1627,8 @@ usb_state_t get_usb_state(void)
         }
 
         if (prop == NULL) {
-                ULOG_ERR_F("couldn't read USB mode");
+                ULOG_ERR_F("couldn't read 'usb_device.mode' from %s",
+                           usb_cable_udi);
                 ret = S_INVALID_USB_STATE;
         } else if (strcmp(prop, "b_peripheral") == 0 ||
                    strcmp(prop, "a_peripheral") == 0) {
@@ -1776,8 +1777,6 @@ static gboolean init_usb_cable_status(gpointer data)
         static int retry_times = 100;
         gboolean do_e_plugged = (gboolean)data;
 
-        ULOG_DEBUG_F("entered");
-
         if (usb_state != S_INVALID_USB_STATE) {
                 ULOG_DEBUG_F("usb_state is already valid"); 
                 return FALSE;
@@ -1785,10 +1784,11 @@ static gboolean init_usb_cable_status(gpointer data)
 
         usb_state = get_usb_state();
         if (usb_state == S_INVALID_USB_STATE) {
-                if (--retry_times > 0)
+                if (--retry_times > 0) {
                         /* try again later */
+                        ULOG_DEBUG_F("%d retry times left", retry_times);
                         return TRUE;
-                else {
+                } else {
                         ULOG_DEBUG_F("max. retry times reached, giving up");
                         return FALSE;
                 }
