@@ -3156,7 +3156,9 @@ int main(int argc, char* argv[])
                 exit(1);
         }
 
+        /*
         init_camera_state();
+        */
         init_slide_keyboard_state();
 
         if (default_usb_device_name == NULL) {
