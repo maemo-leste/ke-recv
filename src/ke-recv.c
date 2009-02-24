@@ -44,8 +44,10 @@
 
 extern GConfClient* gconfclient;
 
+/*
 const char* camera_out_udi = NULL;
 const char* camera_turned_udi = NULL;
+*/
 const char* slide_keyboard_udi = NULL;
 const char* usb_cable_udi = NULL;
 
@@ -1331,6 +1333,7 @@ static void init_usb_volumes()
         }
 }
 
+#if 0
 static void init_camera_state()
 {
         int state;
@@ -1348,6 +1351,7 @@ static void init_camera_state()
                         inform_camera_turned_out(state);
         }
 }
+#endif
 
 static void init_slide_keyboard_state()
 {
@@ -1670,6 +1674,7 @@ static void read_config()
 
         /* Global stuff */
 
+#if 0
         list = libhal_manager_find_device_string_match(hal_ctx,
                  "platform.id", "cam_act", &num_devices, &error);
         if (list != NULL && num_devices == 1) {
@@ -1689,6 +1694,7 @@ static void read_config()
                 camera_turned_udi = NULL;
         } 
         libhal_free_string_array(list);
+#endif
 
         list = libhal_manager_find_device_string_match(hal_ctx,
                  "platform.id", "slide", &num_devices, &error);
@@ -1767,6 +1773,7 @@ static usb_state_t check_usb_cable(void)
 
 static gboolean init_usb_cable_status(gpointer data)
 {
+        static int retry_times = 100;
         gboolean do_e_plugged = (gboolean)data;
 
         ULOG_DEBUG_F("entered");
@@ -1778,8 +1785,13 @@ static gboolean init_usb_cable_status(gpointer data)
 
         usb_state = get_usb_state();
         if (usb_state == S_INVALID_USB_STATE) {
-                /* try again later */
-                return TRUE;
+                if (--retry_times > 0)
+                        /* try again later */
+                        return TRUE;
+                else {
+                        ULOG_DEBUG_F("max. retry times reached, giving up");
+                        return FALSE;
+                }
         } else {
                 if (usb_state != S_CABLE_DETACHED) {
                         inform_usb_cable_attached(TRUE);
@@ -1871,7 +1883,9 @@ static void prop_modified(LibHalContext *ctx,
                         } else {
                                 handle_event(E_OPENED, &int_mmc, NULL);
                         }
-                } else if (camera_out_udi != NULL
+                }
+#if 0
+                else if (camera_out_udi != NULL
                            && strcmp(camera_out_udi, udi) == 0) {
                         ULOG_DEBUG_F("CAMERA_OUT %d", val);
                         inform_camera_out(val);
@@ -1880,6 +1894,7 @@ static void prop_modified(LibHalContext *ctx,
                         ULOG_DEBUG_F("CAMERA_TURNED %d", val);
                         inform_camera_turned_out(val);
                 }
+#endif
         }
 }
 
@@ -3125,8 +3140,10 @@ int main(int argc, char* argv[])
 
         add_prop_watch(ext_mmc.cover_udi);
         add_prop_watch(int_mmc.cover_udi);
+        /*
         add_prop_watch(camera_out_udi);
         add_prop_watch(camera_turned_udi);
+        */
         add_prop_watch(slide_keyboard_udi);
         add_prop_watch(usb_cable_udi);
 
@@ -3150,6 +3167,7 @@ int main(int argc, char* argv[])
         init_usb_storages();
         init_usb_volumes();
 
+#if 0
         /* check if hildon-desktop is running */
         if (dbus_bus_name_has_owner(sys_conn, DESKTOP_SVC, NULL)) {
                 ULOG_DEBUG_F("hildon-desktop is running");
@@ -3159,6 +3177,7 @@ int main(int argc, char* argv[])
                 ULOG_DEBUG_F("this is the first boot");
                 first_boot = TRUE;
         }
+#endif
 
         /* FIXME: now we assume that desktop is running
          * (needs rechecking and possibly fixing hildon-desktop) */

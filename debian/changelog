@@ -15,6 +15,11 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Added emission of Upstart signals G_FILE_STORAGE_REMOVE, G_NOKIA_READY,
     G_NOKIA_REMOVE and G_FILE_STORAGE_READY to USB module loading/unloading
     shell scripts. Patch from Yauheni Kaliuta.
+  * Disable monitoring camera related HAL properties.
+  * Disable first boot check.
+  * Add max. retry limit to init_usb_cable_status(), give up after retrying 100
+    times.
+  * Remove automatically generated files from SVN.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Feb 2009 08:25:34 +0200
 
