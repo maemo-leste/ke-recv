@@ -3,7 +3,7 @@
 
   This file is part of ke-recv.
 
-  Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
+  Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 
   Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 
@@ -36,8 +36,6 @@
 #define FDO_OBJECT_PATH "/org/freedesktop/Notifications"
 #define FDO_INTERFACE "org.freedesktop.Notifications"
 #define USB_DOMAIN "hildon-status-bar-usb"
-#define DEFAULT_USB_CABLE_UDI \
-        "/org/freedesktop/Hal/devices/usb_device_0_0_musb_hdrc"
 #define DESKTOP_SVC "com.nokia.hildon-desktop"
 
 #define FREMANTLE_MODE 1
@@ -100,6 +98,7 @@ static gboolean init_usb_cable_status(gpointer data);
 static int mount_usb_volumes(void);
 static storage_info_t *storage_from_list(const char *udi);
 static mmc_info_t *mmc_from_dev_name(const char *dev);
+static void get_usb_cable_udi();
 
 static void set_usb_mode_key(const char *mode)
 {
@@ -1639,6 +1638,10 @@ usb_state_t get_usb_state(void)
         } else if (strcmp(prop, "b_idle") == 0 ||
                    strcmp(prop, "a_idle") == 0) {
                 ret = S_CABLE_DETACHED;
+        } else if (strcmp(prop, "UNDEFINED") == 0) {
+                ULOG_ERR_F("'usb_device.mode' is UNDEFINED, not changing"
+                           " the state");
+                ret = usb_state;
         } else {
                 ULOG_ERR_F("unknown USB cable type '%s'", prop);
                 ret = S_CABLE_DETACHED;
@@ -1646,6 +1649,25 @@ usb_state_t get_usb_state(void)
         if (prop != NULL) libhal_free_string(prop);
 
         return ret;
+}
+
+static void get_usb_cable_udi()
+{
+        char **list;
+        int num_devices = 0;
+        DBusError error;
+
+        dbus_error_init(&error);
+
+        /* figure out USB cable and mode */
+        list = libhal_manager_find_device_string_match(hal_ctx,
+                 "button.type", "usb.cable", &num_devices, &error);
+        if (list != NULL && num_devices >= 1) {
+                usb_cable_udi = strdup(list[0]);
+        } else {
+                ULOG_ERR_F("coudn't find USB cable indicator");
+        } 
+        libhal_free_string_array(list);
 }
 
 static void read_config()
@@ -1707,24 +1729,10 @@ static void read_config()
         } 
         libhal_free_string_array(list);
 
-        /* figure out USB cable and mode */
-        list = libhal_manager_find_device_string_match(hal_ctx,
-                 "button.type", "usb.cable", &num_devices, &error);
-        if (list != NULL && num_devices == 1) {
-                usb_cable_udi = strdup(list[0]);
-        } else {
-                ULOG_ERR_F("coudn't find USB cable indicator, using "
-                           DEFAULT_USB_CABLE_UDI);
-                usb_cable_udi = DEFAULT_USB_CABLE_UDI;
-        } 
-        libhal_free_string_array(list);
+        get_usb_cable_udi();
 
         if (usb_cable_udi != NULL) {
                 init_usb_cable_status((void*)1);
-        } else {
-                usb_state = S_CABLE_DETACHED;
-                inform_usb_cable_attached(FALSE);
-                set_usb_mode_key("idle");
         }
 }
 
@@ -1780,6 +1788,12 @@ static gboolean init_usb_cable_status(gpointer data)
         if (usb_state != S_INVALID_USB_STATE) {
                 ULOG_DEBUG_F("usb_state is already valid"); 
                 return FALSE;
+        }
+
+        if (usb_cable_udi == NULL) {
+                get_usb_cable_udi();
+                if (usb_cable_udi)
+                        add_prop_watch(usb_cable_udi);
         }
 
         usb_state = get_usb_state();
@@ -3145,7 +3159,8 @@ int main(int argc, char* argv[])
         add_prop_watch(camera_turned_udi);
         */
         add_prop_watch(slide_keyboard_udi);
-        add_prop_watch(usb_cable_udi);
+        if (usb_cable_udi)
+                add_prop_watch(usb_cable_udi);
 
         if (!libhal_ctx_set_device_added(hal_ctx, device_added)) {
                 ULOG_CRIT_L("libhal_ctx_set_device_added failed");
@@ -3185,8 +3200,7 @@ int main(int argc, char* argv[])
          * (needs rechecking and possibly fixing hildon-desktop) */
         desktop_started = TRUE;
 
-        if (usb_state != S_INVALID_USB_STATE  /* valid USB state is required */
-            && (desktop_started || first_boot)) {
+        if (usb_state != S_INVALID_USB_STATE) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
                         handle_event(E_INIT_CARD, &int_mmc, NULL);

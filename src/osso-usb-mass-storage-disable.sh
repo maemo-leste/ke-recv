@@ -1,7 +1,7 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2004-2006 Nokia Corporation. All rights reserved.
+# Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -29,8 +29,6 @@ if [ $? != 0 ]; then
   # the module is not loaded
   exit 0
 fi
-
-initctl emit G_FILE_STORAGE_REMOVE
 
 GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
 LUN0='gadget-lun0'

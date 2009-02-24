@@ -20,6 +20,10 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Add max. retry limit to init_usb_cable_status(), give up after retrying 100
     times.
   * Remove automatically generated files from SVN.
+  * Fix problem with determining the UDI for USB cable, it was resorting to a
+    unusable default value.
+  * Handle "UNDEFINED" value for 'usb_device.mode' when switching modules and
+    the USB cable is connected.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Feb 2009 08:25:34 +0200
 
