@@ -25,24 +25,8 @@ RC=0
 if [ $? = 0 ]; then
     echo "$0: removing g_nokia"
 
-    PNATD_PID=`pidof pnatd`
-    if [ $? = 0 ]; then
-        kill $PNATD_PID
-    else
-        echo "$0: pnatd is not running"
-    fi
-    OBEXD_PID=`pidof obexd`
-    if [ $? = 0 ]; then
-        kill $OBEXD_PID
-    else
-        echo "$0: obexd is not running"
-    fi
-    SYNCD_PID=`pidof syncd`
-    if [ $? = 0 ]; then
-        kill $SYNCD_PID
-    else
-        echo "$0: syncd is not running"
-    fi
+    initctl emit G_NOKIA_REMOVE
+
     sleep 1
     /sbin/rmmod g_nokia
 fi
@@ -57,6 +41,8 @@ if [ $RC != 0 ]; then
     echo "$0: failed to install g_file_storage"
     exit 1
 fi
+
+initctl emit --no-wait G_FILE_STORAGE_READY
 
 if [ $# -gt 1 ]; then
     echo "$0: only one argument supported"

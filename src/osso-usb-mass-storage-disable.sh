@@ -30,6 +30,8 @@ if [ $? != 0 ]; then
   exit 0
 fi
 
+initctl emit G_FILE_STORAGE_REMOVE
+
 GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
 LUN0='gadget-lun0'
 LUN1='gadget-lun1'

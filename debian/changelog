@@ -12,8 +12,11 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Disable D-Bus interface for memory card repairing.
   * Replace the memory card repair interface test with check interface test
     in ke-recv-test.
+  * Added emission of Upstart signals G_FILE_STORAGE_REMOVE, G_NOKIA_READY,
+    G_NOKIA_REMOVE and G_FILE_STORAGE_READY to USB module loading/unloading
+    shell scripts. Patch from Yauheni Kaliuta.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 13 Feb 2009 11:00:18 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Feb 2009 08:25:34 +0200
 
 ke-recv (3.8-1) unstable; urgency=low
 

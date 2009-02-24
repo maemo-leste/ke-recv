@@ -22,6 +22,7 @@
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? = 0 ]; then
     echo "$0: removing g_file_storage"
+    initctl emit G_FILE_STORAGE_REMOVE
     /sbin/rmmod g_file_storage
 fi
 
@@ -39,21 +40,6 @@ else
     sleep 2
 fi
 
-# TODO: wait for the devices
-
-OBEXD_PID=`pidof obexd`
-if [ $? != 0 ]; then
-    echo "$0: obexd is not running"
-else
-    kill -USR1 $OBEXD_PID
-fi
-
-SYNCD_PID=`pidof syncd`
-if [ $? != 0 ]; then
-    echo "$0: failed to get syncd's PID"
-    exit 1
-fi
-
-kill -USR1 $SYNCD_PID
+initctl emit --no-wait G_NOKIA_READY
 
 exit 0
