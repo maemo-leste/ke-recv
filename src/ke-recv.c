@@ -2779,7 +2779,9 @@ static void e_plugged_helper(void)
         if (ext_mmc.whole_device == NULL
             && int_mmc.whole_device == NULL) {
                 ULOG_DEBUG_F("no cards inserted");
+                /*
                 display_system_note(MSG_NO_MEMORY_CARD_INSERTED);
+                */
                 return;
         }
 
@@ -2789,7 +2791,8 @@ static void e_plugged_helper(void)
                  * first available drive letter in Windows */
                 ir = handle_event(E_PLUGGED, &int_mmc, NULL);
         }
-        er = handle_event(E_PLUGGED, &ext_mmc, NULL);
+        if (ext_mmc.whole_device)
+                er = handle_event(E_PLUGGED, &ext_mmc, NULL);
 
         if (!er && !ir) {
                 show_usb_sharing_failed_dialog(&int_mmc, &ext_mmc);
@@ -2797,6 +2800,9 @@ static void e_plugged_helper(void)
                 show_usb_sharing_failed_dialog(NULL, &ext_mmc);
         } else if (!ir) {
                 show_usb_sharing_failed_dialog(&int_mmc, NULL);
+        } else if (ext_mmc.whole_device && int_mmc.whole_device) {
+                /* both succeeded */
+                display_dialog(MSG_DEVICE_CONNECTED_VIA_USB);
         }
 }
 

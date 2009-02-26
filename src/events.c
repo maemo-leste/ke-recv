@@ -608,9 +608,11 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
         args[0] = dev;
         if (load_usb_driver(args)) {
                 ULOG_INFO_F("USB mass storage module loaded for %s", dev);
+                /*
                 if (show) {
                         display_dialog(MSG_DEVICE_CONNECTED_VIA_USB);
                 }
+                */
                 inform_mmc_used_over_usb(TRUE, mmc);
         } else {
                 ULOG_ERR_F("failed to load USB mass storage module for %s",
