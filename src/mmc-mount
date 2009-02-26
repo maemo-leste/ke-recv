@@ -1,2 +1,2 @@
 #!/bin/sh
-mount -t vfat -o rw,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133 "$1" "$2" > /dev/null
+mount -t vfat -o rw,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133,rodir "$1" "$2" > /dev/null
