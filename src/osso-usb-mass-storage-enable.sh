@@ -1,7 +1,7 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
+# Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -23,9 +23,28 @@ RC=0
 
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? = 0 ]; then
-    echo "$0: removing g_nokia"
+    logger "$0: removing g_nokia"
 
     initctl emit G_NOKIA_REMOVE
+
+    PNATD_PID=`pidof pnatd`
+    if [ $? = 0 ]; then
+        kill $PNATD_PID
+    else
+        logger "$0: pnatd is not running"
+    fi
+    OBEXD_PID=`pidof obexd`
+    if [ $? = 0 ]; then
+        kill $OBEXD_PID
+    else
+        logger "$0: obexd is not running"
+    fi
+    SYNCD_PID=`pidof syncd`
+    if [ $? = 0 ]; then
+        kill $SYNCD_PID
+    else
+        logger "$0: syncd is not running"
+    fi
 
     sleep 1
     /sbin/rmmod g_nokia
@@ -38,7 +57,7 @@ if [ $? != 0 ]; then
 fi
 
 if [ $RC != 0 ]; then
-    echo "$0: failed to install g_file_storage"
+    logger "$0: failed to install g_file_storage"
     exit 1
 fi
 
@@ -62,7 +81,7 @@ if [ $# = 1 ]; then
         FOUND=1
     fi
     if [ $FOUND = 1 ]; then
-        echo "$0: $1 is already USB-shared"
+        logger "$0: $1 is already USB-shared"
         exit 0
     fi
 fi

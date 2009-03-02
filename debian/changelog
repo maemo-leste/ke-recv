@@ -1,4 +1,4 @@
-ke-recv (3.9-1~unreleased) unstable; urgency=low
+ke-recv (3.9-1) unstable; urgency=low
 
   * Fixed some minor Coverity-found issues.
   * Now installing /etc/event.d/ke-recv Upstart script. Fixes: NB#101496
@@ -27,7 +27,7 @@ ke-recv (3.9-1~unreleased) unstable; urgency=low
   * Verified that bug 100593 is not reproducable. Fixes: NB#100593
   * Added 'rodir' to mount options. Fixes: NB#101324
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Feb 2009 08:25:34 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 02 Mar 2009 08:33:32 +0200
 
 ke-recv (3.8-1) unstable; urgency=low
 

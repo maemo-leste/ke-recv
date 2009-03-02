@@ -21,7 +21,7 @@
 
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? = 0 ]; then
-    echo "$0: removing g_file_storage"
+    logger "$0: removing g_file_storage"
     initctl emit G_FILE_STORAGE_REMOVE
     /sbin/rmmod g_file_storage
 fi
@@ -33,7 +33,7 @@ if [ $? != 0 ]; then
 fi
 
 if [ $RC != 0 ]; then
-    echo "$0: failed to install g_nokia"
+    logger "$0: failed to install g_nokia"
     exit 1
 else
     # TODO: remove the sleep when the wait is in place
@@ -41,5 +41,24 @@ else
 fi
 
 initctl emit --no-wait G_NOKIA_READY
+
+# TODO: wait for the devices
+
+OBEXD_PID=`pidof obexd`
+if [ $? != 0 ]; then
+    logger "$0: obexd is not running"
+else
+    kill -USR1 $OBEXD_PID
+    logger "$0: sent SIGUSR1 to obexd"
+fi
+
+SYNCD_PID=`pidof syncd`
+if [ $? != 0 ]; then
+    logger "$0: failed to get syncd's PID"
+    exit 1
+fi
+
+kill -USR1 $SYNCD_PID
+logger "$0: sent SIGUSR1 to syncd"
 
 exit 0

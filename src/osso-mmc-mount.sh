@@ -45,6 +45,8 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
+# TODO: check the FAT magic number
+
 /sbin/dosfsck -T 10 $PDEV
 if [ $? != 0 ]; then
   echo "$0: $PDEV is corrupt, trying to mount it read-only"
