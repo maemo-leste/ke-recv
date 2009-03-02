@@ -2987,7 +2987,7 @@ int main(int argc, char* argv[])
 	        .message_function = NULL,
 	        .unregister_function = NULL
         };
-        int ret, first_boot = FALSE;
+        int ret;
 
         if (signal(SIGTERM, sigterm) == SIG_ERR) {
                 ULOG_CRIT_L("signal() failed");
