@@ -185,6 +185,26 @@ static void send_enable_pcsuite()
     	ULOG_DEBUG_F("leaving");
 }
 
+static void send_enable_charging()
+{
+	DBusMessage* m = NULL, *reply = NULL;
+	DBusError err;
+    	ULOG_DEBUG_F("entering");
+	assert(sys_conn != NULL);
+	dbus_error_init(&err);
+	  m = dbus_message_new_method_call("com.nokia.ke_recv",
+			"/com/nokia/ke_recv/enable_charging",
+			"com.nokia.ke_recv",
+			"dummy");
+	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
+			20000, &err);
+    	if (reply == NULL) {
+       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+           exit(1);
+        }
+    	ULOG_DEBUG_F("leaving");
+}
+
 static void send_enable_mass_storage()
 {
 	DBusMessage* m = NULL, *reply = NULL;
@@ -371,6 +391,7 @@ int main(int argc, char* argv[])
                    "ej - eject USB\n"
                    "ec - cancel eject USB\n"
                    "p - enable PC Suite\n"
+                   "c - enable charging mode\n"
                    "m - enable USB mass storage\n");
             exit(1);
     }
@@ -380,7 +401,8 @@ int main(int argc, char* argv[])
 	    case 'c':
                 if (argv[1][1] == 'b') {
             	        close_bat_cover();
-                }
+                } else if (argv[1][1] == '\0')
+                        send_enable_charging();
 	    	break;
 	    case 'o':
                 if (argv[1][1] == 'b') {

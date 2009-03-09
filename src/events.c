@@ -4,7 +4,7 @@
   
   This file is part of ke-recv.
 
-  Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
+  Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 
   Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 
@@ -42,7 +42,7 @@ typedef enum { USB_DIALOG, NORMAL_DIALOG, NO_DIALOG } swap_dialog_t;
 GConfClient* gconfclient;
 
 static void usb_share_card(mmc_info_t *mmc, gboolean show);
-static int mount_volumes(mmc_info_t *mmc);
+static int mount_volumes(mmc_info_t *mmc, gboolean show_errors);
 static int do_unmount(const char *mountpoint);
 static void open_dialog_helper(mmc_info_t *mmc);
 static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n);
@@ -665,23 +665,19 @@ static void handle_e_rename(mmc_info_t *mmc)
                         ULOG_ERR_F("mlabel failed: exec_prog returned %d",
                                    ret);
                         if (mmc->internal_card)
-                                display_dialog(
-                                        MSG_MEMORY_CARD_IS_CORRUPTED_INT);
+                                open_closeable_dialog(OSSO_GN_NOTICE,
+                                    MSG_MEMORY_CARD_IS_CORRUPTED_INT, "OMG!");
                         else
-                                display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                                open_closeable_dialog(OSSO_GN_NOTICE,
+                                    MSG_MEMORY_CARD_IS_CORRUPTED, "OMG!");
                         /* even if renaming failed it makes sense to
                          * try mounting the card */
                 }
 
                 update_mmc_label(mmc);
                 ULOG_DEBUG_F("successful renaming");
-                if (!mount_volumes(mmc)) {
+                if (!mount_volumes(mmc, TRUE)) {
                         ULOG_ERR_F("could not mount it");
-                        if (mmc->internal_card)
-                                display_dialog(
-                                        MSG_MEMORY_CARD_IS_CORRUPTED_INT);
-                        else
-                                display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
         } else {
                 ULOG_DEBUG_F("umount failed");
@@ -744,13 +740,12 @@ static void handle_e_format(mmc_info_t *mmc)
                 if (vol == NULL || vol->dev_name == NULL) {
                         snprintf(buf, 100, "%sp%d", mmc->whole_device,
                                  mmc->preferred_volume);
-                        args[2] = buf;
                 } else
-                        args[2] = vol->dev_name;
-                ULOG_DEBUG_F("using device file %s", args[2]);
+                        snprintf(buf, 100, "%s", vol->dev_name);
+                args[2] = buf;
                 args[3] = mmc->desired_label;
 
-                ret = unmount_volumes(&mmc->volumes);
+                ret = unmount_volumes(mmc);
         }
         if (!ret) {
                 ULOG_INFO_F("memory card %s is in use", mmc->name);
@@ -758,7 +753,7 @@ static void handle_e_format(mmc_info_t *mmc)
                                     "sfil_ni_mmc_format_mmc_in_use"));
                 if (mmc->control_partitions)
                         /* we could have unmounted some other volumes */
-                        mount_volumes(mmc);
+                        mount_volumes(mmc, TRUE);
                 return;
         }
 
@@ -766,7 +761,9 @@ static void handle_e_format(mmc_info_t *mmc)
                 /* partition table will be cleared, clear volume info */
                 clear_volume_list(&mmc->volumes);
 
-        ret = exec_prog(MMC_FORMAT_PROG, args);
+        ULOG_DEBUG_F("execing: %s %s %s %s", args[0], args[1], args[2],
+                     args[3]);
+        ret = exec_prog(args[0], args);
         if (ret != 0) {
                 ULOG_INFO_F("format of %s failed, rc=%d", mmc->name, ret);
         } else {
@@ -774,7 +771,7 @@ static void handle_e_format(mmc_info_t *mmc)
                  * the device; otherwise it is mounted later when the new
                  * partition table is discovered */
                 if (!mmc->control_partitions) {
-                        mount_volumes(mmc);
+                        mount_volumes(mmc, TRUE);
                 } else {
                         mmc->skip_banner = TRUE;
                 }
@@ -831,7 +828,7 @@ static void handle_e_repair(mmc_info_t *mmc)
         set_mmc_corrupted_flag(FALSE, mmc);
 
         init_mmc_volumes(mmc); /* re-init volumes */
-        if (mount_volumes(mmc)) {
+        if (mount_volumes(mmc, FALSE)) {
                 display_system_note(_("card_memory_card_repaired"));
         } else {
                 display_system_note(MSG_UNABLE_TO_REPAIR);
@@ -894,7 +891,7 @@ static void handle_e_check(mmc_info_t *mmc)
 #endif
 }
 
-static int mount_volumes(mmc_info_t *mmc)
+static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
 {
         const char *mount_args[] = {MMC_MOUNT_COMMAND, NULL, NULL, NULL};
         volume_list_t *l;
@@ -902,11 +899,13 @@ static int mount_volumes(mmc_info_t *mmc)
         int ret, count = 0;
        
         l = get_nth_volume(mmc, mmc->preferred_volume);
+        /*
         if (l && l->corrupt) {
                 ULOG_DEBUG_F("partition %d is corrupt",
                              mmc->preferred_volume);
                 return 0;
         }
+        */
 
         if (l == NULL || l->udi == NULL) {
                 ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
@@ -934,18 +933,31 @@ static int mount_volumes(mmc_info_t *mmc)
         ret = exec_prog(MMC_MOUNT_COMMAND, mount_args);
         if (ret == 0) {
                 l->mountpoint = strdup(mmc->mount_point);
+                l->corrupt = 0;
                 possibly_turn_swap_on(mmc);
                 set_mmc_corrupted_flag(FALSE, mmc);
                 count = 1;
+        } else if (ret == 2) {
+                ULOG_DEBUG_F("exec_prog returned %d", ret);
+                l->corrupt = 1; /* 10s check failed */
+                inform_mmc_swapping(FALSE, mmc);
+                set_mmc_corrupted_flag(TRUE, mmc);
+                if (show_errors)
+                        open_closeable_dialog(OSSO_GN_NOTICE,
+                                _("card_ia_corrupted"), "OMG!");
         } else {
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
-                if (mmc->internal_card)
-                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED_INT);
-                else
-                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                if (show_errors) {
+                        if (mmc->internal_card)
+                                display_dialog(
+                                        _("card_ib_unknown_format_device"));
+                        else
+                                display_dialog(
+                                        _("card_ib_unknown_format_card"));
+                }
         }
         inform_mmc_used_over_usb(FALSE, mmc);
         return count;
@@ -994,11 +1006,13 @@ static void discard_volume(mmc_info_t *mmc, const char *udi)
 }
 
 /* try to unmount all volumes on the list */
-int unmount_volumes(volume_list_t *l)
+int unmount_volumes(mmc_info_t *mmc)
 {
         int all_unmounted = 1;
        
-        for (; l != NULL; l = l->next) {
+        if (mmc->control_partitions) {
+            volume_list_t *l;
+            for (l = &mmc->volumes; l != NULL; l = l->next) {
                 if (l->udi != NULL) {
                         int prop;
                         /* TODO: cache is_mounted info for speed */
@@ -1027,6 +1041,23 @@ int unmount_volumes(volume_list_t *l)
                                 all_unmounted = 0;
                         }
                 }
+            }
+        } else {
+                /* we only control single FAT volume */
+                volume_list_t *vol;
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
+                if (vol == NULL) {
+                        ULOG_ERR_F("could not find partition number %d",
+                                   mmc->preferred_volume);
+                        all_unmounted = 0;
+                } else {
+                        if (vol->mountpoint && do_unmount(vol->mountpoint)) {
+                                ULOG_DEBUG_F("unmounted %s", vol->udi);
+                        } else {
+                                ULOG_INFO_F("couldn't unmount %s", vol->udi);
+                                all_unmounted = 0;
+                        }
+                }
         }
         return all_unmounted;
 }
@@ -1046,7 +1077,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         } else {
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
-                                if (mount_volumes(mmc)) {
+                                if (mount_volumes(mmc, TRUE)) {
                                         /*
                                         display_dialog(
                                                 MSG_MEMORY_CARD_AVAILABLE);
@@ -1164,16 +1195,19 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex)
 
         if (in && ex) {
                 snprintf(buf, MAX_MSG_LEN,
-                         _(MSG_USB_MEMORY_CARDS_IN_USE),
-                         in->display_name, ex->display_name);
+                         MSG_USB_MEMORY_CARDS_IN_USE,
+                         ex->display_name);
         } else {
-                mmc_info_t *mmc = in;
                 if (ex) {
+                        /*
+                        mmc_info_t *mmc = in;
                         mmc = ex;
-                }
-                snprintf(buf, MAX_MSG_LEN,
-                         _(MSG_USB_MEMORY_CARD_IN_USE),
-                         mmc->display_name);
+                        */
+                        /* error string missing for this case */
+                        return;
+                } else
+                        snprintf(buf, MAX_MSG_LEN,
+                                 MSG_USB_MEMORY_CARD_IN_USE);
         }
         display_system_note(buf);
 }
@@ -1204,7 +1238,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 break;
                         }
                         possibly_turn_swap_off(NORMAL_DIALOG, mmc);
-                        if (!unmount_volumes(&mmc->volumes)) {
+                        if (!unmount_volumes(mmc)) {
                                 open_dialog_helper(mmc);
                                 setup_s_unmount_pending(mmc);
                                 mmc->state = S_UNMOUNT_PENDING;
@@ -1216,7 +1250,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
-                                if (!unmount_volumes(&mmc->volumes)) {
+                                if (!unmount_volumes(mmc)) {
                                         ret = 0;
                                 } else {
                                         usb_share_card(mmc, TRUE);
@@ -1228,7 +1262,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 unshare_usb_shared_card(mmc);
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
-                                mount_volumes(mmc);
+                                mount_volumes(mmc, TRUE);
                         }
                         break;
                 case E_RENAME:
@@ -1247,7 +1281,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         ULOG_DEBUG_F("E_VOLUME_ADDED for %s", mmc->name);
                         if (ignore_cable || !in_mass_storage_mode()) {
                                 update_mmc_label(mmc);
-                                if (mount_volumes(mmc)) {
+                                if (mount_volumes(mmc, TRUE)) {
                                         /*
                                         if (!mmc->skip_banner) {
                                                 display_dialog(
@@ -1281,7 +1315,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()) {
                                 unshare_usb_shared_card(mmc);
                         } else {
-                                unmount_volumes(&mmc->volumes);
+                                unmount_volumes(mmc);
                         }
                         break;
                 case E_ENABLE_SWAP:
@@ -1303,9 +1337,11 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                         usb_share_card(mmc, FALSE);
                                 } else if (!in_peripheral_wait_mode()) {
                                         update_mmc_label(mmc);
-                                        mount_volumes(mmc);
+                                        mount_volumes(mmc, TRUE);
                                 }
-                        }
+                        } else
+                                ULOG_DEBUG_F("%s whole_device missing",
+                                             mmc->name);
                         break;
                 default:
                         ULOG_ERR_F("unsupported event %d for %s",
@@ -1330,7 +1366,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                                 usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc); /* re-read volumes */
-                                mount_volumes(mmc);
+                                mount_volumes(mmc, TRUE);
                         }
                         mmc->state = S_COVER_CLOSED;
                         break;
@@ -1347,7 +1383,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                 case E_UNMOUNT_TIMEOUT:
                         ULOG_DEBUG_F("E_UNMOUNT_TIMEOUT for %s", mmc->name);
                         mmc->unmount_pending_timer_id = 0;
-                        if (!unmount_volumes(&mmc->volumes)) {
+                        if (!unmount_volumes(mmc)) {
                                 open_dialog_helper(mmc);
                                 setup_s_unmount_pending(mmc);
                         } else {
@@ -1359,7 +1395,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                 case E_VOLUME_REMOVED:
                         ULOG_DEBUG_F("E_VOLUME_REMOVED for %s", mmc->name);
                         discard_volume(mmc, arg);
-                        if (unmount_volumes(&mmc->volumes)) {
+                        if (unmount_volumes(mmc)) {
                                 dismantle_s_unmount_pending(mmc);
                                 CLOSE_DIALOG
                                 CLOSE_SWAP_DIALOG

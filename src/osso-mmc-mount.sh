@@ -19,6 +19,11 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+# Return codes:
+# 0 - mounted read-write
+# 1 - could not mount
+# 2 - mounted read-only
+
 PDEV=$1  ;# preferred device (partition)
 MP=$2    ;# mount point
 
@@ -37,7 +42,7 @@ install_module() # $1 = kernel version $2 = modulename (no .ko)
 
 grep "$PDEV " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
-  echo "$0: $PDEV is already mounted"
+  logger "$0: $PDEV is already mounted"
   exit 0
 fi
 
@@ -49,28 +54,29 @@ fi
 
 /sbin/dosfsck -T 10 $PDEV
 if [ $? != 0 ]; then
-  echo "$0: $PDEV is corrupt, trying to mount it read-only"
+  logger "$0: $PDEV is corrupt, trying to mount it read-only"
   mount -t vfat -o ro,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133 $PDEV $MP > /dev/null
   if [ $? = 0 ]; then
-    echo "$0: $PDEV mounted read-only"
-    exit 0
+    logger "$0: $PDEV mounted read-only"
+    exit 2
   else
-    echo "$0: Couldn't mount $PDEV read-only"
+    logger "$0: Couldn't mount $PDEV read-only"
     exit 1
   fi
 fi
 
 mmc-mount $PDEV $MP
 RC=$?
+logger "$0: mounting $PDEV read-write to $MP, rc: $RC"
 
 if [ $RC = 0 ]; then
   # create some special directories for user's partition
   if [ "x$MP" = "x/home/user/MyDocs" -a -w $MP ]; then
-    for d in .sounds .videos .documents .images .maps; do
+    for d in .sounds .videos .documents .images .camera; do
       mkdir -p $MP/$d
     done
   else
-    echo "$0: '$MP' is not writable"
+    logger "$0: '$MP' is not writable"
   fi
 fi
 
@@ -99,4 +105,4 @@ if false; then
     chown user:users $MP
   fi
 fi
-exit $RC
+exit $(($RC != 0))

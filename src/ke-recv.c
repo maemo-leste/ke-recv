@@ -621,6 +621,21 @@ static DBusHandlerResult enable_pcsuite_handler(DBusConnection *c,
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static DBusHandlerResult enable_charging_handler(DBusConnection *c,
+                                                DBusMessage *m,
+                                                void *data)
+{
+        ULOG_DEBUG_F("entered");
+        the_connection = c;
+        the_message = m;
+        handle_usb_event(E_ENTER_CHARGING_MODE);
+        send_reply();
+        /* invalidate */
+        the_connection = NULL;
+        the_message = NULL;
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 static DBusHandlerResult enable_mass_storage_handler(DBusConnection *c,
                                                      DBusMessage *m,
                                                      void *data)
@@ -1558,7 +1573,7 @@ static int init_card(const char *udi)
                 mmc->swap_off_op = INTERNAL_MMC_SWAP_OFF_OP;
 
 #ifdef FREMANTLE_MODE
-                mmc->preferred_volume = 4;
+                mmc->preferred_volume = 3;
                 mmc->control_partitions = 0;
 #else
                 mmc->preferred_volume = 1;
@@ -1600,8 +1615,10 @@ static int init_card(const char *udi)
                 int state;
                 state = get_prop_bool(mmc->cover_udi,
                                       "button.state.value");
-                if (state) {
-                        /* this case also if get_prop_bool() failed */
+                if (state == -1) {
+                        /* failed -- property missing? */
+                        mmc->state = S_COVER_CLOSED;
+                } else if (state) {
                         mmc->state = S_COVER_CLOSED;
                 } else {
                         mmc->state = S_COVER_OPEN;
@@ -1783,7 +1800,9 @@ static usb_state_t check_usb_cable(void)
 static gboolean init_usb_cable_status(gpointer data)
 {
         static int retry_times = 100;
+        /*
         gboolean do_e_plugged = (gboolean)data;
+        */
 
         if (usb_state != S_INVALID_USB_STATE) {
                 ULOG_DEBUG_F("usb_state is already valid"); 
@@ -1822,10 +1841,15 @@ static gboolean init_usb_cable_status(gpointer data)
                                 usb_state = S_MASS_STORAGE;
                                 /* should reset gconf keys here */
                         } else {
+                                ULOG_DEBUG_F("peripheral but cards not "
+                                        "USB-shared, assuming charging mode");
+                                usb_state = S_CHARGING;
+                                /*
                                 if (do_e_plugged) {
                                         handle_usb_event(
                                                 E_ENTER_PERIPHERAL_WAIT_MODE);
                                 }
+                                */
                         }
                         set_usb_mode_key("peripheral");
                 } else {
@@ -2152,6 +2176,7 @@ static int mount_usb_volumes(void)
 static int unmount_usb_volumes(void)
 {
         int all_unmounted = 1;
+#ifndef FREMANTLE_MODE
         storage_info_t *si;
 
         si = storage_list;
@@ -2165,6 +2190,7 @@ static int unmount_usb_volumes(void)
                 }
                 si = si->next;
         }
+#endif
         return all_unmounted;
 }
 
@@ -2802,7 +2828,7 @@ static void e_plugged_helper(void)
                 show_usb_sharing_failed_dialog(&int_mmc, NULL);
         } else if (ext_mmc.whole_device && int_mmc.whole_device) {
                 /* both succeeded */
-                display_dialog(MSG_DEVICE_CONNECTED_VIA_USB);
+                display_dialog(_("cards_connected_via_usb"));
         }
 }
 
@@ -2838,6 +2864,9 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_PERIPHERAL_WAIT) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_PERIPHERAL_WAIT");
+                        } else if (usb_state == S_CHARGING) {
+                                ULOG_INFO_F("E_CABLE_DETACHED in "
+                                            "S_CHARGING");
                         } else if (usb_state == S_PCSUITE) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
                                 if (!disable_pcsuite()) {
@@ -2924,7 +2953,8 @@ static void handle_usb_event(usb_event_t e)
                         }
                         break;
                 case E_ENTER_MASS_STORAGE_MODE:
-                        if (usb_state == S_PERIPHERAL_WAIT) {
+                        if (usb_state == S_PERIPHERAL_WAIT ||
+                            usb_state == S_CHARGING) {
                                 usb_state = S_MASS_STORAGE;
                                 e_plugged_helper();
                         } else {
@@ -2933,13 +2963,22 @@ static void handle_usb_event(usb_event_t e)
                         }
                         break;
                 case E_ENTER_PCSUITE_MODE:
-                        if (usb_state == S_PERIPHERAL_WAIT) {
+                        if (usb_state == S_PERIPHERAL_WAIT ||
+                            usb_state == S_CHARGING) {
                                 usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");
                                 }
                         } else {
                                 ULOG_WARN_F("E_ENTER_PCSUITE_MODE in %d!",
+                                            usb_state);
+                        }
+                        break;
+                case E_ENTER_CHARGING_MODE:
+                        if (usb_state == S_PERIPHERAL_WAIT) {
+                                usb_state = S_CHARGING;
+                        } else {
+                                ULOG_WARN_F("E_ENTER_CHARGING_MODE in %d!",
                                             usb_state);
                         }
                         break;
@@ -3158,6 +3197,10 @@ int main(int argc, char* argv[])
         vtable.message_function = enable_mass_storage_handler;
         register_op(sys_conn, &vtable, ENABLE_MASS_STORAGE_OP, NULL);
 
+        /* D-Bus interface for charging mode selection */
+        vtable.message_function = enable_charging_handler;
+        register_op(sys_conn, &vtable, ENABLE_CHARGING_OP, NULL);
+
         add_prop_watch(ext_mmc.cover_udi);
         add_prop_watch(int_mmc.cover_udi);
         /*
@@ -3187,8 +3230,10 @@ int main(int argc, char* argv[])
                         strdup(dgettext(USB_DOMAIN,
                                         "stab_me_usb_device_name"));
         }
+#ifndef FREMANTLE_MODE
         init_usb_storages();
         init_usb_volumes();
+#endif
 
 #if 0
         /* check if hildon-desktop is running */
@@ -3206,7 +3251,7 @@ int main(int argc, char* argv[])
          * (needs rechecking and possibly fixing hildon-desktop) */
         desktop_started = TRUE;
 
-        if (usb_state != S_INVALID_USB_STATE) {
+        if (usb_state != S_INVALID_USB_STATE && !mmc_initialised) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
                         handle_event(E_INIT_CARD, &int_mmc, NULL);

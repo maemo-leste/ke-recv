@@ -1,3 +1,20 @@
+ke-recv (3.10-1) unstable; urgency=low
+
+  * Added dialog about read-only mounting.
+  * Fixes: NB#103964 - Back with 3 partitions...
+  * Don't quit mounting if there is old corruption flag for the partition.
+  * Fix a bug in formatting the external card: a freed string was used as
+    parameter for mmc-format.
+  * Added S_CHARGING and E_ENTER_CHARGING_MODE and D-Bus interface for
+    USB plugin for moving to S_CHARGING.
+  * Fixes: NB#104646 - create .camera instead of .maps to internal card.
+  * Fixes: NB#100731 - fix string when both cards are USB-shared.
+  * Fixes: NB#102391 - do not use old error strings
+  * Fixes: NB#101379 - fix old string
+  * Fixes: NB#98461 - fix in use banner
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 09 Mar 2009 18:35:46 +0200
+
 ke-recv (3.9-1) unstable; urgency=low
 
   * Fixed some minor Coverity-found issues.

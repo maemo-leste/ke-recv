@@ -3,7 +3,7 @@
   
   This file is part of ke-recv.
 
-  Copyright (C) 2004-2008 Nokia Corporation. All rights reserved.
+  Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 
   Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 
@@ -147,9 +147,10 @@ extern "C" {
 #define AK_BROADCAST_OP "/com/nokia/osso_app_killer"
 #define AK_BROADCAST_EXIT "exit"
 
-/* PC suite & mass storage */
+/* PC suite, mass storage, charging request */
 #define ENABLE_PCSUITE_OP "/com/nokia/ke_recv/enable_pcsuite"
 #define ENABLE_MASS_STORAGE_OP "/com/nokia/ke_recv/enable_mass_storage"
+#define ENABLE_CHARGING_OP "/com/nokia/ke_recv/enable_charging"
 
 #define INVALID_DIALOG_RESPONSE -666
 
@@ -161,6 +162,7 @@ typedef enum {
         S_EJECTING,
         S_EJECTED,
         S_MASS_STORAGE,
+        S_CHARGING,
         S_PCSUITE
 } usb_state_t;
 
@@ -170,7 +172,9 @@ typedef enum {
         E_EJECT_CANCELLED,
         E_ENTER_HOST_MODE,
         E_ENTER_PERIPHERAL_WAIT_MODE,
+        /* the three next ones are for USB plugin's requests */
         E_ENTER_MASS_STORAGE_MODE,
+        E_ENTER_CHARGING_MODE,
         E_ENTER_PCSUITE_MODE
 } usb_event_t;
 

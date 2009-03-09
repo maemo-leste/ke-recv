@@ -121,8 +121,8 @@ typedef enum {
 #define MSG_USB_DISCONNECTED _("card_ib_usb_disconnected")
 #define MSG_NO_MEMORY_CARD_INSERTED _("card_ni_usb_no_memory_card_inserted")
 #define MSG_MEMORY_CARD_AVAILABLE _("card_ib_memory_card_available")
-#define MSG_MEMORY_CARD_IS_CORRUPTED_INT _("card_ib_unknown_format_device")
-#define MSG_MEMORY_CARD_IS_CORRUPTED _("card_ia_corrupted")
+#define MSG_MEMORY_CARD_IS_CORRUPTED_INT _("card_ti_corrupted_device")
+#define MSG_MEMORY_CARD_IS_CORRUPTED _("card_ti_corrupted_card")
 #define MSG_FORMATTING_COMPLETE _("card_ib_formatting_complete")
 #define MSG_USB_MEMORY_CARD_IN_USE _("card_ni_usb_failed_card_in_use")
 #define MSG_USB_MEMORY_CARDS_IN_USE _("card_ni_usb_failed_cards_in_use")
@@ -140,7 +140,7 @@ typedef enum {
 
 int handle_event(mmc_event_t e, mmc_info_t *mmc, const char *arg);
 void do_global_init(void);
-int unmount_volumes(volume_list_t *v);
+int unmount_volumes(mmc_info_t *mmc);
 void inform_camera_out(gboolean value);
 void inform_camera_turned_out(gboolean value);
 void inform_slide_keyboard(gboolean value);
