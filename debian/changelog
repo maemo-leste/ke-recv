@@ -41,7 +41,6 @@ ke-recv (3.9-1) unstable; urgency=low
     unusable default value.
   * Handle "UNDEFINED" value for 'usb_device.mode' when switching modules and
     the USB cable is connected.
-  * Verified that bug 100593 is not reproducable. Fixes: NB#100593
   * Added 'rodir' to mount options. Fixes: NB#101324
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 02 Mar 2009 08:33:32 +0200
