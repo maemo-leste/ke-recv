@@ -1,3 +1,9 @@
+ke-recv (3.11-1~unreleased) unstable; urgency=low
+
+  * fix partitioning script for 3 partitions
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 18 Mar 2009 14:33:36 +0200
+
 ke-recv (3.10-1) unstable; urgency=low
 
   * Added dialog about read-only mounting.

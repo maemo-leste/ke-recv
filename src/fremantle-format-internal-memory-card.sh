@@ -1,9 +1,9 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2008 Nokia Corporation. All rights reserved.
+# Copyright (C) 2008-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -20,7 +20,7 @@
 # 02110-1301 USA
 
 if [ "x$1" != "x/dev/mmcblk1" -a "x$1" != "x/dev/mmcblk0" ]; then
-  echo "Usage: $0 <device name of internal memory card>"
+  echo "Usage: $0 <device name of internal memory card without 'pN' suffix>"
   exit 1
 fi
 
@@ -33,12 +33,13 @@ umount ${1}p4
 
 sfdisk -D -uM $1 << EOF
 ,768,S
-,4,L
 ,2048,L
 ,,b
 EOF
 
-mkdosfs -F 32 -R 38 ${1}p4
+mkswap ${1}p1
+mkfs.ext3 ${1}p2
+mkdosfs -F 32 -R 38 ${1}p3
 
 sync
 
