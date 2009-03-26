@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2005-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -27,19 +27,6 @@
 PDEV=$1  ;# preferred device (partition)
 MP=$2    ;# mount point
 
-install_module() # $1 = kernel version $2 = modulename (no .ko)
-{
-  if lsmod | grep -qi $2; then return 0 ; fi
-
-  if [ -f /mnt/initfs/lib/modules/$1/$2.ko ]; then
-    if insmod /mnt/initfs/lib/modules/$1/$2.ko; then
-      return 0
-    fi
-  fi
-
-  return 1
-}
-
 grep "$PDEV " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
   logger "$0: $PDEV is already mounted"
@@ -50,12 +37,22 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
-# TODO: check the FAT magic number
+if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk0 ]; then
+  # check the FAT magic number
+  PNUM=$(echo $PDEV | sed "s#/dev/mmcblk[01]p##")
+  DEV=$(echo $PDEV | sed "s#p[1234]##")
+  PID=$(sfdisk -c $DEV $PNUM)
+  if [ $PID != b -a $PID != c ]; then
+    logger "$0: $PDEV is not FAT32"
+    exit 1
+  fi
+fi
 
-/sbin/dosfsck -T 10 $PDEV
+# time limited check
+/sbin/dosfsck -n -T 10 $PDEV
 if [ $? != 0 ]; then
   logger "$0: $PDEV is corrupt, trying to mount it read-only"
-  mount -t vfat -o ro,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133 $PDEV $MP > /dev/null
+  mmc-mount $PDEV $MP ro
   if [ $? = 0 ]; then
     logger "$0: $PDEV mounted read-only"
     exit 2
@@ -65,7 +62,7 @@ if [ $? != 0 ]; then
   fi
 fi
 
-mmc-mount $PDEV $MP
+mmc-mount $PDEV $MP rw
 RC=$?
 logger "$0: mounting $PDEV read-write to $MP, rc: $RC"
 
@@ -80,29 +77,4 @@ if [ $RC = 0 ]; then
   fi
 fi
 
-#if [ $RC != 0 ]; then
-if false; then
-
-  # Let's try ext3 - need to load modules
-  KERNEL_VERSION=`uname -r`
-  if install_module $KERNEL_VERSION mbcache; then
-    if install_module $KERNEL_VERSION jbd; then
-      if install_module $KERNEL_VERSION ext3; then
-        mount -t ext3 $PDEV $MP > /dev/null
-        RC=$?
-      fi
-    fi
-  fi
-
-  if [ $RC != 0 ]; then
-    if install_module $KERNEL_VERSION ext2; then
-      mount -t ext2 $PDEV $MP > /dev/null
-      RC=$?
-    fi
-  fi
-
-  if [ $RC = 0 ]; then
-    chown user:users $MP
-  fi
-fi
 exit $(($RC != 0))

@@ -46,8 +46,12 @@ if [ $? = 0 ]; then
         logger "$0: syncd is not running"
     fi
 
-    sleep 1
+    sleep 2
     /sbin/rmmod g_nokia
+    if [ $? != 0 ]; then
+        logger "$0: failed to rmmod g_nokia!"
+        exit 1
+    fi
 fi
 
 /sbin/lsmod | grep g_file_storage > /dev/null

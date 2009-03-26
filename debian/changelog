@@ -1,8 +1,11 @@
 ke-recv (3.11-1~unreleased) unstable; urgency=low
 
-  * fix partitioning script for 3 partitions
+  * Fix partitioning script for 3 partitions
+  * Added check for the success of "rmmod g_nokia".
+  * Added check for FAT magic number before trying to mount as FAT.
+  * Fixes: NB#108219 - osso-mmc-mount.sh should use -n (no interaction)
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 18 Mar 2009 14:33:36 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 26 Mar 2009 14:16:46 +0200
 
 ke-recv (3.10-1) unstable; urgency=low
 
