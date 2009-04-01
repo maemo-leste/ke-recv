@@ -1,11 +1,19 @@
-ke-recv (3.11-1~unreleased) unstable; urgency=low
+ke-recv (3.11-1) unstable; urgency=low
 
   * Fix partitioning script for 3 partitions
   * Added check for the success of "rmmod g_nokia".
   * Added check for FAT magic number before trying to mount as FAT.
   * Fixes: NB#108219 - osso-mmc-mount.sh should use -n (no interaction)
+  * Added mmc-unmount utility for unmounting with GIO. Patch from Carlos
+    Garnacho.
+  * Fixes: NB#105328 - Internal memory card is not mounted to PC in USB Mass
+    storage mode
+  * Using the new '-I' command line option for dosfsck to ignore 'minor'
+    corruptions.
+  * Fixes: NB#108624 - External memory card is detected as read-only always
+    when it's corrupted.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 26 Mar 2009 14:16:46 +0200
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 01 Apr 2009 18:35:12 +0300
 
 ke-recv (3.10-1) unstable; urgency=low
 

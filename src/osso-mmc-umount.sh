@@ -1,9 +1,9 @@
 #!/bin/sh
 # This file is part of ke-recv
 #
-# Copyright (C) 2005-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2005-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -28,7 +28,12 @@ MP=$1
 
 grep "$MP " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
-  umount $MP 2> /dev/null
+  # first try in gvfs way
+  mmc-unmount $MP 2> /dev/null
+  if [ $? != 0 ]; then
+    # try if old-fashioned way works
+    umount $MP 2> /dev/null
+  fi
   RC=$?
 else
   # it is not mounted

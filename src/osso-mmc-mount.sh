@@ -49,7 +49,7 @@ if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk0 ]; then
 fi
 
 # time limited check
-/sbin/dosfsck -n -T 10 $PDEV
+/sbin/dosfsck -I -n -T 10 $PDEV
 if [ $? != 0 ]; then
   logger "$0: $PDEV is corrupt, trying to mount it read-only"
   mmc-mount $PDEV $MP ro
