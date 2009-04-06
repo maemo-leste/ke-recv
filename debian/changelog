@@ -1,3 +1,10 @@
+ke-recv (3.12-1~unreleased) unstable; urgency=low
+
+  * Added more FAT partition types as supported types to the mount script.
+  * Fixes: NB#109543 - ke-recv regards FAT16 as unsupported format
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  6 Apr 2009 10:15:20 +0300
+
 ke-recv (3.11-1) unstable; urgency=low
 
   * Fix partitioning script for 3 partitions

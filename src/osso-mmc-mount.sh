@@ -42,8 +42,11 @@ if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk0 ]; then
   PNUM=$(echo $PDEV | sed "s#/dev/mmcblk[01]p##")
   DEV=$(echo $PDEV | sed "s#p[1234]##")
   PID=$(sfdisk -c $DEV $PNUM)
-  if [ $PID != b -a $PID != c ]; then
-    logger "$0: $PDEV is not FAT32"
+  if [ $PID = b -o $PID = c -o $PID = e -o $PID = 6 -o $PID = 4 -o \
+       $PID = 14 -o $PID = 16 -o $PID = 1b -o $PID = 1c -o $PID = 1e ]; then
+    logger "$0: $PDEV partition type is '$PID'"
+  else
+    logger "$0: $PDEV type '$PID' is not FAT32 or FAT16"
     exit 1
   fi
 fi
