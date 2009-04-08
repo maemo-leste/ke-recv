@@ -140,7 +140,7 @@ typedef enum {
 
 int handle_event(mmc_event_t e, mmc_info_t *mmc, const char *arg);
 void do_global_init(void);
-int unmount_volumes(mmc_info_t *mmc);
+int unmount_volumes(mmc_info_t *mmc, gboolean lazy);
 void inform_camera_out(gboolean value);
 void inform_camera_turned_out(gboolean value);
 void inform_slide_keyboard(gboolean value);

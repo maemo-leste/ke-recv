@@ -20,7 +20,7 @@
 # 02110-1301 USA
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <mount point>"
+  echo "Usage: $0 <mount point> [\"lazy\"]"
   exit 1
 fi
 
@@ -30,8 +30,13 @@ grep "$MP " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
   # first try in gvfs way
   mmc-unmount $MP 2> /dev/null
-  if [ $? != 0 ]; then
-    # try if old-fashioned way works
+  RC=$?
+  if [ $RC != 0 -a $# = 2 ]; then
+    # lazy unmounting if mmc-unmount failed
+    echo "$0: lazy umount for $MP"
+    umount -l $MP 2> /dev/null
+  elif [ $RC != 0 ]; then
+    # old-fashioned unmounting if mmc-unmount failed
     umount $MP 2> /dev/null
   fi
   RC=$?

@@ -2,6 +2,15 @@ ke-recv (3.12-1~unreleased) unstable; urgency=low
 
   * Added more FAT partition types as supported types to the mount script.
   * Fixes: NB#109543 - ke-recv regards FAT16 as unsupported format
+  * init_card(): Do not assume card as external if HAL does not give the
+    information about which one is it.
+  * device_removed(): Do not check if USB storage/volume was removed if the
+    storage list is empty (avoids a bogus error message).
+  * mmc-format: Remove "-F 32" command line option to avoid 'Not enough
+    clusters for a 32 bit FAT' error encountered in NB#90175.
+  * Now do lazy unmount in osso-mmc-umount.sh in case the cover is opened.
+  * Fixes: NB#109742 - External MMC card cannot be unmounted when filesystem
+    is busy, even if the card is physically removed.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  6 Apr 2009 10:15:20 +0300
 

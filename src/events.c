@@ -43,7 +43,7 @@ GConfClient* gconfclient;
 
 static void usb_share_card(mmc_info_t *mmc, gboolean show);
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors);
-static int do_unmount(const char *mountpoint);
+static int do_unmount(const char *mountpoint, gboolean lazy);
 static void open_dialog_helper(mmc_info_t *mmc);
 static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n);
 
@@ -659,7 +659,7 @@ static void handle_e_rename(mmc_info_t *mmc)
         /* Currently renaming is done to unmounted memory card. This would
          * not be necessary, but there is a problem of updating the volume
          * label otherwise (sending GnomeVFS signals didn't work). */
-        if (do_unmount(mmc->mount_point)) {
+        if (do_unmount(mmc->mount_point, FALSE)) {
                 ret = exec_prog(args[0], args);
                 if (ret != 0) {
                         ULOG_ERR_F("mlabel failed: exec_prog returned %d",
@@ -730,10 +730,10 @@ static void handle_e_format(mmc_info_t *mmc)
                 ULOG_DEBUG_F("using device file %s", args[1]);
 
                 if (vol->mountpoint != NULL)
-                        ret = do_unmount(vol->mountpoint);
+                        ret = do_unmount(vol->mountpoint, FALSE);
                 else {
                         ULOG_DEBUG_F("no mountpoint, using dev_name");
-                        ret = do_unmount(vol->dev_name);
+                        ret = do_unmount(vol->dev_name, FALSE);
                 }
         } else {
                 args[1] = mmc->whole_device;
@@ -745,7 +745,7 @@ static void handle_e_format(mmc_info_t *mmc)
                 args[2] = buf;
                 args[3] = mmc->desired_label;
 
-                ret = unmount_volumes(mmc);
+                ret = unmount_volumes(mmc, FALSE);
         }
         if (!ret) {
                 ULOG_INFO_F("memory card %s is in use", mmc->name);
@@ -963,13 +963,16 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
         return count;
 }
 
-static int do_unmount(const char *mountpoint)
+static int do_unmount(const char *mountpoint, gboolean lazy)
 {
-        const char* umount_args[] = {MMC_UMOUNT_COMMAND, NULL, NULL};
+        const char* umount_args[] = {MMC_UMOUNT_COMMAND, NULL, NULL, NULL};
         int ret;
 
         emit_gnomevfs_pre_unmount(mountpoint);
         umount_args[1] = mountpoint;
+
+        if (lazy) umount_args[2] = "lazy";
+
         ret = exec_prog(MMC_UMOUNT_COMMAND, umount_args);
         if (ret == 0) {
                 return 1;
@@ -999,14 +1002,14 @@ static void discard_volume(mmc_info_t *mmc, const char *udi)
                 rm_volume_from_list(&mmc->volumes, udi);
                 return;
         }
-        if (!do_unmount(l->mountpoint)) {
+        if (!do_unmount(l->mountpoint, TRUE)) {
                 ULOG_INFO_F("couldn't unmount %s", udi);
         }
         rm_volume_from_list(&mmc->volumes, udi);
 }
 
 /* try to unmount all volumes on the list */
-int unmount_volumes(mmc_info_t *mmc)
+int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
 {
         int all_unmounted = 1;
        
@@ -1023,7 +1026,7 @@ int unmount_volumes(mmc_info_t *mmc)
                                  * lower-level issues. Sometimes is_mounted
                                  * property cannot be trusted. */
                                 if (l->mountpoint != NULL
-                                    && do_unmount(l->mountpoint)) {
+                                    && do_unmount(l->mountpoint, lazy)) {
                                         /* unmount succeeded or it
                                          * was not mounted */
                                 }
@@ -1034,7 +1037,7 @@ int unmount_volumes(mmc_info_t *mmc)
                                              l->udi);
                                 continue;
                         }
-                        if (do_unmount(l->mountpoint)) {
+                        if (do_unmount(l->mountpoint, lazy)) {
                                 ULOG_DEBUG_F("unmounted %s", l->udi);
                         } else {
                                 ULOG_INFO_F("couldn't unmount %s", l->udi);
@@ -1051,7 +1054,8 @@ int unmount_volumes(mmc_info_t *mmc)
                                    mmc->preferred_volume);
                         all_unmounted = 0;
                 } else {
-                        if (vol->mountpoint && do_unmount(vol->mountpoint)) {
+                        if (vol->mountpoint &&
+                            do_unmount(vol->mountpoint, lazy)) {
                                 ULOG_DEBUG_F("unmounted %s", vol->udi);
                         } else {
                                 ULOG_INFO_F("couldn't unmount %s", vol->udi);
@@ -1238,7 +1242,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 break;
                         }
                         possibly_turn_swap_off(NORMAL_DIALOG, mmc);
-                        if (!unmount_volumes(mmc)) {
+                        if (!unmount_volumes(mmc, TRUE)) {
                                 open_dialog_helper(mmc);
                                 setup_s_unmount_pending(mmc);
                                 mmc->state = S_UNMOUNT_PENDING;
@@ -1250,7 +1254,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
-                                if (!unmount_volumes(mmc)) {
+                                if (!unmount_volumes(mmc, FALSE)) {
                                         ret = 0;
                                 } else {
                                         usb_share_card(mmc, TRUE);
@@ -1315,7 +1319,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()) {
                                 unshare_usb_shared_card(mmc);
                         } else {
-                                unmount_volumes(mmc);
+                                unmount_volumes(mmc, TRUE);
                         }
                         break;
                 case E_ENABLE_SWAP:
@@ -1383,7 +1387,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                 case E_UNMOUNT_TIMEOUT:
                         ULOG_DEBUG_F("E_UNMOUNT_TIMEOUT for %s", mmc->name);
                         mmc->unmount_pending_timer_id = 0;
-                        if (!unmount_volumes(mmc)) {
+                        if (!unmount_volumes(mmc, FALSE)) {
                                 open_dialog_helper(mmc);
                                 setup_s_unmount_pending(mmc);
                         } else {
@@ -1395,7 +1399,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                 case E_VOLUME_REMOVED:
                         ULOG_DEBUG_F("E_VOLUME_REMOVED for %s", mmc->name);
                         discard_volume(mmc, arg);
-                        if (unmount_volumes(mmc)) {
+                        if (unmount_volumes(mmc, TRUE)) {
                                 dismantle_s_unmount_pending(mmc);
                                 CLOSE_DIALOG
                                 CLOSE_SWAP_DIALOG

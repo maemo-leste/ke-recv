@@ -163,7 +163,6 @@ static gboolean start_format()
         const char* args[] = {MMC_FORMAT_COMMAND, NULL,
                               "-n", NULL,  /* volume label */
                               "-S", NULL,  /* logical sector size */
-                              "-F", "32",  /* FAT32 */
                               "-R", "38",  /* reserved sectors */
                               "-s", "128", /* sectors per cluster */
                               NULL};

@@ -1310,6 +1310,7 @@ int init_mmc_volumes(mmc_info_t *mmc)
         return num_volumes;
 }
 
+#ifndef FREMANTLE_MODE
 static void init_usb_volumes()
 {
         storage_info_t *si;
@@ -1346,6 +1347,7 @@ static void init_usb_volumes()
                 libhal_free_string_array(list);
         }
 }
+#endif
 
 #if 0
 static void init_camera_state()
@@ -1510,10 +1512,10 @@ static int init_card(const char *udi)
 
         slot = get_prop_string(udi, "mmc_host.slot_name");
 
-        if (slot == NULL || strcmp(slot, "external") == 0) {
+        if (slot && strcmp(slot, "external") == 0) {
                 mmc = &ext_mmc;
                 internal = 0;
-        } else if (strcmp(slot, "internal") == 0) {
+        } else if (slot && strcmp(slot, "internal") == 0) {
                 mmc = &int_mmc;
                 internal = 1;
         } else {
@@ -2182,7 +2184,7 @@ static int unmount_usb_volumes(void)
         si = storage_list;
         while (si != NULL) {
                 if (si->storage_udi != NULL) {
-                        if (!unmount_volumes(&si->volumes)) {
+                        if (!unmount_volumes(&si->volumes, FALSE)) {
                                 ULOG_WARN("couldn't unmount all volumes"
                                           " for %s", si->storage_udi);
                                 all_unmounted = 0;
@@ -2491,6 +2493,7 @@ static void add_storage_for_mmc(mmc_info_t *mmc,
         handle_event(E_DEVICE_ADDED, mmc, storage_udi);
 }
 
+#ifndef FREMANTLE_MODE
 static void init_usb_storages()
 {
         int num_devices = 0;
@@ -2524,6 +2527,7 @@ static void init_usb_storages()
         }
         libhal_free_string_array(list);
 }
+#endif
 
 static void device_added(LibHalContext *ctx, const char *udi)
 {
@@ -2657,26 +2661,28 @@ static void device_removed(LibHalContext *ctx, const char *udi)
                 return;
         }
 
-        /* check if it's one of the USB mass storages */
-        si = storage_from_list(udi);
-        if (si != NULL) {
-                ULOG_DEBUG_F("USB STORAGE REMOVED %s", udi);
-                zero_storage_info(si);
-                if (usb_storage_count() == 0
-                    && usb_device_name != NULL) {
-                        /* invalidate the device name */
-                        free(usb_device_name);
-                        usb_device_name = NULL;
-                }
-        } else if ((vol = usb_volume_from_list(udi)) != NULL) {
-                ULOG_DEBUG_F("USB VOLUME REMOVED %s", udi);
-                if (usb_state == S_HOST) {
-                        if (!unmount_volume(vol)) {
-                                ULOG_WARN_F("couldn't unmount USB "
-                                            "VOLUME %s", udi);
+        if (storage_list != NULL) {
+                /* check if it's one of the USB mass storages */
+                si = storage_from_list(udi);
+                if (si != NULL) {
+                        ULOG_DEBUG_F("USB STORAGE REMOVED %s", udi);
+                        zero_storage_info(si);
+                        if (usb_storage_count() == 0
+                            && usb_device_name != NULL) {
+                                /* invalidate the device name */
+                                free(usb_device_name);
+                                usb_device_name = NULL;
                         }
+                } else if ((vol = usb_volume_from_list(udi)) != NULL) {
+                        ULOG_DEBUG_F("USB VOLUME REMOVED %s", udi);
+                        if (usb_state == S_HOST) {
+                                if (!unmount_volume(vol)) {
+                                        ULOG_WARN_F("couldn't unmount USB "
+                                                    "VOLUME %s", udi);
+                                }
+                        }
+                        zero_volume_info(vol);
                 }
-                zero_volume_info(vol);
         }
 }
 
