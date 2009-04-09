@@ -1,4 +1,4 @@
-ke-recv (3.12-1~unreleased) unstable; urgency=low
+ke-recv (3.12-1) unstable; urgency=low
 
   * Added more FAT partition types as supported types to the mount script.
   * Fixes: NB#109543 - ke-recv regards FAT16 as unsupported format
@@ -12,7 +12,7 @@ ke-recv (3.12-1~unreleased) unstable; urgency=low
   * Fixes: NB#109742 - External MMC card cannot be unmounted when filesystem
     is busy, even if the card is physically removed.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  6 Apr 2009 10:15:20 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 09 Apr 2009 08:42:16 +0300
 
 ke-recv (3.11-1) unstable; urgency=low
 
