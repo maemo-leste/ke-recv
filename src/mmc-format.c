@@ -231,25 +231,25 @@ static void sig_handler(int signo)
         int child_status = -1;
         assert(signo == SIGCHLD);
         if (ignore_child) {
-                ULOG_DEBUG_F("child from exec_prog");
+                printf("%s: child from exec_prog\n", __func__);
                 return;
         }
-        ULOG_DEBUG_F("child pid=%d", child_pid);
+
         ret = waitpid(child_pid, &child_status, 0);
         if (ret == -1) {
-                ULOG_ERR_F("waitpid() failed");
+                printf("%s: waitpid() failed\n", __func__);
                 exit(1);
         }
         if (WIFEXITED(child_status)) {
-                ULOG_DEBUG_F("child returned: %d",
-                             WEXITSTATUS(child_status));
+                printf("%s: child returned: %d\n", __func__,
+                       WEXITSTATUS(child_status));
                 if (WEXITSTATUS(child_status) != 0) {
                         exit(2);
                 }
                 sync();  /* sync before exit */
                 exit(0);
         } else {
-                ULOG_WARN_F("child terminated abnormally");
+                printf("%s: child terminated abnormally\n", __func__);
                 exit(2);
         }
 }

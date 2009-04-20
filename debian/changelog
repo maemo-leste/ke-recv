@@ -1,3 +1,10 @@
+ke-recv (3.13-1) unstable; urgency=low
+
+  * Fixes: NB#110491 - BAT: Memory card formatting does not take place.
+  * Added a run of lsof and logging in case unmounting fails.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 20 Apr 2009 11:12:00 +0300
+
 ke-recv (3.12-1) unstable; urgency=low
 
   * Added more FAT partition types as supported types to the mount script.
