@@ -82,9 +82,7 @@ static void emit_gnomevfs_pre_unmount(const char *mount_point)
 static void set_localised_label(mmc_info_t *mmc)
 {
         if (mmc->internal_card) {
-                strcpy(mmc->display_name,
-                       (const char*)dgettext("hildon-fm",
-                        "sfil_li_memorycard_internal"));
+                strcpy(mmc->display_name, "internal card");
         } else {
                 strcpy(mmc->display_name,
                        (const char*)dgettext("hildon-fm",
