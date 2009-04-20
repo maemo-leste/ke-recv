@@ -364,7 +364,7 @@ static gboolean possibly_turn_swap_on(const mmc_info_t *mmc)
                 ULOG_WARN_F("swap_switch_on() for %s: %s", mmc->name,
                             strerror(ret));
                 if (ret == EINVAL) {
-                        display_system_note(MSG_SWAP_FILE_CORRUPTED);
+                        display_system_note("swap file corrupt");
                 }
                 return FALSE;
         }
@@ -451,13 +451,13 @@ static void possibly_turn_swap_off(swap_dialog_t dialog, mmc_info_t *mmc)
                 if (dialog == USB_DIALOG) {
                         mmc->swap_dialog_id =
                                 open_closeable_dialog(OSSO_GN_WARNING,
-                                        MSG_SWAP_IN_USB_USE,
-                                        MSG_SWAP_USB_CLOSEAPPS_BUTTON);
+                                        "in usb use",
+                                        "close apps");
                 } else {
                         mmc->swap_dialog_id =
                                 open_closeable_dialog(OSSO_GN_WARNING,
-                                        MSG_SWAP_CARD_IN_USE,
-                                        MSG_SWAP_CLOSEAPPS_BUTTON);
+                                        "card in use",
+                                        "close apps");
                 }
         }
 }
@@ -610,7 +610,7 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
                 ULOG_INFO_F("USB mass storage module loaded for %s", dev);
                 /*
                 if (show) {
-                        display_dialog(MSG_DEVICE_CONNECTED_VIA_USB);
+                        display_dialog("connected via usb");
                 }
                 */
                 inform_mmc_used_over_usb(TRUE, mmc);
@@ -779,7 +779,6 @@ static void handle_e_format(mmc_info_t *mmc)
         }
 }
 
-#define MSG_UNABLE_TO_REPAIR _("card_unable_to_repair_memory_card")
 
 static void handle_e_repair(mmc_info_t *mmc)
 {
@@ -795,7 +794,7 @@ static void handle_e_repair(mmc_info_t *mmc)
                 udi = l->udi;
         } else {
                 ULOG_ERR_F("device name for the partition not found");
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
                 return;
         }
 
@@ -813,15 +812,15 @@ static void handle_e_repair(mmc_info_t *mmc)
 
         if (ret > 2) {
                 ULOG_ERR_F("dosfsck returned: %d", ret - 2);
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
                 return;
         } else if (ret > 0) {
                 ULOG_ERR_F("mmc-check error code: %d", ret);
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
                 return;
         } else if (ret < 0) {
                 ULOG_ERR_F("exec_prog error code: %d", ret);
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
                 return;
         }
         l->corrupt = 0;
@@ -829,9 +828,9 @@ static void handle_e_repair(mmc_info_t *mmc)
 
         init_mmc_volumes(mmc); /* re-init volumes */
         if (mount_volumes(mmc, FALSE)) {
-                display_system_note(_("card_memory_card_repaired"));
+                display_system_note("memory card repaired");
         } else {
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
         }
 }
 
@@ -884,9 +883,9 @@ static void handle_e_check(mmc_info_t *mmc)
         set_mmc_corrupted_flag(FALSE, mmc);
 
         if (mount_volumes(mmc)) {
-                display_system_note(_("card_memory_card_repaired"));
+                display_system_note("memory card repaired");
         } else {
-                display_system_note(MSG_UNABLE_TO_REPAIR);
+                display_system_note("unable to repair");
         }
 #endif
 }
@@ -1084,7 +1083,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                                 if (mount_volumes(mmc, TRUE)) {
                                         /*
                                         display_dialog(
-                                                MSG_MEMORY_CARD_AVAILABLE);
+                                                "card available");
                                         if (desktop_started) {
                                                 check_install_file(mmc);
                                         }
@@ -1186,11 +1185,6 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex)
         char buf[MAX_MSG_LEN + 1];
         buf[0] = '\0';
 
-        if (in && in->display_name[0] == '\0') {
-                strncpy(in->display_name,
-                        (const char*)dgettext("hildon-fm",
-                        "sfil_li_memorycard_internal"), 99);
-        }
         if (ex && ex->display_name[0] == '\0') {
                 strncpy(ex->display_name,
                         (const char*)dgettext("hildon-fm",
@@ -1221,7 +1215,7 @@ static void open_dialog_helper(mmc_info_t *mmc)
         /*
         if (mmc->dialog_id == -1 && mmc->swap_dialog_id == -1) {
                 mmc->dialog_id = open_closeable_dialog(OSSO_GN_WARNING,
-                                     MSG_UNMOUNT_MEMORY_CARD_IN_USE, "");
+                                     "card in use", "");
         }
         */
 }
@@ -1289,7 +1283,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                         /*
                                         if (!mmc->skip_banner) {
                                                 display_dialog(
-                                                 MSG_MEMORY_CARD_AVAILABLE);
+                                                 "card available");
                                         }
                                         if (desktop_started) {
                                                 check_install_file(mmc);

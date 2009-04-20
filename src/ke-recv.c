@@ -2812,7 +2812,7 @@ static void e_plugged_helper(void)
             && int_mmc.whole_device == NULL) {
                 ULOG_DEBUG_F("no cards inserted");
                 /*
-                display_system_note(MSG_NO_MEMORY_CARD_INSERTED);
+                display_system_note("no memory card inserted");
                 */
                 return;
         }

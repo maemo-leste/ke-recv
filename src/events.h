@@ -117,24 +117,12 @@ typedef enum {
 
 
 /* some UI strings */
-#define MSG_DEVICE_CONNECTED_VIA_USB _("card_connected_via_usb")
 #define MSG_USB_DISCONNECTED _("card_ib_usb_disconnected")
-#define MSG_NO_MEMORY_CARD_INSERTED _("card_ni_usb_no_memory_card_inserted")
-#define MSG_MEMORY_CARD_AVAILABLE _("card_ib_memory_card_available")
 #define MSG_MEMORY_CARD_IS_CORRUPTED_INT _("card_ti_corrupted_device")
 #define MSG_MEMORY_CARD_IS_CORRUPTED _("card_ti_corrupted_card")
 #define MSG_FORMATTING_COMPLETE _("card_ib_formatting_complete")
 #define MSG_USB_MEMORY_CARD_IN_USE _("card_ni_usb_failed_card_in_use")
 #define MSG_USB_MEMORY_CARDS_IN_USE _("card_ni_usb_failed_cards_in_use")
-#define MSG_UNMOUNT_MEMORY_CARD_IN_USE _("card_ni_card_in_use_warning")
-
-#define MSG_CARD_IS_READ_ONLY _("mmc_ib_mmc_is_readonly")
-#define MSG_SWAP_CARD_IN_USE _("card_no_mmc_cover_open_mmc_swap")
-#define MSG_SWAP_CLOSEAPPS_BUTTON _("card_bd_mmc_cover_open_mmc_swap_ok")
-#define MSG_SWAP_IN_USB_USE _("card_no_usb_connected_swap_on")
-#define MSG_SWAP_FILE_CORRUPTED _("memr_ni_swap_file_corrupted")
-#define MSG_SWAP_USB_CLOSEAPPS_BUTTON \
-              _("card_bd_usb_connected_swap_on_closeapps")
 
 #define MAX_MSG_LEN 500
 

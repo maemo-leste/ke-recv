@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 
                 hildon_banner =
                         (HildonBanner*)hildon_banner_show_progress(NULL, NULL,
-                                _("card_repairing_memory_card"));
+                                "repairing");
                 hildon_banner_set_fraction(hildon_banner, 0.0);
                 gtk_widget_show(GTK_WIDGET(hildon_banner));
         }

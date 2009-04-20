@@ -1,3 +1,10 @@
+ke-recv (3.14-1~unreleased) unstable; urgency=low
+
+  * Added dependencies to various l10n packages whose translations are used.
+  * Removed a number of unused l10n strings.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 20 Apr 2009 12:38:07 +0300
+
 ke-recv (3.13-1) unstable; urgency=low
 
   * Fixes: NB#110491 - BAT: Memory card formatting does not take place.
