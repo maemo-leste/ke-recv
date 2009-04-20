@@ -1,7 +1,14 @@
-ke-recv (3.14-1~unreleased) unstable; urgency=low
+ke-recv (3.14-1) unstable; urgency=low
 
   * Added dependencies to various l10n packages whose translations are used.
   * Removed a number of unused l10n strings.
+  * Fix USB sharing failure messages to match the new UI specification.
+  * Disable swap on/off functions.
+  * Remove "-s 128" format option because Lokesh's card failed to format with
+    it.
+  * Fixes: NB#112053 - Formatting mmc throws no banner and actually doesnt
+    format anything.
+  * Fix a small typo in osso-mmc-mount.sh partition type checking code.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 20 Apr 2009 12:38:07 +0300
 

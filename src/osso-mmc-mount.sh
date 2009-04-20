@@ -37,7 +37,7 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
-if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk0 ]; then
+if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk1 ]; then
   # check the FAT magic number
   PNUM=$(echo $PDEV | sed "s#/dev/mmcblk[01]p##")
   DEV=$(echo $PDEV | sed "s#p[1234]##")

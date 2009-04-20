@@ -164,7 +164,9 @@ static gboolean start_format()
                               "-n", NULL,  /* volume label */
                               "-S", NULL,  /* logical sector size */
                               "-R", "38",  /* reserved sectors */
+#if 0  /* some cards fail with "-s 128" */
                               "-s", "128", /* sectors per cluster */
+#endif
                               NULL};
 
         ULOG_DEBUG_F("entered");

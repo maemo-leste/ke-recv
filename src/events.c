@@ -41,7 +41,7 @@ typedef enum { USB_DIALOG, NORMAL_DIALOG, NO_DIALOG } swap_dialog_t;
 
 GConfClient* gconfclient;
 
-static void usb_share_card(mmc_info_t *mmc, gboolean show);
+static int usb_share_card(mmc_info_t *mmc, gboolean show);
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors);
 static int do_unmount(const char *mountpoint, gboolean lazy);
 static void open_dialog_helper(mmc_info_t *mmc);
@@ -339,6 +339,7 @@ static void dismantle_s_unmount_pending(mmc_info_t *mmc)
 
 static gboolean possibly_turn_swap_on(const mmc_info_t *mmc)
 {
+#if 0
         int ret;
 
         if (mmc->swap_location == NULL) {
@@ -368,6 +369,8 @@ static gboolean possibly_turn_swap_on(const mmc_info_t *mmc)
         }
         inform_mmc_swapping(TRUE, mmc);
         return TRUE;
+#endif
+        return FALSE;
 }
 
 static void check_swap_dialog(mmc_info_t *mmc)
@@ -404,6 +407,7 @@ static void check_swap_dialog(mmc_info_t *mmc)
 
 static void possibly_turn_swap_off(swap_dialog_t dialog, mmc_info_t *mmc)
 {
+#if 0
         if (mmc->swap_location == NULL) {
                 return;
         }
@@ -458,10 +462,12 @@ static void possibly_turn_swap_off(swap_dialog_t dialog, mmc_info_t *mmc)
                                         "close apps");
                 }
         }
+#endif
 }
 
 void possibly_turn_swap_off_simple(mmc_info_t *mmc)
 {
+#if 0
         if (mmc->swap_location == NULL) {
                 return;
         }
@@ -489,10 +495,12 @@ void possibly_turn_swap_off_simple(mmc_info_t *mmc)
         } else {
                 ULOG_DEBUG_F("cannot safely turn %s swap off", mmc->name);
         }
+#endif
 }
 
 static gboolean possibly_turn_swap_off_nocheck(mmc_info_t *mmc)
 {
+#if 0
         int ret;
 
         if (mmc->swap_location == NULL) {
@@ -516,6 +524,7 @@ static gboolean possibly_turn_swap_off_nocheck(mmc_info_t *mmc)
                 return FALSE;
         }
         inform_mmc_swapping(FALSE, mmc);
+#endif
         return TRUE;
 }
 
@@ -568,7 +577,7 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
         }
 }
 
-static void usb_share_card(mmc_info_t *mmc, gboolean show)
+static int usb_share_card(mmc_info_t *mmc, gboolean show)
 {
         const char *args[] = {NULL, NULL};
         char *dev;
@@ -585,9 +594,9 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
                                 ULOG_DEBUG_F("falling back to partition 1!");
                                 vol = get_nth_volume(mmc, 1);
                                 if (vol == NULL || vol->dev_name == NULL)
-                                        return;
+                                        return 0;
                         } else
-                                return;
+                                return 0;
                 }
                 dev = vol->dev_name;
         } else
@@ -595,12 +604,12 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
 
         if (dev == NULL) {
                 ULOG_DEBUG_F("dev unknown for %s", mmc->name);
-                return;
+                return 0;
         }
 
         if (mmc->storage_udi == NULL) {
                 ULOG_DEBUG_F("device is not ready yet");
-                return;
+                return 0;
         }
 
         args[0] = dev;
@@ -612,9 +621,11 @@ static void usb_share_card(mmc_info_t *mmc, gboolean show)
                 }
                 */
                 inform_mmc_used_over_usb(TRUE, mmc);
+                return 1;
         } else {
                 ULOG_ERR_F("failed to load USB mass storage module for %s",
                            dev);
+                return 0;
         }
 }
 
@@ -1074,7 +1085,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         inform_mmc_cover_open(FALSE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
@@ -1178,7 +1189,8 @@ static void handle_disable_swap(mmc_info_t *mmc)
         }
 }
 
-void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex)
+void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex,
+                                    gboolean ext_failed)
 {
         char buf[MAX_MSG_LEN + 1];
         buf[0] = '\0';
@@ -1193,19 +1205,22 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex)
                 snprintf(buf, MAX_MSG_LEN,
                          MSG_USB_MEMORY_CARDS_IN_USE,
                          ex->display_name);
+                display_system_note(buf);
         } else {
-                if (ex) {
-                        /*
-                        mmc_info_t *mmc = in;
-                        mmc = ex;
-                        */
-                        /* error string missing for this case */
-                        return;
-                } else
+                if (ext_failed) {
+                        /* external card in use */
                         snprintf(buf, MAX_MSG_LEN,
-                                 MSG_USB_MEMORY_CARD_IN_USE);
+                                 _("card_connected_via_usb_card"),
+                                 ex->display_name);
+                        display_dialog(buf);
+                } else {
+                        /* internal card in use */
+                        snprintf(buf, MAX_MSG_LEN,
+                                 _("card_connected_via_usb_device"),
+                                 ex->display_name);
+                        display_dialog(buf);
+                }
         }
-        display_system_note(buf);
 }
 
 static void open_dialog_helper(mmc_info_t *mmc)
@@ -1249,7 +1264,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 if (!unmount_volumes(mmc, FALSE)) {
                                         ret = 0;
                                 } else {
-                                        usb_share_card(mmc, TRUE);
+                                        ret = usb_share_card(mmc, TRUE);
                                 }
                         }
                         break;
@@ -1302,7 +1317,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         inform_device_present(TRUE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, TRUE);
                         }
                         break;
                 case E_DEVICE_REMOVED:
@@ -1330,7 +1345,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 inform_device_present(TRUE, mmc);
                                 if (!ignore_cable && in_mass_storage_mode()
                                     && !device_locked) {
-                                        usb_share_card(mmc, FALSE);
+                                        ret = usb_share_card(mmc, FALSE);
                                 } else if (!in_peripheral_wait_mode()) {
                                         update_mmc_label(mmc);
                                         mount_volumes(mmc, TRUE);
@@ -1359,7 +1374,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         CLOSE_SWAP_DIALOG
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc); /* re-read volumes */
                                 mount_volumes(mmc, TRUE);

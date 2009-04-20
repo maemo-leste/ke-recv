@@ -2827,11 +2827,11 @@ static void e_plugged_helper(void)
                 er = handle_event(E_PLUGGED, &ext_mmc, NULL);
 
         if (!er && !ir) {
-                show_usb_sharing_failed_dialog(&int_mmc, &ext_mmc);
+                show_usb_sharing_failed_dialog(&int_mmc, &ext_mmc, 0);
         } else if (!er) {
-                show_usb_sharing_failed_dialog(NULL, &ext_mmc);
+                show_usb_sharing_failed_dialog(NULL, &ext_mmc, 1);
         } else if (!ir) {
-                show_usb_sharing_failed_dialog(&int_mmc, NULL);
+                show_usb_sharing_failed_dialog(NULL, &ext_mmc, 0);
         } else if (ext_mmc.whole_device && int_mmc.whole_device) {
                 /* both succeeded */
                 display_dialog(_("cards_connected_via_usb"));
