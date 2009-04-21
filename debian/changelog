@@ -1,3 +1,10 @@
+ke-recv (3.15-1~unreleased) unstable; urgency=low
+
+  * Fixes: NB#111920 - Do not mount volumes when the cover is closed, but wait
+    for the volume added event.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 21 Apr 2009 10:47:56 +0300
+
 ke-recv (3.14-1) unstable; urgency=low
 
   * Added dependencies to various l10n packages whose translations are used.

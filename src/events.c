@@ -1087,6 +1087,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                             && !device_locked) {
                                 ret = usb_share_card(mmc, TRUE);
                         } else {
+#if 0 /* cannot mount here anymore after kernel changes in Fremantle */
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc, TRUE)) {
@@ -1098,6 +1099,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                                         }
                                                 */
                                 }
+#endif
                         }
                         mmc->state = S_COVER_CLOSED;
                         break;
