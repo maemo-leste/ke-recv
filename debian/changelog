@@ -1,4 +1,4 @@
-ke-recv (3.15-1~unreleased) unstable; urgency=low
+ke-recv (3.15-1) unstable; urgency=low
 
   * Fixes: NB#111920 - Do not mount volumes when the cover is closed, but wait
     for the volume added event.
