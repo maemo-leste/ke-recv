@@ -1,3 +1,11 @@
+ke-recv (3.16-1~unreleased) unstable; urgency=low
+
+  * Set the cover open GConf key on E_INIT_CARD.
+  * Fixes: NB#105727 - Camera is not considering Lens cover as open, if
+    battery cover is not present
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 23 Apr 2009 14:19:41 +0300
+
 ke-recv (3.15-1) unstable; urgency=low
 
   * Fixes: NB#111920 - Do not mount volumes when the cover is closed, but wait

@@ -1139,6 +1139,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                 case E_INIT_CARD:
                         ULOG_DEBUG_F("E_INIT_CARD for %s", mmc->name);
                         /* cover is open, the device should not be used */
+                        inform_mmc_cover_open(TRUE, mmc);
                         inform_device_present(FALSE, mmc);
                         break;
                 case E_PLUGGED:
@@ -1343,6 +1344,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_INIT_CARD:
                         ULOG_DEBUG_F("E_INIT_CARD for %s", mmc->name);
+                        inform_mmc_cover_open(FALSE, mmc);
                         if (mmc->whole_device != NULL) {
                                 inform_device_present(TRUE, mmc);
                                 if (!ignore_cable && in_mass_storage_mode()
