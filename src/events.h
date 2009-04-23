@@ -121,7 +121,8 @@ typedef enum {
 #define MSG_MEMORY_CARD_IS_CORRUPTED_INT _("card_ti_corrupted_device")
 #define MSG_MEMORY_CARD_IS_CORRUPTED _("card_ti_corrupted_card")
 #define MSG_FORMATTING_COMPLETE _("card_ib_formatting_complete")
-#define MSG_USB_MEMORY_CARD_IN_USE _("card_ni_usb_failed_card_in_use")
+#define MSG_USB_INT_MEMORY_CARD_IN_USE_NO_EXT \
+        _("card_ni_usb_failed_card_in_use")
 #define MSG_USB_MEMORY_CARDS_IN_USE _("card_ni_usb_failed_cards_in_use")
 
 #define MAX_MSG_LEN 500

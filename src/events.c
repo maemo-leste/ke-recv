@@ -1209,6 +1209,11 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex,
                          MSG_USB_MEMORY_CARDS_IN_USE,
                          ex->display_name);
                 display_system_note(buf);
+        } else if (!ex) {
+                /* internal card in use, no external card present */
+                snprintf(buf, MAX_MSG_LEN,
+                         MSG_USB_INT_MEMORY_CARD_IN_USE_NO_EXT);
+                display_dialog(buf);
         } else {
                 if (ext_failed) {
                         /* external card in use */

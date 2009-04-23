@@ -3,6 +3,8 @@ ke-recv (3.16-1~unreleased) unstable; urgency=low
   * Set the cover open GConf key on E_INIT_CARD.
   * Fixes: NB#105727 - Camera is not considering Lens cover as open, if
     battery cover is not present
+  * Fixes: NB#112647 - Wrong info banner displayed when Mass stoirage mode
+    connected while no external mmc card pressent and internal mmc in use.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 23 Apr 2009 14:19:41 +0300
 
