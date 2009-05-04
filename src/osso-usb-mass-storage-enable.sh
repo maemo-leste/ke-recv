@@ -35,7 +35,7 @@ if [ $? = 0 ]; then
     fi
     OBEXD_PID=`pidof obexd`
     if [ $? = 0 ]; then
-        kill $OBEXD_PID
+        kill -HUP $OBEXD_PID
     else
         logger "$0: obexd is not running"
     fi
