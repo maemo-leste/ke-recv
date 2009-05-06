@@ -1,8 +1,6 @@
 ke-recv (3.16-1) unstable; urgency=low
 
   * Set the cover open GConf key on E_INIT_CARD.
-  * Fixes: NB#105727 - Camera is not considering Lens cover as open, if
-    battery cover is not present
   * Fixes: NB#112647 - Wrong info banner displayed when Mass stoirage mode
     connected while no external mmc card pressent and internal mmc in use.
   * Fixes: NB#113332 - obexd should be sent SIGHUP and not SIGTERM when USB
