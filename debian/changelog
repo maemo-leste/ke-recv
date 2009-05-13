@@ -5,6 +5,12 @@ ke-recv (3.17-1~unreleased) unstable; urgency=low
   * Do not lose mount point info when card was mounted read-only.
   * Fixes: NB#114816 - Error banner is displayed and henceforth memory card in
     not formatted when trying to format memory card
+  * Start tracking hildon-desktop readiness again, using the flag file and
+    D-Bus signal. Also initialisation of memory cards is postponed until
+    hildon-desktop is running.
+  * Fix problem with detecting the storage for external card. HAL's device
+    hierarchy is different at times (sometimes mmc_host is parent of storage,
+    sometimes grandparent). Partial fix to NB#115433 (remaining part is HAL's)
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 12 May 2009 14:13:06 +0300
 

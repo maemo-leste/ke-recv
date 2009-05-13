@@ -36,7 +36,7 @@
 #define FDO_OBJECT_PATH "/org/freedesktop/Notifications"
 #define FDO_INTERFACE "org.freedesktop.Notifications"
 #define USB_DOMAIN "hildon-status-bar-usb"
-#define DESKTOP_SVC "com.nokia.hildon-desktop"
+#define DESKTOP_IF "com.nokia.HildonDesktop"
 
 #define FREMANTLE_MODE 1
 
@@ -210,6 +210,7 @@ static gboolean set_desktop_started(gpointer data)
 {
         ULOG_DEBUG_F("entered");
         desktop_started = TRUE;
+
         if (!mmc_initialised) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
@@ -218,10 +219,12 @@ static gboolean set_desktop_started(gpointer data)
                 handle_event(E_INIT_CARD, &ext_mmc, NULL);
                 mmc_initialised = TRUE;
         }
+#if 0
         if (delayed_auto_install_check) {
                 possibly_start_am();
                 delayed_auto_install_check = FALSE;
         }
+#endif
         return FALSE;
 }
 
@@ -779,19 +782,10 @@ sig_handler(DBusConnection *c, DBusMessage *m, void *data)
         ULOG_INFO_L("Shutdown signal from MCE, unmounting and exiting");
         g_main_loop_quit(mainloop);
         handled = TRUE;
-    } else if (dbus_message_is_signal(m, "org.freedesktop.DBus",
-                                      "NameOwnerChanged")) {
-        DBusMessageIter iter;
-        char *s = NULL;
-
-        if (dbus_message_iter_init(m, &iter) &&
-            dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING) {
-            dbus_message_iter_get_basic(&iter, &s);
-            if (s && strcmp(s, DESKTOP_SVC) == 0) {
-                ULOG_DEBUG_F("hildon-desktop registered to system bus");
-                g_timeout_add(10 * 1000, set_desktop_started, NULL);
-            }
-        }
+    } else if (!desktop_started &&
+               dbus_message_is_signal(m, DESKTOP_IF, "ready")) {
+        ULOG_DEBUG_F("hildon-desktop registered to system bus");
+        g_timeout_add(1000, set_desktop_started, NULL);
         handled = TRUE;
     }
     /* invalidate */
@@ -1858,7 +1852,7 @@ static gboolean init_usb_cable_status(gpointer data)
                         set_usb_mode_key("idle");
                 }
 
-                if (!mmc_initialised) {
+                if (desktop_started && !mmc_initialised) {
                         /* initialise GConf keys and possibly mount or
                          * USB-share */
                         if (int_mmc_enabled) {
@@ -2551,6 +2545,7 @@ static void device_added(LibHalContext *ctx, const char *udi)
                         handle_event(E_VOLUME_ADDED, &int_mmc, udi);
                 } else if ((si = storage_for_volume(udi)) != NULL) {
                         volume_list_t *vol;
+                        ULOG_DEBUG_F("%s is USB volume", udi);
                         vol = add_usb_volume(&si->volumes, udi);
                         if (vol != NULL && vol->dev_name != NULL
                             && vol->mountpoint != NULL
@@ -2566,23 +2561,31 @@ static void device_added(LibHalContext *ctx, const char *udi)
                         }
                 }
         } else if (has_capability(udi, "storage")) {
-                char *parent, *grandparent = NULL;
+                char *parent, *grandpa = NULL, *mmc_host = NULL;
 
                 parent = get_prop_string(udi, "info.parent");
-                if (parent != NULL) {
-                        grandparent = get_prop_string(parent, "info.parent");
+                if (parent && has_capability(parent, "mmc_host"))
+                        mmc_host = parent;
+                else if (parent) {
+                        grandpa = get_prop_string(parent, "info.parent");
+                        if (grandpa && has_capability(grandpa, "mmc_host"))
+                                mmc_host = grandpa;
                 }
-                if (grandparent == NULL) {
-                        ULOG_DEBUG_F("storage didn't have grandparent");
+
+                if (mmc_host == NULL) {
+                        ULOG_DEBUG_F("couldn't find mmc_host for storage");
                         if (parent != NULL) libhal_free_string(parent);
+                        if (grandpa != NULL) libhal_free_string(grandpa);
                         return;
                 }
 
-                if (strcmp(ext_mmc.udi, grandparent) == 0) {
+                ULOG_DEBUG_F("comparing %s to %s or to %s", mmc_host,
+                             ext_mmc.udi, int_mmc.udi);
+                if (strcmp(ext_mmc.udi, mmc_host) == 0) {
                         add_storage_for_mmc(&ext_mmc, parent, udi);
                         setup_mmc_mount_timeout(&ext_mmc, 5);
                 } else if (int_mmc_enabled &&
-                           strcmp(int_mmc.udi, grandparent) == 0) {
+                           strcmp(int_mmc.udi, mmc_host) == 0) {
                         add_storage_for_mmc(&int_mmc, parent, udi);
                         setup_mmc_mount_timeout(&int_mmc, 5);
                 } else {
@@ -2600,7 +2603,9 @@ static void device_added(LibHalContext *ctx, const char *udi)
                         if (s != NULL) libhal_free_string(s);
                 }
                 libhal_free_string(parent);
-                libhal_free_string(grandparent);
+                libhal_free_string(grandpa);
+        } else {
+                ULOG_DEBUG_F("%s is not a storage or volume", udi);
         }
 }
 
@@ -3136,7 +3141,9 @@ int main(int argc, char* argv[])
                             MCE_MATCH_RULE);
 	        exit(1);
         }
-        dbus_bus_add_match(conn, "type='signal',member='NameOwnerChanged'",
+        /* match for HD readiness signal */
+        dbus_bus_add_match(conn, "type='signal',member='ready',"
+                           "interface='" DESKTOP_IF "'",
                            &error);
         if (dbus_error_is_set(&error)) {
                 ULOG_CRIT_L("dbus_bus_add_match failed");
@@ -3249,23 +3256,22 @@ int main(int argc, char* argv[])
         init_usb_volumes();
 #endif
 
-#if 0
         /* check if hildon-desktop is running */
-        if (dbus_bus_name_has_owner(sys_conn, DESKTOP_SVC, NULL)) {
+        if (g_file_test("/tmp/hildon-desktop/desktop-started.stamp",
+                        G_FILE_TEST_EXISTS)) {
                 ULOG_DEBUG_F("hildon-desktop is running");
                 desktop_started = TRUE;
         }
+
+#if 0
         if (getenv("FIRST_BOOT") != NULL) {
                 ULOG_DEBUG_F("this is the first boot");
                 first_boot = TRUE;
         }
 #endif
 
-        /* FIXME: now we assume that desktop is running
-         * (needs rechecking and possibly fixing hildon-desktop) */
-        desktop_started = TRUE;
-
-        if (usb_state != S_INVALID_USB_STATE && !mmc_initialised) {
+        if (desktop_started && usb_state != S_INVALID_USB_STATE
+            && !mmc_initialised) {
                 /* initialise GConf keys and possibly mount or USB-share */
                 if (int_mmc_enabled) {
                         handle_event(E_INIT_CARD, &int_mmc, NULL);
