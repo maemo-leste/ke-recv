@@ -946,15 +946,19 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                 set_mmc_corrupted_flag(FALSE, mmc);
                 count = 1;
         } else if (ret == 2) {
+                /* is was mounted read-only */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-                l->corrupt = 1; /* 10s check failed */
+                l->mountpoint = strdup(mmc->mount_point);
+                l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
                 if (show_errors)
                         open_closeable_dialog(OSSO_GN_NOTICE,
                                 _("card_ia_corrupted"), "OMG!");
         } else {
+                /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
+                l->mountpoint = NULL;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
