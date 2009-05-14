@@ -1,4 +1,4 @@
-ke-recv (3.17-1~unreleased) unstable; urgency=low
+ke-recv (3.17-1) unstable; urgency=low
 
   * Do not log bogus error 'MP is not writable' in the external card mounting
     case.
@@ -12,7 +12,7 @@ ke-recv (3.17-1~unreleased) unstable; urgency=low
     hierarchy is different at times (sometimes mmc_host is parent of storage,
     sometimes grandparent). Partial fix to NB#115433 (remaining part is HAL's)
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 12 May 2009 14:13:06 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 14 May 2009 10:34:58 +0300
 
 ke-recv (3.16-1) unstable; urgency=low
 
