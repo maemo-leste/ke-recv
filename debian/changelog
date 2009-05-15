@@ -3,8 +3,6 @@ ke-recv (3.17-1) unstable; urgency=low
   * Do not log bogus error 'MP is not writable' in the external card mounting
     case.
   * Do not lose mount point info when card was mounted read-only.
-  * Fixes: NB#114816 - Error banner is displayed and henceforth memory card in
-    not formatted when trying to format memory card
   * Start tracking hildon-desktop readiness again, using the flag file and
     D-Bus signal. Also initialisation of memory cards is postponed until
     hildon-desktop is running.
