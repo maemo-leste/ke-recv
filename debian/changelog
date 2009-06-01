@@ -1,3 +1,13 @@
+ke-recv (3.18-1) unstable; urgency=low
+
+  * Don't check is_mounted before unmounting to speed up and simplify.
+  * Handle event (e.g. E_CLOSED) properly even if whole_device is not known
+    yet.
+  * Fixes: NB#119012 - Memory card doesn't shows up in File Manager once back
+    cover is removed and put back again
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 01 Jun 2009 16:38:26 +0300
+
 ke-recv (3.17-1) unstable; urgency=low
 
   * Do not log bogus error 'MP is not writable' in the external card mounting

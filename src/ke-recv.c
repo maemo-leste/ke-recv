@@ -1901,7 +1901,6 @@ static void prop_modified(LibHalContext *ctx,
 
                 if (slide_keyboard_udi != NULL
                     && strcmp(slide_keyboard_udi, udi) == 0) {
-                        ULOG_DEBUG_F("SLIDE_KEYBOARD %d", val);
                         inform_slide_keyboard(val);
                 } else if (ext_mmc.cover_udi &&
                            strcmp(ext_mmc.cover_udi, udi) == 0) {

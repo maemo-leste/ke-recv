@@ -1029,6 +1029,7 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
             volume_list_t *l;
             for (l = &mmc->volumes; l != NULL; l = l->next) {
                 if (l->udi != NULL) {
+#if 0  /* not necessary to check is_mounted, mountpoint should be enough */
                         int prop;
                         /* TODO: cache is_mounted info for speed */
                         prop = get_prop_bool(l->udi, "volume.is_mounted");
@@ -1044,6 +1045,7 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
                                 }
                                 continue;
                         }
+#endif
                         if (l->mountpoint == NULL) {
                                 ULOG_DEBUG_F("mount point not known for %s",
                                              l->udi);
@@ -1444,7 +1446,6 @@ int handle_event(mmc_event_t e, mmc_info_t *mmc, const char *arg)
         int ret = 1;
         if (mmc->whole_device == NULL) {
                 ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
-                return ret;
         }
         switch (mmc->state) {
                 case S_COVER_OPEN:
