@@ -1,3 +1,9 @@
+ke-recv (3.19-1~unreleased) unstable; urgency=low
+
+  * foo
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri,  5 Jun 2009 13:33:23 +0300
+
 ke-recv (3.18-1) unstable; urgency=low
 
   * Don't check is_mounted before unmounting to speed up and simplify.
