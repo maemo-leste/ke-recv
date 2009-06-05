@@ -3031,7 +3031,6 @@ int in_peripheral_wait_mode(void)
 
 static void sigterm(int signo)
 {
-        ULOG_INFO_L("got SIGTERM");
         g_main_loop_quit(mainloop);
 }
 

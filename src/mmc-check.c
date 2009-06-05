@@ -49,15 +49,11 @@ static void sig_handler(int signo)
         int child_status = -1;
         assert(signo == SIGCHLD);
 
-        ULOG_DEBUG_F("child pid=%d", child_pid);
         ret = waitpid(child_pid, &child_status, 0);
         if (ret == -1) {
-                ULOG_ERR_F("waitpid() failed");
                 exit(1);
         }
         if (WIFEXITED(child_status)) {
-                ULOG_DEBUG_F("child returned: %d",
-                             WEXITSTATUS(child_status));
                 if (WEXITSTATUS(child_status) == 1) {
                         exit(3);
                 } else if (WEXITSTATUS(child_status) == 2) {
@@ -65,7 +61,6 @@ static void sig_handler(int signo)
                 }
                 exit(0);
         } else {
-                ULOG_WARN_F("child terminated abnormally");
                 exit(2);
         }
 }
