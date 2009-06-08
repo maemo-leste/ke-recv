@@ -1,6 +1,8 @@
 ke-recv (3.19-1~unreleased) unstable; urgency=low
 
   * Fixes: NB#119586 - Unsafe signal handler in ke-recv
+  * Not showing the "mounted as read-only" infonote since it is now shown by
+    hulda.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri,  5 Jun 2009 13:33:23 +0300
 

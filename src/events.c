@@ -952,9 +952,11 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
+                /* This is now done from hulda due to fix for NB#114795.
                 if (show_errors)
                         open_closeable_dialog(OSSO_GN_NOTICE,
                                 _("card_ia_corrupted"), "OMG!");
+                                */
         } else {
                 /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
