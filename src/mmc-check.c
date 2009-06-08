@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         ULOG_DEBUG_L("entered");
 
         if (argc != 2 && argc != 3) {
-                ULOG_CRIT_L("Usage: %s <device> [-q]", argv[0]);
+                ULOG_CRIT_L("Usage: mmc-check <device> [-q]");
                 exit(1);
         }
         if (argc == 3) {

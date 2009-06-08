@@ -84,9 +84,9 @@ static void set_localised_label(mmc_info_t *mmc)
         if (mmc->internal_card) {
                 strcpy(mmc->display_name, "internal card");
         } else {
-                strcpy(mmc->display_name,
-                       (const char*)dgettext("hildon-fm",
-                        "sfil_li_memorycard_removable"));
+                strncpy(mmc->display_name,
+                        (const char*)dgettext("hildon-fm",
+                         "sfil_li_memorycard_removable"), 100);
         }
 }
 
@@ -154,7 +154,7 @@ void update_mmc_label(mmc_info_t *mmc)
                 if (buf[0] == '\0' || buf[0] == ' ') {
                         set_localised_label(mmc);
                 } else {
-                        strcpy(mmc->display_name, (const char*)buf);
+                        strncpy(mmc->display_name, (const char*)buf, 100);
                 }
         }
         g_free(buf);
@@ -373,6 +373,7 @@ static gboolean possibly_turn_swap_on(const mmc_info_t *mmc)
         return FALSE;
 }
 
+#if 0
 static void check_swap_dialog(mmc_info_t *mmc)
 {
         gboolean retval;
@@ -404,6 +405,7 @@ static void check_swap_dialog(mmc_info_t *mmc)
                 }
         }
 }
+#endif
 
 static void possibly_turn_swap_off(swap_dialog_t dialog, mmc_info_t *mmc)
 {

@@ -2220,7 +2220,7 @@ static char *make_utf8_clean(const char *name)
                 remainder = invalid + 1;
         }
 
-        strcat(string, remainder);
+        strncat(string, remainder, 200);
 
         return strdup(string);
 }

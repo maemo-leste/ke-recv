@@ -588,7 +588,7 @@ int swap_create(unsigned size, SWAP_CREATE_CALLBACK callback)
       return EINVAL;
 
    /* Open the file, O_ASYNC PROHIBITED because swap can be incorrectly created */
-   file = open(path, O_CREAT|O_WRONLY|O_TRUNC);
+   file = open(path, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR | S_IWUSR);
    if ( file < 0 )
       return errno;
 

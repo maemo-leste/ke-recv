@@ -264,8 +264,8 @@ int main(int argc, char* argv[])
         ULOG_DEBUG_L("entered");
 
         if (argc != 3 && argc != 4) {
-                ULOG_CRIT_L("Usage: %s [<device>] <partition> <volume label>",
-                            argv[0]);
+                ULOG_CRIT_L("Usage: mmc-format [<device>] <partition>"
+                            " <volume label>");
                 exit(1);
         }
         sa.sa_handler = sig_handler;
