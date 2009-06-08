@@ -92,7 +92,7 @@ static volume_list_t *add_usb_volume(volume_list_t *l, const char *udi);
 static gboolean usb_unmount_recheck(gpointer data);
 static int unmount_usb_volumes(void);
 static int launch_fm(void);
-static void e_plugged_helper(void);
+static gboolean e_plugged_helper(void);
 static void possibly_start_am(void);
 static gboolean init_usb_cable_status(gpointer data);
 static int mount_usb_volumes(void);
@@ -2808,9 +2808,11 @@ exit_loops:
         return 1;
 }
 
-static void e_plugged_helper(void)
+/* Returns TRUE if at least one card was shared */
+static gboolean e_plugged_helper(void)
 {
         int er = 1, ir = 1;
+        gboolean retval = FALSE;
 
         if (ext_mmc.whole_device == NULL
             && int_mmc.whole_device == NULL) {
@@ -2818,7 +2820,7 @@ static void e_plugged_helper(void)
                 /*
                 display_system_note("no memory card inserted");
                 */
-                return;
+                return FALSE;
         }
 
         /* false means failure */
@@ -2834,11 +2836,14 @@ static void e_plugged_helper(void)
                         show_usb_sharing_failed_dialog(&int_mmc, &ext_mmc, 0);
                 } else if (!er) {
                         show_usb_sharing_failed_dialog(NULL, &ext_mmc, 1);
+                        retval = TRUE;
                 } else if (!ir) {
                         show_usb_sharing_failed_dialog(NULL, &ext_mmc, 0);
+                        retval = TRUE;
                 } else {
                         /* both succeeded */
                         display_dialog(_("cards_connected_via_usb"));
+                        retval = TRUE;
                 }
         } else {
                 /* no external card inserted */
@@ -2846,8 +2851,10 @@ static void e_plugged_helper(void)
                         show_usb_sharing_failed_dialog(&int_mmc, NULL, 0);
                 } else {
                         display_dialog(_("cards_connected_via_usb"));
+                        retval = TRUE;
                 }
         }
+        return retval;
 }
 
 static void handle_usb_event(usb_event_t e)
@@ -2973,8 +2980,14 @@ static void handle_usb_event(usb_event_t e)
                 case E_ENTER_MASS_STORAGE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
                             usb_state == S_CHARGING) {
+                                usb_state_t orig = usb_state;
                                 usb_state = S_MASS_STORAGE;
-                                e_plugged_helper();
+                                if (!e_plugged_helper()) {
+                                        ULOG_DEBUG_F("no card was USB shared");
+                                        /* no real state change if no card was
+                                         * successful */
+                                        usb_state = orig;
+                                }
                         } else {
                                 ULOG_WARN_F("E_ENTER_MASS_STORAGE_MODE in %d!",
                                             usb_state);
