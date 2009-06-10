@@ -60,12 +60,20 @@ case "$1" in
 	# Start daemons
 	echo -n "Starting $DESC: "
 
-        # g_nokia is loaded as the default
-        modprobe g_nokia
+        # g_nada is loaded as the default
+        modprobe g_nada
 
         # check if this is the first boot
         if [ -e /home/user/first-boot-flag ]; then
                 export FIRST_BOOT=1
+        fi
+
+        # check if this is TA image
+        if [ -x /usr/bin/sysinfo-tool ]; then
+                sysinfo-tool -g /device/sw-release-ver | grep -q _TA_
+                if [ $? = 0 ]; then
+                        export TA_IMAGE=1
+                fi
         fi
 
 	if [ -x $DTOOL ]; then

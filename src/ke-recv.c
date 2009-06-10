@@ -1629,15 +1629,31 @@ static int init_card(const char *udi)
         return 1;
 }
 
+#define USB_PROP "usb_device.vbus"
+
 usb_state_t get_usb_state(void)
 {
         usb_state_t ret;
-        char *prop = NULL;
+        int prop = -1;
 
         if (usb_cable_udi != NULL) {
-                prop = get_prop_string(usb_cable_udi, "usb_device.mode");
+                prop = get_prop_int(usb_cable_udi, USB_PROP);
         }
 
+        if (prop == -1) {
+                ULOG_ERR_F("couldn't read '" USB_PROP "' from %s",
+                           usb_cable_udi);
+                ret = S_INVALID_USB_STATE;
+        } else if (prop == 0) {
+                ret = S_CABLE_DETACHED;
+        } else if (prop == 1) {
+                ret = S_PERIPHERAL_WAIT;
+        } else {
+                ULOG_ERR_F("unknown " USB_PROP " value %d", prop);
+                ret = S_CABLE_DETACHED;
+        }
+
+#if 0  /* old architecture */
         if (prop == NULL) {
                 ULOG_ERR_F("couldn't read 'usb_device.mode' from %s",
                            usb_cable_udi);
@@ -1660,6 +1676,7 @@ usb_state_t get_usb_state(void)
                 ret = S_CABLE_DETACHED;
         }
         if (prop != NULL) libhal_free_string(prop);
+#endif
 
         return ret;
 }
@@ -1677,6 +1694,7 @@ static void get_usb_cable_udi()
                  "button.type", "usb.cable", &num_devices, &error);
         if (list != NULL && num_devices >= 1) {
                 usb_cable_udi = strdup(list[0]);
+                ULOG_DEBUG_F("using USB cable udi '%s'", usb_cable_udi);
         } else {
                 ULOG_ERR_F("coudn't find USB cable indicator");
         } 
@@ -1786,7 +1804,11 @@ static usb_state_t check_usb_cable(void)
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
         } else if (state == S_PERIPHERAL_WAIT) {
-                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+                if (getenv("TA_IMAGE"))
+                        /* in TA image, we don't wait for user's decision */
+                        handle_usb_event(E_ENTER_PCSUITE_MODE);
+                else
+                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1872,9 +1894,13 @@ static void prop_modified(LibHalContext *ctx,
                           dbus_bool_t is_added)
 {
         if (is_added) {
+                /*
                 ULOG_DEBUG_F("udi %s added %s", udi, key);
+                */
         } else if (is_removed) {
+                /*
                 ULOG_DEBUG_F("udi %s removed %s", udi, key);
+                */
         } else {
                 int val;
 
@@ -1884,7 +1910,7 @@ static void prop_modified(LibHalContext *ctx,
                         return;
                 }
 
-                if (strcmp("usb_device.mode", key) == 0) {
+                if (strcmp(USB_PROP, key) == 0) {
                         check_usb_cable();
                         return;
                 }
@@ -2995,7 +3021,8 @@ static void handle_usb_event(usb_event_t e)
                         break;
                 case E_ENTER_PCSUITE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
-                            usb_state == S_CHARGING) {
+                            usb_state == S_CHARGING ||
+                            usb_state == S_CABLE_DETACHED) {
                                 usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");

@@ -19,13 +19,13 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep g_file_storage > /dev/null
+/sbin/lsmod | grep g_nada > /dev/null
 if [ $? = 0 ]; then
-    logger "$0: removing g_file_storage"
-    initctl emit G_FILE_STORAGE_REMOVE
-    /sbin/rmmod g_file_storage
+    logger "$0: removing g_nada"
+    /sbin/rmmod g_nada
 fi
 
+RC=0
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_nokia
@@ -34,15 +34,21 @@ fi
 
 if [ $RC != 0 ]; then
     logger "$0: failed to install g_nokia"
+    # put g_nada back
+    /sbin/modprobe g_nada
+    if [ $? != 0 ]; then
+      logger "$0: failed to install g_nada back"
+    fi
     exit 1
-else
-    # TODO: remove the sleep when the wait is in place
-    sleep 2
 fi
+
+# TODO: wait for device files
+sleep 1
 
 initctl emit --no-wait G_NOKIA_READY
 
-# TODO: wait for the devices
+# TODO: wait for daemons
+sleep 1
 
 OBEXD_PID=`pidof obexd`
 if [ $? != 0 ]; then

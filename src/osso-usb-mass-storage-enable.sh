@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -19,41 +19,13 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-RC=0
-
-/sbin/lsmod | grep g_nokia > /dev/null
+/sbin/lsmod | grep g_nada > /dev/null
 if [ $? = 0 ]; then
-    logger "$0: removing g_nokia"
-
-    initctl emit G_NOKIA_REMOVE
-
-    PNATD_PID=`pidof pnatd`
-    if [ $? = 0 ]; then
-        kill $PNATD_PID
-    else
-        logger "$0: pnatd is not running"
-    fi
-    OBEXD_PID=`pidof obexd`
-    if [ $? = 0 ]; then
-        kill -HUP $OBEXD_PID
-    else
-        logger "$0: obexd is not running"
-    fi
-    SYNCD_PID=`pidof syncd`
-    if [ $? = 0 ]; then
-        kill $SYNCD_PID
-    else
-        logger "$0: syncd is not running"
-    fi
-
-    sleep 2
-    /sbin/rmmod g_nokia
-    if [ $? != 0 ]; then
-        logger "$0: failed to rmmod g_nokia!"
-        exit 1
-    fi
+    logger "$0: removing g_nada"
+    /sbin/rmmod g_nada
 fi
 
+RC=0
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_file_storage stall=0 luns=2 removable
@@ -62,6 +34,11 @@ fi
 
 if [ $RC != 0 ]; then
     logger "$0: failed to install g_file_storage"
+    # put g_nada back
+    /sbin/modprobe g_nada
+    if [ $? != 0 ]; then
+      logger "$0: failed to install g_nada back"
+    fi
     exit 1
 fi
 
