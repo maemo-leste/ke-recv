@@ -87,6 +87,7 @@ static void set_localised_label(mmc_info_t *mmc)
                 strncpy(mmc->display_name,
                         (const char*)dgettext("hildon-fm",
                          "sfil_li_memorycard_removable"), 100);
+                mmc->display_name[99] = '\0';
         }
 }
 
@@ -155,6 +156,7 @@ void update_mmc_label(mmc_info_t *mmc)
                         set_localised_label(mmc);
                 } else {
                         strncpy(mmc->display_name, (const char*)buf, 100);
+                        mmc->display_name[99] = '\0';
                 }
         }
         g_free(buf);

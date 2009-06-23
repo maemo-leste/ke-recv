@@ -54,18 +54,18 @@ if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk1 ]; then
 fi
 
 # time limited check
-/sbin/dosfsck -I -n -T 10 $PDEV
-if [ $? != 0 ]; then
-  logger "$0: $PDEV is corrupt, trying to mount it read-only"
-  mmc-mount $PDEV $MP ro
-  if [ $? = 0 ]; then
-    logger "$0: $PDEV mounted read-only"
-    exit 2
-  else
-    logger "$0: Couldn't mount $PDEV read-only"
-    exit 1
-  fi
-fi
+#/sbin/dosfsck -I -n -T 10 $PDEV
+#if [ $? != 0 ]; then
+#  logger "$0: $PDEV is corrupt, trying to mount it read-only"
+#  mmc-mount $PDEV $MP ro
+#  if [ $? = 0 ]; then
+#    logger "$0: $PDEV mounted read-only"
+#    exit 2
+#  else
+#    logger "$0: Couldn't mount $PDEV read-only"
+#    exit 1
+#  fi
+#fi
 
 mmc-mount $PDEV $MP rw
 RC=$?

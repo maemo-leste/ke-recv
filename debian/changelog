@@ -4,6 +4,8 @@ ke-recv (3.20-1~unreleased) unstable; urgency=low
     memory is full
   * Changes for the new USB handling architecture.
   * Reduce some syslog spam.
+  * Fix bugs in previous Coverity fixes.
+  * Fixes: NB#122833 - dosfsck should be removed from device mount
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 10 Jun 2009 09:47:20 +0300
 
