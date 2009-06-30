@@ -1,3 +1,9 @@
+ke-recv (3.21-1~unreleased) unstable; urgency=low
+
+  * foo
+
+ -- Aapo Kojo <aapo.kojo@nokia.com>  Tue, 30 Jun 2009 14:35:09 +0300
+
 ke-recv (3.20-1) unstable; urgency=low
 
   * Fixes: NB#121472 - mmc-pre-unmount crashes on mass storage mode when
