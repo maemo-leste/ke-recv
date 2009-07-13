@@ -1,7 +1,6 @@
 ke-recv (3.21-1~unreleased) unstable; urgency=low
 
-  Peter Aradi:
-  * Fixes: NB#125773: ke-recv should provide g_* handling
+  * foo
 
  -- Aapo Kojo <aapo.kojo@nokia.com>  Tue, 30 Jun 2009 14:35:09 +0300
 

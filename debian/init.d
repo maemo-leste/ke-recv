@@ -76,13 +76,12 @@ case "$1" in
                 fi
         fi
 
-# NOTE: ke-recv is now started earlier
-#	if [ -x $DTOOL ]; then
-#        	$DTOOL -U $USER -n -1 -t $DAEMON
-#	else
+	if [ -x $DTOOL ]; then
+        	$DTOOL -U $USER -n -1 -t $DAEMON
+	else
 		start-stop-daemon -b --start --quiet --user $USER \
 			--exec $DAEMON -- $PARAMS
-#	fi
+	fi
 	echo "$NAME."
 	;;
   stop)

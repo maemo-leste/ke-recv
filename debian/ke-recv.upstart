@@ -1,7 +1,7 @@
 description "starting ke-recv"
 author "Philippe De Swert"
-start on startup
-stop on starting shutdown
+start on started hildon-desktop
+stop on ACT_DEAD
 console none
 script
         export RUNLEVEL=2
