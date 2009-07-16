@@ -29,7 +29,6 @@
 #include <gconf/gconf-client.h>
 #include "ke-recv.h"
 #include "exec-func.h"
-#include "gui.h"
 #include "fat-tools.h"
 
 #ifdef __cplusplus

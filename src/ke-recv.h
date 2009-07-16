@@ -163,7 +163,8 @@ typedef enum {
         S_EJECTED,
         S_MASS_STORAGE,
         S_CHARGING,
-        S_PCSUITE
+        S_PCSUITE,
+        S_CHARGER_PROBE
 } usb_state_t;
 
 typedef enum {
@@ -175,7 +176,8 @@ typedef enum {
         /* the three next ones are for USB plugin's requests */
         E_ENTER_MASS_STORAGE_MODE,
         E_ENTER_CHARGING_MODE,
-        E_ENTER_PCSUITE_MODE
+        E_ENTER_PCSUITE_MODE,
+        E_ENTER_CHARGER_PROBE
 } usb_event_t;
 
 typedef enum {
@@ -291,6 +293,7 @@ gboolean get_device_lock(void);
 dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                                     const char *msg, const char *btext);
 void close_closeable_dialog(dbus_uint32_t id);
+void show_infobanner(const char *msg);
 gint get_dialog_response(dbus_int32_t id);
 gboolean send_exit_signal(void);
 void send_systembus_signal(const char *op, const char *iface,

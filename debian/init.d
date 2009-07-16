@@ -60,9 +60,6 @@ case "$1" in
 	# Start daemons
 	echo -n "Starting $DESC: "
 
-        # g_nada is loaded as the default
-        modprobe g_nada
-
         # check if this is the first boot
         if [ -e /home/user/first-boot-flag ]; then
                 export FIRST_BOOT=1

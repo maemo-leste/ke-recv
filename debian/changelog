@@ -1,8 +1,17 @@
 ke-recv (3.21-1~unreleased) unstable; urgency=low
 
-  * foo
+  * Changes for the newest USB architecture:
+    - Get rid of the D-Bus session bus dependency
+    - Move session bus D-Bus interfaces to system bus
+    - Get rid of libosso functions, because libosso requires session bus
+    - Start ke-recv earlier, after HAL
+    - Do not insert any USB module in startup: wait for the cable
+    - Do not keep g_nada inserted, it is only used temporarily on cable
+      connection
+    - NOTE: requires infonote and infobanner interfaces to be provided on
+      the system bus also
 
- -- Aapo Kojo <aapo.kojo@nokia.com>  Tue, 30 Jun 2009 14:35:09 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 15 Jul 2009 13:02:48 +0300
 
 ke-recv (3.20-1) unstable; urgency=low
 

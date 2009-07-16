@@ -52,16 +52,4 @@ if [ $? = 0 ]; then
     fi
 fi
 
-RC=0
-/sbin/lsmod | grep g_nada > /dev/null
-if [ $? != 0 ]; then
-    /sbin/modprobe g_nada
-    RC=$?
-fi
-
-if [ $RC != 0 ]; then
-    logger "$0: failed to install g_nada"
-    exit 1
-fi
-
 exit 0

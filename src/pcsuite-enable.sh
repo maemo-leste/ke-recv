@@ -25,6 +25,13 @@ if [ $? = 0 ]; then
     /sbin/rmmod g_nada
 fi
 
+# g_file_storage could be there for charging
+/sbin/lsmod | grep g_file_storage > /dev/null
+if [ $? = 0 ]; then
+    logger "$0: removing g_file_storage"
+    /sbin/rmmod g_file_storage
+fi
+
 RC=0
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? != 0 ]; then
@@ -34,11 +41,6 @@ fi
 
 if [ $RC != 0 ]; then
     logger "$0: failed to install g_nokia"
-    # put g_nada back
-    /sbin/modprobe g_nada
-    if [ $? != 0 ]; then
-      logger "$0: failed to install g_nada back"
-    fi
     exit 1
 fi
 

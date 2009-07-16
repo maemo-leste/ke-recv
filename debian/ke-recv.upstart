@@ -1,8 +1,10 @@
 description "starting ke-recv"
 author "Philippe De Swert"
-start on started hildon-desktop
-stop on ACT_DEAD
+
+start on started hal
+stop on stopping hal
 console none
+
 script
         export RUNLEVEL=2
         exec /etc/init.d/ke-recv start

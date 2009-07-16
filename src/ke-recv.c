@@ -26,11 +26,13 @@
 
 #include "ke-recv.h"
 #include "exec-func.h"
-#include "gui.h"
 #include "events.h"
 #include "camera.h"
+/*
 #include <hildon-mime.h>
+*/
 #include <libgen.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #define FDO_SERVICE "org.freedesktop.Notifications"
 #define FDO_OBJECT_PATH "/org/freedesktop/Notifications"
@@ -63,6 +65,7 @@ static storage_info_t *storage_list = NULL;
 static usb_state_t usb_state = S_INVALID_USB_STATE;
 static guint usb_pending_timer_id = 0;
 static guint usb_mounting_timer_id = 0;
+static guint charger_probe_timer_id = 0;
 static dbus_uint32_t usb_dialog = -1;
 static int usb_unmount_timeout = 0;
 extern gboolean device_locked;
@@ -74,7 +77,6 @@ static gboolean mmc_keys_set = FALSE;
    the current message or signal that we're handling) came */
 static DBusConnection* the_connection = NULL;
 static DBusConnection* sys_conn = NULL;
-DBusConnection* ses_conn = NULL;
 static DBusMessage* the_message = NULL;
 osso_context_t *osso;
 static LibHalContext *hal_ctx;
@@ -91,7 +93,9 @@ static int mount_volume(volume_list_t *vol);
 static volume_list_t *add_usb_volume(volume_list_t *l, const char *udi);
 static gboolean usb_unmount_recheck(gpointer data);
 static int unmount_usb_volumes(void);
+/*
 static int launch_fm(void);
+*/
 static gboolean e_plugged_helper(void);
 static void possibly_start_am(void);
 static gboolean init_usb_cable_status(gpointer data);
@@ -99,6 +103,10 @@ static int mount_usb_volumes(void);
 static storage_info_t *storage_from_list(const char *udi);
 static mmc_info_t *mmc_from_dev_name(const char *dev);
 static void get_usb_cable_udi();
+static void notification_closed(unsigned int id);
+static void action_invoked(unsigned int id, const char *act);
+static gboolean usb_cable_is_connected(void);
+static void check_charger(void);
 
 static void set_usb_mode_key(const char *mode)
 {
@@ -165,12 +173,14 @@ static void dismantle_usb_unmount_pending()
 static gboolean usb_mount_check(gpointer data)
 {
         ULOG_DEBUG_F("entered");
+#if 0
         /* launch FM with what ever we have mounted */
         if (desktop_started && !launch_fm()) {
                 /* no USB volumes mounted */
                 display_system_note(dgettext(USB_DOMAIN,
                                     "stab_me_usb_no_file_system_available"));
         }
+#endif
         usb_mounting_timer_id = 0;
         return FALSE;
 }
@@ -197,7 +207,7 @@ static gboolean mmc_mount_check(gpointer data)
                 ULOG_DEBUG_F("set %s", mmc->corrupted_key);
                 update_mmc_label(mmc); /* clear old label */
                 if (desktop_started) {
-                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
+                        show_infobanner(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
         } else {
                 ULOG_DEBUG_F("volumes found, doing nothing");
@@ -247,6 +257,36 @@ static void setup_usb_mount_timeout(int seconds)
         } 
         usb_mounting_timer_id = g_timeout_add(seconds * 1000,
                                         usb_mount_check, NULL);
+}
+
+static gboolean charger_probe_timeout(gpointer data)
+{
+        ULOG_DEBUG_F("entered");
+        if (usb_state == S_CHARGER_PROBE) {
+                check_charger();
+        }
+        charger_probe_timer_id = 0;
+        return FALSE;
+}
+
+/* needed for dedicated charger because property modified event
+ * does not come for usb_device.mode after inserting g_nada */
+static void setup_charger_probe_timeout(int seconds)
+{
+        if (charger_probe_timer_id) {
+                ULOG_DEBUG_F("resetting the timer");
+                g_source_remove(charger_probe_timer_id);
+        } 
+        charger_probe_timer_id = g_timeout_add(seconds * 1000,
+                                               charger_probe_timeout, NULL);
+}
+
+static void dismantle_charger_probe_timeout()
+{
+        if (charger_probe_timer_id) {
+                g_source_remove(charger_probe_timer_id);
+                charger_probe_timer_id = 0;
+        }
 }
 
 static void dismantle_mmc_mount_timeout(mmc_info_t *mmc)
@@ -524,7 +564,6 @@ away:
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-#if 0
 static DBusHandlerResult card_repair_handler(DBusConnection *c,
                                              DBusMessage *m,
                                              void *data)
@@ -557,7 +596,6 @@ away:
         the_message = NULL;
         return DBUS_HANDLER_RESULT_HANDLED;
 }
-#endif
 
 /* This function is for testing only. Allows emulating the USB cable
  * attaching and detaching. */
@@ -787,6 +825,33 @@ sig_handler(DBusConnection *c, DBusMessage *m, void *data)
         ULOG_DEBUG_F("hildon-desktop registered to system bus");
         g_timeout_add(1000, set_desktop_started, NULL);
         handled = TRUE;
+    } else if (dbus_message_is_signal(m, FDO_INTERFACE,
+                                   "NotificationClosed")) {
+        DBusMessageIter iter;
+        unsigned int i = 0;
+
+        if (dbus_message_iter_init(m, &iter)) {
+                dbus_message_iter_get_basic(&iter, &i);
+                ULOG_DEBUG_F("NotificationClosed for %u", i);
+                notification_closed(i);
+        }
+        handled = TRUE;
+    } else if (dbus_message_is_signal(m, FDO_INTERFACE,
+                                          "ActionInvoked")) {
+        DBusMessageIter iter;
+        unsigned int i = 0;
+        char *s = NULL;
+
+        if (dbus_message_iter_init(m, &iter)) {
+                dbus_message_iter_get_basic(&iter, &i);
+                if (dbus_message_iter_next(&iter)) {
+                        dbus_message_iter_get_basic(&iter, &s);
+                        ULOG_DEBUG_F("ActionInvoked for %u:"
+                                     " '%s'", i, s);
+                        action_invoked(i, s);
+                }
+        }
+        handled = TRUE;
     }
     /* invalidate */
     the_connection = NULL;
@@ -837,6 +902,7 @@ static void action_invoked(unsigned int id, const char *act)
         }
 }
 
+#if 0
 static DBusHandlerResult
 session_sig_handler(DBusConnection *c, DBusMessage *m, void *data)
 {
@@ -912,6 +978,7 @@ gboolean send_exit_signal(void)
         dbus_connection_flush(ses_conn); /* needed because the sleep hack */
         return TRUE;
 }
+#endif
 
 void send_error(const char* n)
 {
@@ -988,8 +1055,7 @@ gboolean get_device_lock(void)
                 return FALSE;
         }
         dbus_error_init(&err);
-        r = dbus_connection_send_with_reply_and_block(sys_conn,
-                m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1012,6 +1078,41 @@ gboolean get_device_lock(void)
         }
 }
 
+void show_infobanner(const char *msg)
+{
+        DBusMessage *m = NULL;
+        DBusError err;
+        dbus_bool_t ret;
+
+        assert(sys_conn != NULL);
+
+        if (!desktop_started) {
+                ULOG_DEBUG_F("do nothing - desktop is not running");
+                return;
+        }
+        dbus_error_init(&err);
+
+        m = dbus_message_new_method_call(FDO_SERVICE, FDO_OBJECT_PATH,
+                FDO_INTERFACE, "SystemNoteInfoprint");
+        if (m == NULL) {
+                ULOG_ERR_F("couldn't create message");
+                return;
+        }
+        ret = dbus_message_append_args(m, DBUS_TYPE_STRING, &msg,
+                                       DBUS_TYPE_INVALID);
+        if (!ret) {
+                ULOG_ERR_F("couldn't append arguments");
+                dbus_message_unref(m);
+                return;
+        }
+
+        ret = dbus_connection_send(sys_conn, m, NULL);
+        dbus_message_unref(m);
+        if (!ret) {
+                ULOG_ERR_F("sending failed");
+        }
+}
+
 dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                                     const char *msg, const char *btext)
 {
@@ -1021,7 +1122,7 @@ dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
         dbus_uint32_t id;
         dbus_bool_t ret;
 
-        assert(ses_conn != NULL);
+        assert(sys_conn != NULL);
 
         if (!desktop_started) {
                 ULOG_DEBUG_F("do nothing - desktop is not running");
@@ -1045,8 +1146,7 @@ dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                 return -1;
         }
 
-        r = dbus_connection_send_with_reply_and_block(ses_conn,
-                m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1070,7 +1170,7 @@ void close_closeable_dialog(dbus_uint32_t id)
         DBusError err;
 	dbus_bool_t ret;
 
-        assert(ses_conn != NULL);
+        assert(sys_conn != NULL);
         if (id == -1) {
                 ULOG_DEBUG_F("do nothing, id == -1");
                 return;
@@ -1091,8 +1191,7 @@ void close_closeable_dialog(dbus_uint32_t id)
 		return;
 	}
 
-        r = dbus_connection_send_with_reply_and_block(ses_conn,
-                m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1128,8 +1227,7 @@ gint get_dialog_response(dbus_int32_t id)
 		return retval;
 	}
 
-        r = dbus_connection_send_with_reply_and_block(sys_conn,
-                m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1629,27 +1727,17 @@ static int init_card(const char *udi)
         return 1;
 }
 
-#define USB_PROP "usb_device.vbus"
+#define BME_DEVICE_UDI "/org/freedesktop/Hal/devices/bme"
+#define USB_VBUS_PROP "usb_device.vbus"
+#define USB_CABLE_PROP "maemo.charger.connection_status"
 
 usb_state_t get_usb_state(void)
 {
         usb_state_t ret;
-        int prop = -1;
 
-        if (usb_cable_udi != NULL) {
-                prop = get_prop_int(usb_cable_udi, USB_PROP);
-        }
-
-        if (prop == -1) {
-                ULOG_ERR_F("couldn't read '" USB_PROP "' from %s",
-                           usb_cable_udi);
-                ret = S_INVALID_USB_STATE;
-        } else if (prop == 0) {
-                ret = S_CABLE_DETACHED;
-        } else if (prop == 1) {
+        if (usb_cable_is_connected()) {
                 ret = S_PERIPHERAL_WAIT;
         } else {
-                ULOG_ERR_F("unknown " USB_PROP " value %d", prop);
                 ret = S_CABLE_DETACHED;
         }
 
@@ -1679,6 +1767,22 @@ usb_state_t get_usb_state(void)
 #endif
 
         return ret;
+}
+
+static gboolean usb_cable_is_connected(void)
+{
+        char *prop;
+
+        prop = get_prop_string(BME_DEVICE_UDI, USB_CABLE_PROP);
+
+        if (!prop)
+                return FALSE;
+        else if (strcmp(prop, "disconnected") == 0) {
+                libhal_free_string(prop);
+                return FALSE;
+        }
+        libhal_free_string(prop);
+        return TRUE;
 }
 
 static void get_usb_cable_udi()
@@ -1760,11 +1864,7 @@ static void read_config()
         } 
         libhal_free_string_array(list);
 
-        get_usb_cable_udi();
-
-        if (usb_cable_udi != NULL) {
-                init_usb_cable_status((void*)1);
-        }
+        init_usb_cable_status((void*)1);
 }
 
 static void register_op(DBusConnection *conn, DBusObjectPathVTable *t,
@@ -1796,6 +1896,21 @@ static int has_capability(const char *udi, const char *capability)
         return ret;
 }
 
+static gboolean is_actdead_mode(void)
+{
+        gchar *buf = NULL;
+        gboolean is_state;
+
+        is_state = g_file_get_contents("/tmp/STATE", &buf, NULL, NULL);
+        if (is_state && strncmp("ACT_DEAD", buf, 8) == 0) {
+                g_free(buf);
+                return TRUE;
+        }
+        if (buf)
+                g_free(buf);
+        return FALSE;
+}
+
 static usb_state_t check_usb_cable(void)
 {
         usb_state_t state;
@@ -1803,12 +1918,8 @@ static usb_state_t check_usb_cable(void)
         state = get_usb_state();
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
-        } else if (state == S_PERIPHERAL_WAIT) {
-                if (getenv("TA_IMAGE"))
-                        /* in TA image, we don't wait for user's decision */
-                        handle_usb_event(E_ENTER_PCSUITE_MODE);
-                else
-                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+        } else if (state == S_PERIPHERAL_WAIT) { /* BME -> connected */
+                handle_usb_event(E_ENTER_CHARGER_PROBE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1887,6 +1998,75 @@ static gboolean init_usb_cable_status(gpointer data)
         }
 }
 
+static gboolean rmmod_g_nada()
+{
+        int ret;
+        const char *args[] = {"/sbin/rmmod", "g_nada", NULL};
+        /* remove g_nada */
+        ret = exec_prog(args[0], args);
+        if (ret)
+                return FALSE;
+        else
+                return TRUE;
+}
+
+static gboolean rmmod_g_file_storage()
+{
+        int ret;
+        const char *args[] = {"/sbin/rmmod", "g_file_storage", NULL};
+        /* remove g_nada */
+        ret = exec_prog(args[0], args);
+        if (ret)
+                return FALSE;
+        else
+                return TRUE;
+}
+
+/* this assumes we are in charger probing state */
+static void check_charger(void)
+{
+        char *usb_mode;
+        usb_mode = get_prop_string(usb_cable_udi, "usb_device.mode");
+        if (!usb_mode) {
+                ULOG_ERR_F("failed to read usb_device.mode");
+        } else if (strcmp(usb_mode, "b_idle") == 0) {
+                ULOG_DEBUG_F("dedicated charger");
+                /* remove g_nada */
+                if (!rmmod_g_nada()) {
+                        ULOG_ERR_F("rmmod for g_nada failed");
+                } else {
+                        ULOG_DEBUG_F("rmmod for g_nada done");
+                }
+                handle_usb_event(E_ENTER_CHARGING_MODE);
+        } else if (strcmp(usb_mode, "disconnected") == 0) {
+                ULOG_DEBUG_F("PC host charger");
+                if (!rmmod_g_nada()) {
+                        ULOG_ERR_F("rmmod for g_nada failed");
+                } else {
+                        ULOG_DEBUG_F("rmmod for g_nada done");
+                }
+                if (is_actdead_mode()) {
+                        /* insert empty g_file_storage */
+                        handle_event(E_PLUGGED, NULL, NULL);
+                        handle_usb_event(E_ENTER_CHARGING_MODE);
+                } else {
+                        if (getenv("TA_IMAGE")) {
+                                /* in TA image, we choose
+                                 * g_nokia automatically */
+                                handle_usb_event(E_ENTER_PCSUITE_MODE);
+                        } else {
+                                /* insert empty g_file_storage */
+                                handle_event(E_PLUGGED, NULL, NULL);
+                                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+                        }
+                }
+        } else {
+                ULOG_WARN_F("unhandled value '%s'", usb_mode);
+        }
+        if (usb_mode)
+                libhal_free_string(usb_mode);
+}
+
 static void prop_modified(LibHalContext *ctx,
                           const char *udi,
                           const char *key,
@@ -1896,6 +2076,12 @@ static void prop_modified(LibHalContext *ctx,
         if (is_added) {
                 /*
                 ULOG_DEBUG_F("udi %s added %s", udi, key);
+                if (strcmp(USB_VBUS_PROP, key) == 0) {
+                        if (usb_state == S_CHARGER_PROBE) {
+                                check_charger();
+                        }
+                        return;
+                }
                 */
         } else if (is_removed) {
                 /*
@@ -1910,8 +2096,18 @@ static void prop_modified(LibHalContext *ctx,
                         return;
                 }
 
-                if (strcmp(USB_PROP, key) == 0) {
+                if (strcmp(USB_CABLE_PROP, key) == 0) {
+                        /* BME tells USB cable was (dis)connected */
                         check_usb_cable();
+                        /* now we're either in DETACHED or CHARGER_PROBE */
+                        return;
+                }
+
+                if (strcmp(USB_VBUS_PROP, key) == 0 ||
+                    (usb_cable_udi && strcmp("usb_device.mode", key) == 0)) {
+                        if (usb_state == S_CHARGER_PROBE) {
+                                check_charger();
+                        }
                         return;
                 }
 
@@ -1919,6 +2115,7 @@ static void prop_modified(LibHalContext *ctx,
                         return;
                 }
 
+                /* FIXME: do not read this if the udi is not interesting */
                 val = get_prop_bool(udi, "button.state.value");
                 if (val == -1) {
                         ULOG_ERR_F("failed to read button.state.value");
@@ -2552,6 +2749,21 @@ static void device_added(LibHalContext *ctx, const char *udi)
 {
         ULOG_DEBUG_F("udi: %s", udi);
 
+        if (usb_cable_udi == NULL) {
+                /* check if it's the USB device */
+                get_usb_cable_udi();
+                if (usb_cable_udi) {
+                        add_prop_watch(usb_cable_udi);
+#if 0
+                        /* if we are probing, check the charger type */
+                        if (usb_state == S_CHARGER_PROBE) {
+                                check_charger();
+                        }
+#endif
+                        return;
+                }
+        }
+
         if (has_capability(udi, "volume")) {
                 int slot = volume_slot_number(udi);
                 storage_info_t *si;
@@ -2740,7 +2952,7 @@ static usb_state_t try_eject()
                 snprintf(msg, 100,
                          dgettext(USB_DOMAIN, "stab_me_usb_ejected"),
                          usb_device_name);
-                display_dialog(msg);
+                show_infobanner(msg);
                 set_usb_mode_key("idle"); /* hide the USB plugin */
                 return S_EJECTED;
         } else {
@@ -2749,6 +2961,7 @@ static usb_state_t try_eject()
         }
 }
 
+#if 0
 static int open_fm_folder(const char *folder)
 {
         DBusMessage* m = NULL;
@@ -2833,6 +3046,7 @@ exit_loops:
         }
         return 1;
 }
+#endif
 
 /* Returns TRUE if at least one card was shared */
 static gboolean e_plugged_helper(void)
@@ -2868,7 +3082,7 @@ static gboolean e_plugged_helper(void)
                         retval = TRUE;
                 } else {
                         /* both succeeded */
-                        display_dialog(_("cards_connected_via_usb"));
+                        show_infobanner(_("cards_connected_via_usb"));
                         retval = TRUE;
                 }
         } else {
@@ -2876,7 +3090,7 @@ static gboolean e_plugged_helper(void)
                 if (!ir) {
                         show_usb_sharing_failed_dialog(&int_mmc, NULL, 0);
                 } else {
-                        display_dialog(_("cards_connected_via_usb"));
+                        show_infobanner(_("cards_connected_via_usb"));
                         retval = TRUE;
                 }
         }
@@ -2903,7 +3117,7 @@ static void handle_usb_event(usb_event_t e)
                                 }
                                 if (ext_mmc.whole_device != NULL
                                     || int_mmc.whole_device != NULL) {
-                                        display_dialog(
+                                        show_infobanner(
                                                 MSG_USB_DISCONNECTED);
                                 }
                         } else if (usb_state == S_EJECTED) {
@@ -2918,10 +3132,20 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_CHARGING) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
+                                /* it's possible that g_file_storage is
+                                 * inserted and should be removed */
+                                rmmod_g_file_storage();
                         } else if (usb_state == S_PCSUITE) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
                                 if (!disable_pcsuite()) {
                                         ULOG_ERR_F("disable_pcsuite() failed");
+                                }
+                        } else if (usb_state == S_CHARGER_PROBE) {
+                                ULOG_INFO_F("E_CABLE_DETACHED in"
+                                            " S_CHARGER_PROBE");
+                                /* remove g_nada */
+                                if (!rmmod_g_nada()) {
+                                        ULOG_ERR_F("rmmod for g_nada failed");
                                 }
                         } else {
                                 ULOG_WARN_F("E_CABLE_DETACHED in %d!",
@@ -2991,13 +3215,15 @@ static void handle_usb_event(usb_event_t e)
                         set_usb_mode_key("peripheral");
                         inform_usb_cable_attached(TRUE);
                         if (usb_state == S_CABLE_DETACHED ||
-                            usb_state == S_PERIPHERAL_WAIT) {
+                            usb_state == S_PERIPHERAL_WAIT ||
+                            usb_state == S_CHARGER_PROBE) {
                                 /* we could be in S_PERIPHERAL_WAIT already
                                  * because of the device lock */
                                 ULOG_DEBUG_F("E_ENTER_PERIPHERAL_WAIT_MODE"
-                                             " in S_CABLE_DETACHED or "
-                                             "S_PERIPHERAL_WAIT");
+                                        " in DETACHED, WAIT or PROBE state");
+                                dismantle_charger_probe_timeout();
                                 usb_state = S_PERIPHERAL_WAIT;
+                                /* FIXME: dialogi? */
                         } else {
                                 ULOG_WARN_F("E_ENTER_PERIPHERAL_WAIT_MODE"
                                             " in %d!", usb_state);
@@ -3022,7 +3248,9 @@ static void handle_usb_event(usb_event_t e)
                 case E_ENTER_PCSUITE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
                             usb_state == S_CHARGING ||
-                            usb_state == S_CABLE_DETACHED) {
+                            usb_state == S_CABLE_DETACHED ||
+                            usb_state == S_CHARGER_PROBE /* TA images */) {
+                                dismantle_charger_probe_timeout();
                                 usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");
@@ -3034,12 +3262,36 @@ static void handle_usb_event(usb_event_t e)
                         break;
                 case E_ENTER_CHARGING_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT) {
+                                ULOG_DEBUG_F("user dialog -> charging");
+                                usb_state = S_CHARGING;
+                                /* this will also remove g_nada */
+                                handle_event(E_PLUGGED, NULL, NULL);
+                        } else if (usb_state == S_CHARGER_PROBE) {
+                                ULOG_DEBUG_F("dedicated charger "
+                                             "or ACTDEAD -> charging");
+                                dismantle_charger_probe_timeout();
                                 usb_state = S_CHARGING;
                         } else {
                                 ULOG_WARN_F("E_ENTER_CHARGING_MODE in %d!",
                                             usb_state);
                         }
                         break;
+                case E_ENTER_CHARGER_PROBE:
+                {
+                        int ret;
+                        const char *args[] = {"/sbin/modprobe", "g_nada", 0};
+                        ret = exec_prog(args[0], args);
+                        if (ret) {
+                                ULOG_ERR_F("modprobe for g_nada failed!");
+                        } else {
+                                ULOG_DEBUG_F("modprobe for g_nada done");
+                                /* need a timeout for probing the dedicated
+                                 * charger */
+                                setup_charger_probe_timeout(5);
+                                usb_state = S_CHARGER_PROBE;
+                        }
+                        break;
+                }
                 default:
                         ULOG_ERR_F("unknown event %d", e);
         }
@@ -3105,12 +3357,31 @@ int main(int argc, char* argv[])
       	        ULOG_ERR_L("textdomain() failed");
         }
 
+#if 0
         osso = osso_initialize(APPL_NAME, APPL_VERSION, FALSE,
                                g_main_context_default());
         if (osso == NULL) {
                 ULOG_CRIT_L("Libosso initialisation failed");
                 exit(1);
         }
+#endif
+
+        conn = dbus_bus_get(DBUS_BUS_SYSTEM, &error);
+        if (conn == NULL) {
+                ULOG_ERR_F("Unable to connect to the system bus: %s",
+                           error.message);
+                exit(1);
+        }
+        dbus_connection_setup_with_g_main(conn, g_main_context_default());
+    
+        if (dbus_bus_request_name(conn, "com.nokia." APPL_NAME,
+                DBUS_NAME_FLAG_ALLOW_REPLACEMENT, &error) == -1) {
+                ULOG_ERR_F("dbus_bus_request_name failed: %s", error.message);
+                exit(1);
+        }
+        dbus_connection_set_exit_on_disconnect(conn, FALSE);
+
+#if 0
         ses_conn = (DBusConnection*) osso_get_dbus_connection(osso);
         if (ses_conn == NULL) {
                 ULOG_CRIT_L("osso_get_dbus_connection() failed");
@@ -3136,6 +3407,7 @@ int main(int argc, char* argv[])
                 ULOG_CRIT_L("Failed to get system bus connection");
                 exit(1);
         }
+#endif
         sys_conn = conn;
 
         /* initialise HAL context */
@@ -3187,14 +3459,21 @@ int main(int argc, char* argv[])
                 ULOG_CRIT_L("dbus_bus_add_match failed");
 	        exit(1);
         }
+        /* match for FDO Notifications */
+        dbus_bus_add_match(conn, "type='signal',interface='"
+                           FDO_INTERFACE "'", &error);
+        if (dbus_error_is_set(&error)) {
+                ULOG_CRIT_L("dbus_bus_add_match failed");
+	        exit(1);
+        }
 
         /* register D-BUS interface for MMC renaming */
         vtable.message_function = rename_handler;
-        register_op(ses_conn, &vtable, RENAME_OP, NULL);
+        register_op(sys_conn, &vtable, RENAME_OP, NULL);
 
         /* register D-BUS interface for MMC formatting */
         vtable.message_function = format_handler;
-        register_op(ses_conn, &vtable, FORMAT_OP, NULL);
+        register_op(sys_conn, &vtable, FORMAT_OP, NULL);
 
         /* register D-BUS interface for enabling swapping on MMC */
         vtable.message_function = enable_mmc_swap_handler;
@@ -3226,14 +3505,12 @@ int main(int argc, char* argv[])
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/check_auto_install", NULL);
 
-#if 0
         /* D-Bus interface for repairing memory cards */
         vtable.message_function = card_repair_handler;
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/repair_card", NULL);
-#endif
 
-        /* D-Bus interface for repairing memory cards */
+        /* D-Bus interface for checking memory cards */
         vtable.message_function = card_check_handler;
         register_op(sys_conn, &vtable,
                     "/com/nokia/ke_recv/check_card", NULL);
@@ -3262,6 +3539,10 @@ int main(int argc, char* argv[])
 
         add_prop_watch(ext_mmc.cover_udi);
         add_prop_watch(int_mmc.cover_udi);
+
+        /* watch BME properties to detect USB cable connection */
+        add_prop_watch(BME_DEVICE_UDI);
+
         /*
         add_prop_watch(camera_out_udi);
         add_prop_watch(camera_turned_udi);
@@ -3318,10 +3599,12 @@ int main(int argc, char* argv[])
                 mmc_initialised = TRUE;
         }
 
+#if 0
         if (usb_state == S_INVALID_USB_STATE) {
                 /* check it again later */
                 g_timeout_add(1000, init_usb_cable_status, (void*)1);
         }
+#endif
 
         g_main_loop_run(mainloop); 
         ULOG_DEBUG_L("Returned from the main loop");

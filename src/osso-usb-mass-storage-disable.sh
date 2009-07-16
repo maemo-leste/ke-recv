@@ -26,11 +26,7 @@ fi
 
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? != 0 ]; then
-  # the module is not loaded, ensure g_nada
-  /sbin/modprobe g_nada
-  if [ $? != 0 ]; then
-    logger "$0: failed to install g_nada"
-  fi
+  # the module is not loaded, nothing to do
   exit 0
 fi
 
@@ -73,11 +69,6 @@ if [ x${TMP1}${TMP2}x = xx ]; then
     if [ $? != 0 ]; then
         logger "$0: failed to rmmod g_file_storage!"
     fi
-  fi
-
-  /sbin/modprobe g_nada
-  if [ $? != 0 ]; then
-    logger "$0: failed to install g_nada"
   fi
 fi
 

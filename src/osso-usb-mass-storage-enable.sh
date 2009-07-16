@@ -34,11 +34,6 @@ fi
 
 if [ $RC != 0 ]; then
     logger "$0: failed to install g_file_storage"
-    # put g_nada back
-    /sbin/modprobe g_nada
-    if [ $? != 0 ]; then
-      logger "$0: failed to install g_nada back"
-    fi
     exit 1
 fi
 
