@@ -484,6 +484,46 @@ away:
         return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static DBusHandlerResult get_usb_mode_handler(DBusConnection *c,
+                                              DBusMessage *m, void *data)
+{
+        DBusMessage *r;
+        char buf[20], *buf_p;
+        dbus_bool_t ret;
+        buf_p = buf;
+
+        ULOG_DEBUG_F("entered");
+
+        if (usb_state == S_PERIPHERAL_WAIT ||
+            usb_state == S_PCSUITE ||
+            usb_state == S_MASS_STORAGE) {
+                strcpy(buf, "peripheral");
+        } else {
+                strcpy(buf, "disconnected");
+        }
+
+	r = dbus_message_new_method_return(m);
+        if (r == NULL) {
+                ULOG_ERR_F("couldn't create message");
+                return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        ret = dbus_message_append_args(r, DBUS_TYPE_STRING, &buf_p,
+                                       DBUS_TYPE_INVALID);
+        if (!ret) {
+                ULOG_ERR_F("couldn't append arguments");
+                dbus_message_unref(r);
+                return DBUS_HANDLER_RESULT_HANDLED;
+        }
+
+        ret = dbus_connection_send(sys_conn, r, NULL);
+        dbus_message_unref(r);
+        if (!ret) {
+                ULOG_ERR_F("sending failed");
+        }
+
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 static DBusHandlerResult enable_mmc_swap_handler(DBusConnection *c,
                                                  DBusMessage *m,
                                                  void *data)
@@ -979,6 +1019,35 @@ gboolean send_exit_signal(void)
         return TRUE;
 }
 #endif
+
+static void send_usb_mode_signal(void)
+{
+        DBusMessage *m;
+        dbus_bool_t ret;
+
+        ULOG_DEBUG_F("entering");
+
+        if (usb_state == S_PERIPHERAL_WAIT ||
+            usb_state == S_PCSUITE ||
+            usb_state == S_MASS_STORAGE) {
+                m = dbus_message_new_signal("/com/nokia/ke_recv/usb_mode",
+                                            "com.nokia.ke_recv.usb_mode",
+                                            "peripheral");
+        } else {
+                m = dbus_message_new_signal("/com/nokia/ke_recv/usb_mode",
+                                            "com.nokia.ke_recv.usb_mode",
+                                            "disconnected");
+        }
+        if (m == NULL) {
+                ULOG_ERR_F("dbus_message_new_signal failed");
+                return;
+        }
+        ret = dbus_connection_send(sys_conn, m, NULL);
+        if (!ret) {
+                ULOG_ERR_F("dbus_connection_send failed");
+        }
+        dbus_message_unref(m);
+}
 
 void send_error(const char* n)
 {
@@ -1970,15 +2039,10 @@ static gboolean init_usb_cable_status(gpointer data)
                                 usb_state = S_MASS_STORAGE;
                                 /* should reset gconf keys here */
                         } else {
-                                ULOG_DEBUG_F("peripheral but cards not "
-                                        "USB-shared, assuming charging mode");
-                                usb_state = S_CHARGING;
-                                /*
-                                if (do_e_plugged) {
-                                        handle_usb_event(
-                                                E_ENTER_PERIPHERAL_WAIT_MODE);
-                                }
-                                */
+                                /* this is startup time, so charger probe
+                                 * should succeed since no other g_* modules
+                                 * should be in use */
+                                handle_usb_event(E_ENTER_CHARGER_PROBE);
                         }
                         set_usb_mode_key("peripheral");
                 } else {
@@ -2085,7 +2149,9 @@ static void prop_modified(LibHalContext *ctx,
         } else {
                 int val;
 
+                /*
                 ULOG_DEBUG_F("udi %s modified %s", udi, key);
+                */
 
                 if (strcmp("volume.is_mounted", key) == 0) {
                         return;
@@ -3154,6 +3220,7 @@ static void handle_usb_event(usb_event_t e)
                                             usb_state);
                         }
                         usb_state = S_CABLE_DETACHED;
+                        send_usb_mode_signal();
                         break;
                 case E_EJECT:
                         if (usb_state == S_HOST) {
@@ -3225,7 +3292,7 @@ static void handle_usb_event(usb_event_t e)
                                         " in DETACHED, WAIT or PROBE state");
                                 dismantle_charger_probe_timeout();
                                 usb_state = S_PERIPHERAL_WAIT;
-                                /* FIXME: dialogi? */
+                                send_usb_mode_signal();
                         } else {
                                 ULOG_WARN_F("E_ENTER_PERIPHERAL_WAIT_MODE"
                                             " in %d!", usb_state);
@@ -3476,6 +3543,10 @@ int main(int argc, char* argv[])
         /* register D-BUS interface for MMC formatting */
         vtable.message_function = format_handler;
         register_op(sys_conn, &vtable, FORMAT_OP, NULL);
+
+        /* register D-BUS interface for USB mode (used by USB plugin) */
+        vtable.message_function = get_usb_mode_handler;
+        register_op(sys_conn, &vtable, "/com/nokia/ke_recv/get_usb_mode", NULL);
 
         /* register D-BUS interface for enabling swapping on MMC */
         vtable.message_function = enable_mmc_swap_handler;
