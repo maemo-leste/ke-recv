@@ -2038,7 +2038,8 @@ static void check_charger(void)
                         ULOG_DEBUG_F("rmmod for g_nada done");
                 }
                 handle_usb_event(E_ENTER_CHARGING_MODE);
-        } else if (strcmp(usb_mode, "disconnected") == 0) {
+        } else if (strcmp(usb_mode, "disconnected") == 0 ||
+                   strcmp(usb_mode, "b_peripheral") == 0) {
                 ULOG_DEBUG_F("PC host charger");
                 if (!rmmod_g_nada()) {
                         ULOG_ERR_F("rmmod for g_nada failed");
@@ -2076,12 +2077,6 @@ static void prop_modified(LibHalContext *ctx,
         if (is_added) {
                 /*
                 ULOG_DEBUG_F("udi %s added %s", udi, key);
-                if (strcmp(USB_VBUS_PROP, key) == 0) {
-                        if (usb_state == S_CHARGER_PROBE) {
-                                check_charger();
-                        }
-                        return;
-                }
                 */
         } else if (is_removed) {
                 /*
@@ -2106,6 +2101,10 @@ static void prop_modified(LibHalContext *ctx,
                 if (strcmp(USB_VBUS_PROP, key) == 0 ||
                     (usb_cable_udi && strcmp("usb_device.mode", key) == 0)) {
                         if (usb_state == S_CHARGER_PROBE) {
+                                /* workaround for usb_device.mode == b_idle
+                                 * in early phase of host cable detection
+                                 * sometimes */
+                                g_usleep(1000 * 500);
                                 check_charger();
                         }
                         return;
@@ -3129,6 +3128,9 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_PERIPHERAL_WAIT) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_PERIPHERAL_WAIT");
+                                /* it's possible that g_file_storage is
+                                 * inserted and should be removed */
+                                rmmod_g_file_storage();
                         } else if (usb_state == S_CHARGING) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
