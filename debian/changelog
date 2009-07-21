@@ -11,6 +11,9 @@ ke-recv (3.21-1~unreleased) unstable; urgency=low
     - Add USB mode signal and querying interface for the USB plugin
     - NOTE: requires infonote and infobanner interfaces to be provided on
       the system bus also
+  * Fixes: NB#114280 - MyDocs gets dated Jan 1 1970 after using USB in mass
+    storage mode
+  * Fixes: NB#128388 - vfat should sit at the first partition
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 15 Jul 2009 13:02:48 +0300
 
