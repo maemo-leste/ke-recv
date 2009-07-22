@@ -1086,11 +1086,20 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
                                    mmc->preferred_volume);
                         all_unmounted = 0;
                 } else {
-                        if (vol->mountpoint &&
-                            do_unmount(vol->mountpoint, lazy)) {
-                                ULOG_DEBUG_F("unmounted %s", vol->udi);
+                        char *arg;
+                        if (vol->mountpoint)
+                                arg = vol->mountpoint;
+                        else
+                                /* use device name in case it is not mounted
+                                 * or mount point could be unknown */
+                                arg = vol->dev_name;
+
+                        if (do_unmount(arg, lazy)) {
+                                ULOG_DEBUG_F("unmounted %s (%s)", arg,
+                                             vol->udi);
                         } else {
-                                ULOG_INFO_F("couldn't unmount %s", vol->udi);
+                                ULOG_INFO_F("couldn't unmount %s (%s)", arg,
+                                            vol->udi);
                                 all_unmounted = 0;
                         }
                 }
