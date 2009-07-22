@@ -20,7 +20,7 @@
 # 02110-1301 USA
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <mount point> [\"lazy\"]"
+  echo "Usage: $0 <mount point | device> [\"lazy\"]"
   exit 1
 fi
 

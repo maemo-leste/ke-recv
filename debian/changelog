@@ -1,3 +1,11 @@
+ke-recv (3.19-1fixes) unstable; urgency=low
+
+  * Fixes: NB#127339 - AppCert-ke-recv doesn't export card if the partition
+    format isn't recognized
+  * Fixes: NB#128388 - vfat should sit at the first partition
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 22 Jul 2009 15:50:52 +0300
+
 ke-recv (3.19-1) unstable; urgency=low
 
   * Fixes: NB#119586 - Unsafe signal handler in ke-recv
