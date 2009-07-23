@@ -4,7 +4,7 @@ ke-recv (3.19-1fixes) unstable; urgency=low
     format isn't recognized
   * Fixes: NB#122833 - dosfsck should be removed from device mount
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 22 Jul 2009 15:50:52 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 23 Jul 2009 10:35:29 +0300
 
 ke-recv (3.19-1) unstable; urgency=low
 
