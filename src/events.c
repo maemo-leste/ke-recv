@@ -904,18 +904,30 @@ static void handle_e_check(mmc_info_t *mmc)
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
 {
         const char *mount_args[] = {MMC_MOUNT_COMMAND, NULL, NULL, NULL};
-        volume_list_t *l, *l_on_first_try = NULL;
+        volume_list_t *l;
         const char *udi = NULL, *device = NULL;
         int ret, count = 0;
        
         l = get_nth_volume(mmc, mmc->preferred_volume);
+        /*
+        if (l && l->corrupt) {
+                ULOG_DEBUG_F("partition %d is corrupt",
+                             mmc->preferred_volume);
+                return 0;
+        }
+        */
 
         if (l == NULL || l->udi == NULL) {
                 ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
-                return 0;
+                if (mmc->preferred_volume != 1 && mmc->internal_card) {
+                        /* workaround for not yet partitioned systems */
+                        ULOG_DEBUG_F("falling back to partition 1!");
+                        l = get_nth_volume(mmc, 1);
+                        if (l == NULL || l->udi == NULL)
+                                return 0;
+                } else
+                        return 0;
         }
-
-try_again:
         udi = l->udi;
         device = l->dev_name;
 
@@ -950,21 +962,6 @@ try_again:
         } else {
                 /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-
-                if (!l_on_first_try && l->volume_number == 1 &&
-                    mmc->internal_card) {
-                        /* try partition 3 for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 3");
-                        l_on_first_try = l;
-                        l = get_nth_volume(mmc, 3);
-                        if (l == NULL || l->udi == NULL)
-                                l = l_on_first_try;
-                        else
-                                goto try_again;
-                } else if (l_on_first_try)
-                        /* the partition on first try was just corrupt */
-                        l = l_on_first_try;
-
                 l->mountpoint = NULL;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);

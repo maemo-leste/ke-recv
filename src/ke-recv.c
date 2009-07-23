@@ -1569,7 +1569,7 @@ static int init_card(const char *udi)
                 mmc->swap_off_op = INTERNAL_MMC_SWAP_OFF_OP;
 
 #ifdef FREMANTLE_MODE
-                mmc->preferred_volume = 1;
+                mmc->preferred_volume = 3;
                 mmc->control_partitions = 0;
 #else
                 mmc->preferred_volume = 1;
