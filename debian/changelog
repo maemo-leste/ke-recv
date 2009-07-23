@@ -1,4 +1,4 @@
-ke-recv (3.19-1fixes) unstable; urgency=low
+ke-recv (3.19-2fixes) unstable; urgency=low
 
   * Fixes: NB#127339 - AppCert-ke-recv doesn't export card if the partition
     format isn't recognized
