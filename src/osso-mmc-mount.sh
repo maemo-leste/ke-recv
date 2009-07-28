@@ -74,7 +74,7 @@ logger "$0: mounting $PDEV read-write to $MP, rc: $RC"
 if [ $RC = 0 ]; then
   # create some special directories for user's partition
   if [ "x$MP" = "x/home/user/MyDocs" -a -w $MP ]; then
-    for d in sounds videos documents images camera; do
+    for d in .sounds .videos .documents .images DCIM; do
       mkdir -p $MP/$d
     done
   elif [ "x$MP" = "x/home/user/MyDocs" ]; then
