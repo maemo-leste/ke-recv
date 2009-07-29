@@ -1569,7 +1569,7 @@ static int init_card(const char *udi)
                 mmc->swap_off_op = INTERNAL_MMC_SWAP_OFF_OP;
 
 #ifdef FREMANTLE_MODE
-                mmc->preferred_volume = 3;
+                mmc->preferred_volume = 1;
                 mmc->control_partitions = 0;
 #else
                 mmc->preferred_volume = 1;
@@ -1994,6 +1994,16 @@ static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
                 libhal_free_string(dev);
         }
 
+        /* fstype is needed for supporting old partition layout */
+        dev = get_prop_string(l->udi, "volume.fstype");
+        if (dev == NULL) {
+                ULOG_ERR_F("couldn't get volume.fstype for %s", l->udi);
+        } else {
+                ULOG_DEBUG_F("got volume.fstype '%s' for %s", dev, l->udi);
+                l->fstype = strdup(dev);
+                libhal_free_string(dev);
+        }
+
         l->corrupt = 0;
 
         if (get_prop_bool(l->udi, "volume.is_partition") == 1) {
@@ -2031,6 +2041,10 @@ static void zero_volume_info(volume_list_t *l)
                 if (l->dev_name != NULL) {
                         free(l->dev_name);
                         l->dev_name = NULL;
+                }
+                if (l->fstype != NULL) {
+                        free(l->fstype);
+                        l->fstype = NULL;
                 }
                 l->volume_number = 0;
                 l->corrupt = 0;

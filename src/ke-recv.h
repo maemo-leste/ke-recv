@@ -201,6 +201,7 @@ typedef struct volume_list_t_ {
         char *udi;
         char *mountpoint;
         char *dev_name;
+        char *fstype;
         int volume_number;
         int corrupt;
         struct volume_list_t_ *next;
