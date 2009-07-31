@@ -1,3 +1,9 @@
+ke-recv (3.19-4) unstable; urgency=low
+
+  * Keep g_file_storage loaded by default instead of g_nokia.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 31 Jul 2009 15:34:41 +0300
+
 ke-recv (3.19-3) unstable; urgency=low
 
   * Changes to support the new partition layout.

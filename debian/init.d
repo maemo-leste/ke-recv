@@ -60,8 +60,8 @@ case "$1" in
 	# Start daemons
 	echo -n "Starting $DESC: "
 
-        # g_nokia is loaded as the default
-        modprobe g_nokia
+        # g_file_storage is loaded as the default
+        /sbin/modprobe g_file_storage stall=0 luns=2 removable
 
         # check if this is the first boot
         if [ -e /home/user/first-boot-flag ]; then
