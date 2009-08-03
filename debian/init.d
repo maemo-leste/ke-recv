@@ -60,12 +60,24 @@ case "$1" in
 	# Start daemons
 	echo -n "Starting $DESC: "
 
-        # g_file_storage is loaded as the default
-        /sbin/modprobe g_file_storage stall=0 luns=2 removable
-
         # check if this is the first boot
         if [ -e /home/user/first-boot-flag ]; then
                 export FIRST_BOOT=1
+        fi
+
+        # check if this is TA image
+        if [ -x /usr/bin/sysinfo-tool ]; then
+                sysinfo-tool -g /device/sw-release-ver | grep -q _TA_
+                if [ $? = 0 ]; then
+                        export TA_IMAGE=1
+                        # modprobe g_nokia automatically in TA images
+                        /usr/sbin/pcsuite-enable.sh
+                fi
+        fi
+
+        if [ "x$TA_IMAGE" = "x" ]; then
+                # g_file_storage is loaded as the default
+                /sbin/modprobe g_file_storage stall=0 luns=2 removable
         fi
 
 	if [ -x $DTOOL ]; then

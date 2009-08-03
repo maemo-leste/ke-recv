@@ -1786,7 +1786,11 @@ static usb_state_t check_usb_cable(void)
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
         } else if (state == S_PERIPHERAL_WAIT) {
-                handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+                if (getenv("TA_IMAGE"))
+                        /* in TA image, we don't wait for user's decision */
+                        handle_usb_event(E_ENTER_PCSUITE_MODE);
+                else
+                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1872,9 +1876,13 @@ static void prop_modified(LibHalContext *ctx,
                           dbus_bool_t is_added)
 {
         if (is_added) {
+                /*
                 ULOG_DEBUG_F("udi %s added %s", udi, key);
+                */
         } else if (is_removed) {
+                /*
                 ULOG_DEBUG_F("udi %s removed %s", udi, key);
+                */
         } else {
                 int val;
 
@@ -3009,7 +3017,8 @@ static void handle_usb_event(usb_event_t e)
                         break;
                 case E_ENTER_PCSUITE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
-                            usb_state == S_CHARGING) {
+                            usb_state == S_CHARGING ||
+                            usb_state == S_CABLE_DETACHED) {
                                 usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");

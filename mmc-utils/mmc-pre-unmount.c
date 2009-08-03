@@ -64,6 +64,9 @@ static int check_volume (const char *vol)
         GList *l;
 
 	monitor = gnome_vfs_get_volume_monitor ();
+        if (monitor == NULL)
+                return 0;
+
         l = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
         for (; l != NULL; l = l->next) {
                 GnomeVFSVolume *v;

@@ -36,13 +36,22 @@ if [ $RC != 0 ]; then
     logger "$0: failed to install g_nokia"
     exit 1
 else
-    # TODO: remove the sleep when the wait is in place
     sleep 2
 fi
 
 initctl emit --no-wait G_NOKIA_READY
 
-# TODO: wait for the devices
+# Wait until pnatd is ready
+INC=1
+while [ "x$(pidof pnatd)x" = "xx" ]; do
+    if [ $INC -gt 20 ]; then
+      echo "$0: Error, pnatd did not start"
+      logger "$0: Error, pnatd did not start"
+      exit 1
+    fi
+    sleep 1
+    INC=`expr $INC + 1`
+done
 
 OBEXD_PID=`pidof obexd`
 if [ $? != 0 ]; then

@@ -77,6 +77,7 @@ if [ $RC = 0 ]; then
     for d in .sounds .videos .documents .images .camera; do
       mkdir -p $MP/$d
     done
+    touch $MP
   elif [ "x$MP" = "x/home/user/MyDocs" ]; then
     logger "$0: '$MP' is not writable"
   fi
