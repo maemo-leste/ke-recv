@@ -41,12 +41,13 @@ fi
 
 initctl emit --no-wait G_NOKIA_READY
 
-# Wait until pnatd is ready
+# Wait until daemons are up
 INC=1
-while [ "x$(pidof pnatd)x" = "xx" ]; do
+while [ "x$(pidof pnatd)x" = "xx" -o "x$(pidof obexd)x" = "xx" \
+       -o "x$(pidof syncd)x" = "xx" ]; do
     if [ $INC -gt 20 ]; then
-      echo "$0: Error, pnatd did not start"
-      logger "$0: Error, pnatd did not start"
+      echo "$0: Error, daemons did not start"
+      logger "$0: Error, daemons did not start"
       exit 1
     fi
     sleep 1
