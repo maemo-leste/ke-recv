@@ -104,19 +104,13 @@ static volume_list_t *get_internal_mmc_volume(mmc_info_t *mmc)
 {
         volume_list_t *vol;
         vol = get_nth_volume(mmc, mmc->preferred_volume);
-        if (vol && vol->dev_name && vol->fstype
-            && strcmp(vol->fstype, "vfat")) {
-                /* workaround for not yet partitioned systems */
-                ULOG_DEBUG_F("falling back to partition 3!");
-                vol = get_nth_volume(mmc, 3);
-                if (vol == NULL || vol->dev_name == NULL)
-                        return NULL;
-        } else if (vol == NULL || vol->dev_name == NULL) {
+        if (vol && vol->dev_name) {
+                return vol;
+        } else {
                 ULOG_ERR_F("could not find partition number %d",
                            mmc->preferred_volume);
                 return NULL;
         }
-        return vol;
 }
 
 #define UPDATE_MMC_LABEL_SCRIPT "/usr/sbin/osso-update-mmc-label.sh"
@@ -890,7 +884,7 @@ static void handle_e_check(mmc_info_t *mmc)
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
 {
         const char *mount_args[] = {MMC_MOUNT_COMMAND, NULL, NULL, NULL};
-        volume_list_t *l, *l_on_first_try = NULL;
+        volume_list_t *l;
         const char *udi = NULL, *device = NULL;
         int ret, count = 0;
        
@@ -901,7 +895,6 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                 return 0;
         }
 
-try_again:
         udi = l->udi;
         device = l->dev_name;
 
@@ -916,13 +909,6 @@ try_again:
                 possibly_turn_swap_on(mmc);
                 set_mmc_corrupted_flag(FALSE, mmc);
                 count = 1;
-                if (mmc->internal_card && l_on_first_try) {
-                        /* fallback partition was mounted, mark the
-                         * preferred one as 'swap' to counter a HAL bug
-                         * where it reports the swap partition as 'vfat' */
-                        free(l_on_first_try->fstype);
-                        l_on_first_try->fstype = strdup("swap");
-                }
         } else if (ret == 2) {
                 /* is was mounted read-only */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
@@ -930,31 +916,9 @@ try_again:
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
-                if (mmc->internal_card && l_on_first_try) {
-                        /* fallback partition was mounted, mark the
-                         * preferred one as 'swap' to counter a HAL bug
-                         * where it reports the swap partition as 'vfat' */
-                        free(l_on_first_try->fstype);
-                        l_on_first_try->fstype = strdup("swap");
-                }
         } else {
                 /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-
-                if (!l_on_first_try && l->volume_number == 1 &&
-                    mmc->internal_card) {
-                        /* try partition 3 for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 3");
-                        l_on_first_try = l;
-                        l = get_nth_volume(mmc, 3);
-                        if (l == NULL || l->udi == NULL || l->dev_name == NULL)
-                                l = l_on_first_try;
-                        else
-                                goto try_again;
-                } else if (l_on_first_try)
-                        /* the partition on first try was just corrupt */
-                        l = l_on_first_try;
-
                 l->mountpoint = NULL;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
