@@ -5,6 +5,8 @@ ke-recv (3.19-5) unstable; urgency=low
   * Fixes: NB#121472 - mmc-pre-unmount crashes on mass storage mode when
     memory is full
   * Fixes: NB#123352 - AppCert-USB-Modem query doesn't work after PC reboot
+  * Fixes: NB#127339 - AppCert-ke-recv doesn't export card if the partition
+    format isn't recognized
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  3 Aug 2009 10:39:09 +0300
 
