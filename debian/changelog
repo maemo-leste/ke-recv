@@ -8,6 +8,8 @@ ke-recv (3.21-1~unreleased) unstable; urgency=low
     - Insert g_nokia in startup, unless we're in ACTDEAD mode
     - NOTE: requires infonote and infobanner interfaces to be provided on
       the system bus also
+    - Assume S_PCSUITE if restarted when the cable is connected
+    - Be more persisting when connecting to hald.
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 15 Jul 2009 13:02:48 +0300
 

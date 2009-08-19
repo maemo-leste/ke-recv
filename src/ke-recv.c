@@ -224,6 +224,12 @@ static gboolean set_desktop_started(gpointer data)
                 handle_event(E_INIT_CARD, &ext_mmc, NULL);
                 mmc_initialised = TRUE;
         }
+
+        if (usb_state == S_INVALID_USB_STATE) {
+                /* try USB init again now that syncd and obexd
+                 * should be running */
+                init_usb_cable_status ((void*)1);
+        }
 #if 0
         if (delayed_auto_install_check) {
                 possibly_start_am();
@@ -1825,8 +1831,11 @@ static usb_state_t check_usb_cable(void)
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
         } else if (state == S_PERIPHERAL_WAIT) {
-                /* go directly to PC Suite mode whenever cable is plugged */
-                handle_usb_event(E_ENTER_PCSUITE_MODE);
+                if (usb_state == S_CABLE_DETACHED) {
+                        /* go directly to PC Suite mode whenever cable is
+                         * plugged */
+                        handle_usb_event(E_ENTER_PCSUITE_MODE);
+                }
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1878,8 +1887,12 @@ static gboolean init_usb_cable_status(gpointer data)
                                 /* should reset gconf keys here */
                         } else {
                                 ULOG_DEBUG_F("peripheral but cards not "
-                                        "USB-shared, assuming charging mode");
-                                usb_state = S_CHARGING;
+                                        "USB-shared, assuming PC Suite mode");
+                                usb_state = S_PCSUITE;
+                                if (!enable_pcsuite()) {
+                                        ULOG_ERR_F("Couldn't enable PC Suite");
+                                        usb_state = S_INVALID_USB_STATE;
+                                }
                                 /*
                                 if (do_e_plugged) {
                                         handle_usb_event(
@@ -1892,7 +1905,8 @@ static gboolean init_usb_cable_status(gpointer data)
                         set_usb_mode_key("idle");
                 }
 
-                if (desktop_started && !mmc_initialised) {
+                if (usb_state != S_INVALID_USB_STATE &&
+                    desktop_started && !mmc_initialised) {
                         /* initialise GConf keys and possibly mount or
                          * USB-share */
                         if (int_mmc_enabled) {
@@ -2903,6 +2917,17 @@ static gboolean e_plugged_helper(void)
         return retval;
 }
 
+static gboolean modprobe_g_nokia()
+{
+        int ret;
+        const char *args[] = {"/sbin/modprobe", "g_nokia", NULL};
+        ret = exec_prog(args[0], args);
+        if (ret)
+                return FALSE;
+        else
+                return TRUE;
+}
+
 static void handle_usb_event(usb_event_t e)
 {
         switch (e) {
@@ -2926,6 +2951,7 @@ static void handle_usb_event(usb_event_t e)
                                         show_infobanner(
                                                 MSG_USB_DISCONNECTED);
                                 }
+                                modprobe_g_nokia();
                         } else if (usb_state == S_EJECTED) {
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in S_EJECTED");
                         } else if (usb_state == S_EJECTING) {
@@ -2940,9 +2966,11 @@ static void handle_usb_event(usb_event_t e)
                                             "S_CHARGING");
                         } else if (usb_state == S_PCSUITE) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
+                                /*
                                 if (!disable_pcsuite()) {
                                         ULOG_ERR_F("disable_pcsuite() failed");
                                 }
+                                */
                         } else {
                                 ULOG_WARN_F("E_CABLE_DETACHED in %d!",
                                             usb_state);
@@ -3028,6 +3056,9 @@ static void handle_usb_event(usb_event_t e)
                             usb_state == S_CHARGING ||
                             usb_state == S_PCSUITE) {
                                 usb_state_t orig = usb_state;
+                                if (!disable_pcsuite()) {
+                                        ULOG_ERR_F("disable_pcsuite() failed");
+                                }
                                 usb_state = S_MASS_STORAGE;
                                 if (!e_plugged_helper()) {
                                         ULOG_DEBUG_F("no card was USB shared");
@@ -3108,6 +3139,7 @@ int main(int argc, char* argv[])
 	        .unregister_function = NULL
         };
         int ret;
+        int hal_retries = 10;
 
         if (signal(SIGTERM, sigterm) == SIG_ERR) {
                 ULOG_CRIT_L("signal() failed");
@@ -3191,6 +3223,8 @@ int main(int argc, char* argv[])
                 ULOG_CRIT_L("libhal_ctx_set_dbus_connection() failed");
                 exit(1);
         }
+
+try_hal_again:
         if (!libhal_ctx_init(hal_ctx, &error)) {
                 if (dbus_error_is_set(&error)) {
                         ULOG_CRIT_L("libhal_ctx_init: %s: %s", error.name,
@@ -3198,7 +3232,11 @@ int main(int argc, char* argv[])
                         dbus_error_free(&error);
                 }
                 ULOG_CRIT_L("Could not initialise connection to hald");
-                exit(1);
+                if (--hal_retries > 0) {
+                        sleep(1);
+                        goto try_hal_again;
+                } else
+                        exit(1);
         }
 
         do_global_init();

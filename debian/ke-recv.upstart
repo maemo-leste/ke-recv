@@ -1,9 +1,10 @@
 description "starting ke-recv"
 author "Philippe De Swert"
 
-start on started hal
-stop on stopping hal
 stop on ACT_DEAD
+stop on TEST
+stop on stopping hal
+start on started hal
 console none
 
 script

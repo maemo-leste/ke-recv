@@ -54,19 +54,25 @@ fi
 
 case "$1" in
   start)
-        modprobe omap_hsmmc
-        modprobe sd_mod
+        STATE="x$(cat /tmp/STATE)x"
+        if [ $STATE != "xACT_DEADx" -a $STATE != "xTESTx" ]; then
+                modprobe omap_hsmmc
+                modprobe sd_mod
 
-	# Start daemons
-	echo -n "Starting $DESC: "
+	        # Start daemons
+	        echo -n "Starting $DESC: "
 
-	if [ -x $DTOOL ]; then
-        	$DTOOL -U $USER -n -1 -t $DAEMON
-	else
-		start-stop-daemon -b --start --quiet --user $USER \
-			--exec $DAEMON -- $PARAMS
-	fi
-	echo "$NAME."
+                # modprobe g_nokia by default, unless in ACT_DEAD
+                modprobe g_nokia
+
+                if [ -x $DTOOL ]; then
+                        $DTOOL -U $USER -n -1 -t $DAEMON
+                else
+                        start-stop-daemon -b --start --quiet --user $USER \
+                                --exec $DAEMON -- $PARAMS
+                fi
+	        echo "$NAME."
+        fi
 	;;
   stop)
 	echo -n "Stopping $DESC: "
