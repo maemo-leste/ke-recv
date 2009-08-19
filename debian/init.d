@@ -73,6 +73,12 @@ case "$1" in
                 fi
         fi
 
+        STATE="x$(cat /tmp/STATE)x"
+        if [ $STATE != "xACT_DEADx" ]; then
+                # modprobe g_nokia by default, unless in ACT_DEAD
+                /usr/sbin/pcsuite-enable.sh
+        fi
+
 	if [ -x $DTOOL ]; then
         	$DTOOL -U $USER -n -1 -t $DAEMON
 	else
