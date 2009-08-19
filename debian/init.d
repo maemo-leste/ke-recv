@@ -60,11 +60,6 @@ case "$1" in
 	# Start daemons
 	echo -n "Starting $DESC: "
 
-        # check if this is the first boot
-        if [ -e /home/user/first-boot-flag ]; then
-                export FIRST_BOOT=1
-        fi
-
         # check if this is TA image
         if [ -x /usr/bin/sysinfo-tool ]; then
                 sysinfo-tool -g /device/sw-release-ver | grep -q _TA_

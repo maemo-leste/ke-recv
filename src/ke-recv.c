@@ -1817,21 +1817,6 @@ static int has_capability(const char *udi, const char *capability)
         return ret;
 }
 
-static gboolean is_actdead_mode(void)
-{
-        gchar *buf = NULL;
-        gboolean is_state;
-
-        is_state = g_file_get_contents("/tmp/STATE", &buf, NULL, NULL);
-        if (is_state && strncmp("ACT_DEAD", buf, 8) == 0) {
-                g_free(buf);
-                return TRUE;
-        }
-        if (buf)
-                g_free(buf);
-        return FALSE;
-}
-
 static usb_state_t check_usb_cable(void)
 {
         usb_state_t state;
@@ -3371,13 +3356,6 @@ int main(int argc, char* argv[])
                 ULOG_DEBUG_F("hildon-desktop is running");
                 desktop_started = TRUE;
         }
-
-#if 0
-        if (getenv("FIRST_BOOT") != NULL) {
-                ULOG_DEBUG_F("this is the first boot");
-                first_boot = TRUE;
-        }
-#endif
 
         if (desktop_started && usb_state != S_INVALID_USB_STATE
             && !mmc_initialised) {

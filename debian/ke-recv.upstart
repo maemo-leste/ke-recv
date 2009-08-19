@@ -3,6 +3,7 @@ author "Philippe De Swert"
 
 start on started hal
 stop on stopping hal
+stop on ACT_DEAD
 console none
 
 script
