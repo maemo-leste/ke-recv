@@ -98,6 +98,20 @@ static void empty_file(const char *file)
         }
 }
 
+/* helper to hide backwards compatibility for the old layout */
+static volume_list_t *get_internal_mmc_volume(mmc_info_t *mmc)
+{
+        volume_list_t *vol;
+        vol = get_nth_volume(mmc, mmc->preferred_volume);
+        if (vol && vol->dev_name) {
+                return vol;
+        } else {
+                ULOG_ERR_F("could not find partition number %d",
+                           mmc->preferred_volume);
+                return NULL;
+        }
+}
+
 #define UPDATE_MMC_LABEL_SCRIPT "/usr/sbin/osso-update-mmc-label.sh"
 
 void update_mmc_label(mmc_info_t *mmc)
@@ -110,19 +124,16 @@ void update_mmc_label(mmc_info_t *mmc)
         char *part_device = NULL;
         volume_list_t *vol;
 
-        vol = get_nth_volume(mmc, mmc->preferred_volume);
-        if (vol == NULL) {
-                ULOG_ERR_F("could not find partition number %d",
-                           mmc->preferred_volume);
-                if (mmc->preferred_volume != 1 && mmc->internal_card) {
-                        /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 1!");
-                        vol = get_nth_volume(mmc, 1);
-                        if (vol == NULL)
-                                return;
-                } else
-                        return;
+        if (mmc->internal_card)
+                vol = get_internal_mmc_volume(mmc);
+        else
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
+
+        if (vol == NULL || vol->dev_name == NULL) {
+                ULOG_ERR_F("could not find partition");
+                return;
         }
+
         part_device = vol->dev_name;
 
         if (part_device == NULL) {
@@ -547,20 +558,10 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
         const char *args[] = {NULL, NULL}; 
         char *dev;
 
-        if (!mmc->control_partitions) {
+        if (mmc->internal_card) {
                 volume_list_t *vol;
-
-                vol = get_nth_volume(mmc, mmc->preferred_volume);
-                if (vol == NULL) {
-                        if (mmc->preferred_volume != 1) {
-                                /* workaround for not yet partitioned systems */
-                                ULOG_DEBUG_F("falling back to partition 1!");
-                                vol = get_nth_volume(mmc, 1);
-                                if (vol == NULL || vol->dev_name == NULL)
-                                        return;
-                        } else
-                                return;
-                }
+                if ((vol = get_internal_mmc_volume(mmc)) == NULL)
+                        return;
                 dev = vol->dev_name;
         } else
                 dev = mmc->whole_device;
@@ -582,54 +583,37 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
 static int usb_share_card(mmc_info_t *mmc, gboolean show)
 {
         const char *args[] = {NULL, NULL};
-        char *dev = NULL;
+        char *dev;
 
-        if (mmc) {
-                if (!mmc->control_partitions) {
-                        volume_list_t *vol;
-
-                        vol = get_nth_volume(mmc, mmc->preferred_volume);
-                        if (vol == NULL) {
-                                ULOG_ERR_F("volume %d not found from %s",
-                                           mmc->preferred_volume, mmc->name);
-                                if (mmc->preferred_volume != 1) {
-                                        /* workaround for not yet partitioned
-                                         * systems */
-                                        ULOG_DEBUG_F("falling back to"
-                                                     " partition 1!");
-                                        vol = get_nth_volume(mmc, 1);
-                                        if (vol == NULL ||
-                                            vol->dev_name == NULL)
-                                                return 0;
-                                } else
-                                        return 0;
-                        }
-                        dev = vol->dev_name;
-                } else
-                        dev = mmc->whole_device;
-
-                if (dev == NULL) {
-                        ULOG_DEBUG_F("dev unknown for %s", mmc->name);
+        if (mmc->internal_card) {
+                volume_list_t *vol;
+                if ((vol = get_internal_mmc_volume(mmc)) == NULL) {
+                        ULOG_ERR_F("volume not found for %s", mmc->name);
                         return 0;
                 }
+                dev = vol->dev_name;
+        } else
+                dev = mmc->whole_device;
 
-                if (mmc->storage_udi == NULL) {
-                        ULOG_DEBUG_F("device is not ready yet");
-                        return 0;
-                }
-
-                args[0] = dev;
+        if (dev == NULL) {
+                ULOG_DEBUG_F("dev unknown for %s", mmc->name);
+                return 0;
         }
 
+        if (mmc->storage_udi == NULL) {
+                ULOG_DEBUG_F("device is not ready yet");
+                return 0;
+        }
+
+        args[0] = dev;
         if (load_usb_driver(args)) {
                 ULOG_INFO_F("USB mass storage module loaded for %s", dev);
                 /*
                 if (show) {
-                        show_infobanner("connected via usb");
+                        display_dialog("connected via usb");
                 }
                 */
-                if (mmc)
-                        inform_mmc_used_over_usb(TRUE, mmc);
+                inform_mmc_used_over_usb(TRUE, mmc);
                 return 1;
         } else {
                 ULOG_ERR_F("failed to load USB mass storage module for %s",
@@ -644,19 +628,14 @@ static void handle_e_rename(mmc_info_t *mmc)
         int ret;
         volume_list_t *vol;
 
-        vol = get_nth_volume(mmc, mmc->preferred_volume);
+        if (mmc->internal_card)
+                vol = get_internal_mmc_volume(mmc);
+        else
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
 
         if (vol == NULL || vol->dev_name == NULL) {
-                ULOG_ERR_F("could not find partition number %d",
-                           mmc->preferred_volume);
-                if (mmc->preferred_volume != 1 && mmc->internal_card) {
-                        /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 1!");
-                        vol = get_nth_volume(mmc, 1);
-                        if (vol == NULL || vol->dev_name == NULL)
-                                return;
-                } else
-                        return;
+                ULOG_ERR_F("could not find partition");
+                return;
         }
 
         ULOG_DEBUG_F("using device file %s", vol->dev_name);
@@ -727,20 +706,14 @@ static void handle_e_format(mmc_info_t *mmc)
 
         ULOG_DEBUG_F("label for %s is '%s'", mmc->name, mmc->desired_label);
 
-        vol = get_nth_volume(mmc, mmc->preferred_volume);
+        if (mmc->internal_card)
+                vol = get_internal_mmc_volume(mmc);
+        else
+                vol = get_nth_volume(mmc, mmc->preferred_volume);
 
-        if ((vol == NULL || vol->dev_name == NULL)
-            && !mmc->control_partitions) {
-                ULOG_ERR_F("could not find partition number %d",
-                           mmc->preferred_volume);
-                if (mmc->preferred_volume != 1 && mmc->internal_card) {
-                        /* workaround for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 1!");
-                        vol = get_nth_volume(mmc, 1);
-                        if (vol == NULL || vol->dev_name == NULL)
-                                return;
-                } else
-                        return;
+        if (vol == NULL || vol->dev_name == NULL) {
+                ULOG_ERR_F("could not find partition");
+                return;
         }
 
         if (!mmc->control_partitions) {
@@ -915,25 +888,19 @@ static void handle_e_check(mmc_info_t *mmc)
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
 {
         const char *mount_args[] = {MMC_MOUNT_COMMAND, NULL, NULL, NULL};
-        volume_list_t *l, *l_on_first_try = NULL;
+        volume_list_t *l;
         const char *udi = NULL, *device = NULL;
         int ret, count = 0;
        
         l = get_nth_volume(mmc, mmc->preferred_volume);
 
-        if (l == NULL || l->udi == NULL) {
+        if (l == NULL || l->udi == NULL || l->dev_name == NULL) {
                 ULOG_DEBUG_F("partition %d not found", mmc->preferred_volume);
                 return 0;
         }
 
-try_again:
         udi = l->udi;
         device = l->dev_name;
-
-        if (device == NULL) {
-                ULOG_ERR_F("couldn't get device for %s", udi);
-                return 0;
-        }
 
         ULOG_DEBUG_F("trying to mount %s", device);
 
@@ -953,29 +920,9 @@ try_again:
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
-                /* This is now done from hulda due to fix for NB#114795.
-                if (show_errors)
-                        open_closeable_dialog(OSSO_GN_NOTICE,
-                                _("card_ia_corrupted"), "OMG!");
-                                */
         } else {
                 /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-
-                if (!l_on_first_try && l->volume_number == 1 &&
-                    mmc->internal_card) {
-                        /* try partition 3 for not yet partitioned systems */
-                        ULOG_DEBUG_F("falling back to partition 3");
-                        l_on_first_try = l;
-                        l = get_nth_volume(mmc, 3);
-                        if (l == NULL || l->udi == NULL)
-                                l = l_on_first_try;
-                        else
-                                goto try_again;
-                } else if (l_on_first_try)
-                        /* the partition on first try was just corrupt */
-                        l = l_on_first_try;
-
                 l->mountpoint = NULL;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
@@ -1043,27 +990,10 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
 {
         int all_unmounted = 1;
        
-        if (mmc->control_partitions) {
+        if (!mmc->internal_card) {
             volume_list_t *l;
             for (l = &mmc->volumes; l != NULL; l = l->next) {
                 if (l->udi != NULL) {
-#if 0  /* not necessary to check is_mounted, mountpoint should be enough */
-                        int prop;
-                        /* TODO: cache is_mounted info for speed */
-                        prop = get_prop_bool(l->udi, "volume.is_mounted");
-                        if (!prop) {
-                                ULOG_DEBUG_F("%s is not mounted", l->udi);
-                                /* FIXME: This is a workaround for
-                                 * lower-level issues. Sometimes is_mounted
-                                 * property cannot be trusted. */
-                                if (l->mountpoint != NULL
-                                    && do_unmount(l->mountpoint, lazy)) {
-                                        /* unmount succeeded or it
-                                         * was not mounted */
-                                }
-                                continue;
-                        }
-#endif
                         if (l->mountpoint == NULL) {
                                 ULOG_DEBUG_F("mount point not known for %s",
                                              l->udi);
@@ -1080,10 +1010,9 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
         } else {
                 /* we only control single FAT volume */
                 volume_list_t *vol;
-                vol = get_nth_volume(mmc, mmc->preferred_volume);
+                vol = get_internal_mmc_volume(mmc);
                 if (vol == NULL) {
-                        ULOG_ERR_F("could not find partition number %d",
-                                   mmc->preferred_volume);
+                        ULOG_ERR_F("couldn't find partition for internal card");
                         all_unmounted = 0;
                 } else {
                         char *arg;
@@ -1137,6 +1066,13 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         mmc->state = S_COVER_CLOSED;
                         break;
                 case E_RENAME:
+                        ULOG_WARN_F("improper state");
+                        break;
+                case E_FORMAT:
+                        ULOG_WARN_F("improper state");
+                        break;
+                case E_REPAIR:
+                case E_CHECK:
                         ULOG_WARN_F("improper state");
                         break;
                 case E_VOLUME_REMOVED:
@@ -1472,27 +1408,21 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
 int handle_event(mmc_event_t e, mmc_info_t *mmc, const char *arg)
 {
         int ret = 1;
-        if (!mmc && e == E_PLUGGED) {
-                /* enable fast charging with host PC by inserting
-                 * g_file_storage */
-                ret = usb_share_card(NULL, TRUE);
-        } else {
-                if (mmc->whole_device == NULL) {
-                        ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
-                }
-                switch (mmc->state) {
-                        case S_COVER_OPEN:
-                                ret = event_in_cover_open(e, mmc, arg);
-                                break;
-                        case S_COVER_CLOSED:
-                                ret = event_in_cover_closed(e, mmc, arg);
-                                break;
-                        case S_UNMOUNT_PENDING:
-                                ret = event_in_unmount_pending(e, mmc, arg);
-                                break;
-                        default:
-                                ULOG_ERR_F("unknown state %d", mmc->state);
-                }
+        if (mmc->whole_device == NULL) {
+                ULOG_DEBUG_F("whole_device unknown for %s", mmc->name);
+        }
+        switch (mmc->state) {
+                case S_COVER_OPEN:
+                        ret = event_in_cover_open(e, mmc, arg);
+                        break;
+                case S_COVER_CLOSED:
+                        ret = event_in_cover_closed(e, mmc, arg);
+                        break;
+                case S_UNMOUNT_PENDING:
+                        ret = event_in_unmount_pending(e, mmc, arg);
+                        break;
+                default:
+                        ULOG_ERR_F("unknown state %d", mmc->state);
         }
         return ret;
 }

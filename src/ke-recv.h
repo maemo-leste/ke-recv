@@ -295,7 +295,9 @@ dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
 void close_closeable_dialog(dbus_uint32_t id);
 void show_infobanner(const char *msg);
 gint get_dialog_response(dbus_int32_t id);
+/*
 gboolean send_exit_signal(void);
+*/
 void send_systembus_signal(const char *op, const char *iface,
                                            const char *name);
 char* find_by_cap_and_prop(const char *capability,

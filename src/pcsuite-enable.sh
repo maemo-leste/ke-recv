@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2008-2009 Nokia Corporation. All rights reserved.
 #
-# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
@@ -19,20 +19,13 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep g_nada > /dev/null
-if [ $? = 0 ]; then
-    logger "$0: removing g_nada"
-    /sbin/rmmod g_nada
-fi
-
-# g_file_storage could be there for charging
 /sbin/lsmod | grep g_file_storage > /dev/null
 if [ $? = 0 ]; then
     logger "$0: removing g_file_storage"
+    initctl emit G_FILE_STORAGE_REMOVE
     /sbin/rmmod g_file_storage
 fi
 
-RC=0
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_nokia
@@ -42,15 +35,24 @@ fi
 if [ $RC != 0 ]; then
     logger "$0: failed to install g_nokia"
     exit 1
+else
+    sleep 2
 fi
-
-# TODO: wait for device files
-sleep 1
 
 initctl emit --no-wait G_NOKIA_READY
 
-# TODO: wait for daemons
-sleep 1
+# Wait until daemons are up
+INC=1
+while [ "x$(pidof pnatd)x" = "xx" -o "x$(pidof obexd)x" = "xx" \
+       -o "x$(pidof syncd)x" = "xx" ]; do
+    if [ $INC -gt 20 ]; then
+      echo "$0: Error, daemons did not start"
+      logger "$0: Error, daemons did not start"
+      exit 1
+    fi
+    sleep 1
+    INC=`expr $INC + 1`
+done
 
 OBEXD_PID=`pidof obexd`
 if [ $? != 0 ]; then

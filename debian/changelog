@@ -5,18 +5,9 @@ ke-recv (3.21-1~unreleased) unstable; urgency=low
     - Move session bus D-Bus interfaces to system bus
     - Get rid of libosso functions, because libosso requires session bus
     - Start ke-recv earlier, after HAL
-    - Do not insert any USB module in startup: wait for the cable
-    - Do not keep g_nada inserted, it is only used temporarily on cable
-      connection
-    - Add USB mode signal and querying interface for the USB plugin
+    - Insert g_nokia in startup, unless we're in ACTDEAD mode
     - NOTE: requires infonote and infobanner interfaces to be provided on
       the system bus also
-  * Fixes: NB#114280 - MyDocs gets dated Jan 1 1970 after using USB in mass
-    storage mode
-  * Fixes: NB#128388 - vfat should sit at the first partition
-  * Fixes: NB#123352 - AppCert-USB-Modem query doesn't work after PC reboot
-  * Fixes: NB#127339 - AppCert-ke-recv doesn't export card if the partition
-    format isn't recognized
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 15 Jul 2009 13:02:48 +0300
 
