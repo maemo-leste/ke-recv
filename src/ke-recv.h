@@ -163,8 +163,7 @@ typedef enum {
         S_EJECTED,
         S_MASS_STORAGE,
         S_CHARGING,
-        S_PCSUITE,
-        S_CHARGER_PROBE
+        S_PCSUITE
 } usb_state_t;
 
 typedef enum {
@@ -176,8 +175,7 @@ typedef enum {
         /* the three next ones are for USB plugin's requests */
         E_ENTER_MASS_STORAGE_MODE,
         E_ENTER_CHARGING_MODE,
-        E_ENTER_PCSUITE_MODE,
-        E_ENTER_CHARGER_PROBE
+        E_ENTER_PCSUITE_MODE
 } usb_event_t;
 
 typedef enum {
