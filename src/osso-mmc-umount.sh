@@ -40,7 +40,7 @@ if [ $? = 0 ]; then
       TMP=`/usr/bin/lsof $MP`
       echo $TMP
       if [ -x /usr/bin/logger ]; then
-        /usr/bin/logger $TMP
+        /usr/bin/logger "x$TMP"
       fi
     fi
   elif [ $RC != 0 ]; then
@@ -51,7 +51,7 @@ if [ $? = 0 ]; then
       TMP=`/usr/bin/lsof $MP`
       echo $TMP
       if [ -x /usr/bin/logger ]; then
-        /usr/bin/logger $TMP
+        /usr/bin/logger "x$TMP"
       fi
     fi
   fi

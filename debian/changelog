@@ -1,3 +1,10 @@
+ke-recv (3.19-6) unstable; urgency=low
+
+  * Make sure logger is not called without command line arguments.
+  * Fixes: NB#134327 - Hot swap is not working
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 21 Aug 2009 13:43:30 +0300
+
 ke-recv (3.19-5) unstable; urgency=low
 
   * Fixes: NB#123352 - AppCert-USB-Modem query doesn't work after PC reboot
