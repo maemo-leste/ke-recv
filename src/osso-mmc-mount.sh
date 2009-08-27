@@ -74,11 +74,34 @@ logger "$0: mounting $PDEV read-write to $MP, rc: $RC"
 if [ $RC = 0 ]; then
   # create some special directories for user's partition
   if [ "x$MP" = "x/home/user/MyDocs" -a -w $MP ]; then
-    for d in .sounds .videos .documents .images .camera; do
-      mkdir -p $MP/$d
-    done
+    # use global folder names
+    USERDIRS="/home/user/.config/user-dirs.dirs"
+    if [ -f "$USERDIRS" ]; then
+      HOME='/home/user'
+      source "$USERDIRS"
+      mkdir -p "$XDG_DOCUMENTS_DIR" 
+      mkdir -p "$XDG_PICTURES_DIR"
+      mkdir -p "$XDG_MUSIC_DIR"
+      mkdir -p "$XDG_VIDEOS_DIR" 
+      mkdir -p "$NOKIA_CAMERA_DIR"
+    else
+      # fallback
+      for d in .sounds .videos .documents .images .camera; do
+        mkdir -p $MP/$d
+      done
+    fi
     touch $MP
   elif [ "x$MP" = "x/home/user/MyDocs" ]; then
+    logger "$0: '$MP' is not writable"
+  elif [ "x$MP" = "x/media/mmc1" -a -w $MP ]; then
+    # use global folder names
+    USERDIRS="/home/user/.config/user-dirs.dirs"
+    if [ -f "$USERDIRS" ]; then
+      HOME='/home/user'
+      source "$USERDIRS"
+      mkdir -p "$NOKIA_MMC_CAMERA_DIR"
+    fi
+  elif [ "x$MP" = "x/media/mmc1" ]; then
     logger "$0: '$MP' is not writable"
   fi
 fi

@@ -1,3 +1,10 @@
+ke-recv (3.19-7) unstable; urgency=low
+
+  Patch from Mox Soini to support '/home/user/.config/user-dirs.dirs':
+  * Fixes: NB#130327 - ke-recv needs to support global safe folders
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 27 Aug 2009 14:42:49 +0300
+
 ke-recv (3.19-6) unstable; urgency=low
 
   * Make sure logger is not called without command line arguments.
