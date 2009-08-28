@@ -76,8 +76,14 @@ case "$1" in
         fi
 
         if [ "x$TA_IMAGE" = "x" ]; then
-                # g_file_storage is loaded as the default
-                /sbin/modprobe g_file_storage stall=0 luns=2 removable
+                if [ -e /var/lib/ke-recv/usb_phonet_mode ]; then
+                        /sbin/modprobe g_nokia
+                        rm -f /var/lib/ke-recv/usb_phonet_mode
+                        sync
+                else
+                        # g_file_storage is loaded as the default
+                        /sbin/modprobe g_file_storage stall=0 luns=2 removable
+                fi
         fi
 
 	if [ -x $DTOOL ]; then

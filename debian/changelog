@@ -1,3 +1,10 @@
+ke-recv (3.19-9) unstable; urgency=low
+
+  * Add usb_phonet_mode flag file for fixing NB#134836.
+  * modprobe g_nokia if usb_phonet_mode exists.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Aug 2009 15:23:53 +0300
+
 ke-recv (3.19-8) unstable; urgency=low
 
   * Do not require the external card to have a partition in order to format
