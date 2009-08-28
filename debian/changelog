@@ -1,3 +1,11 @@
+ke-recv (3.19-8) unstable; urgency=low
+
+  * Do not require the external card to have a partition in order to format
+    it.
+  * Fixes: NB#135087 - Memory card cannot be formatted
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Aug 2009 13:53:38 +0300
+
 ke-recv (3.19-7) unstable; urgency=low
 
   Patch from Mox Soini to support '/home/user/.config/user-dirs.dirs':

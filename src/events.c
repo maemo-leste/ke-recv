@@ -710,7 +710,8 @@ static void handle_e_format(mmc_info_t *mmc)
         else
                 vol = get_nth_volume(mmc, mmc->preferred_volume);
 
-        if (vol == NULL || vol->dev_name == NULL) {
+        if (!mmc->control_partitions &&
+            (vol == NULL || vol->dev_name == NULL)) {
                 ULOG_ERR_F("could not find partition");
                 return;
         }
