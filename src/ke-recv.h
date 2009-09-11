@@ -94,7 +94,10 @@ extern "C" {
 #define MCE_DEVICELOCK_SIG "devicelock_mode_ind"
 #define MCE_SHUTDOWN_SIG "shutdown_ind"
 #define MCE_LOCKED_STR "locked"
-#define MCE_MATCH_RULE "type='signal',interface='" MCE_SIGNAL_IF "'"
+#define MCE_DEVICELOCK_SIG_MATCH_RULE "type='signal',interface='" \
+  MCE_SIGNAL_IF "',member='" MCE_DEVICELOCK_SIG "'"
+#define MCE_SHUTDOWN_SIG_MATCH_RULE "type='signal',interface='" \
+  MCE_SIGNAL_IF "',member='" MCE_SHUTDOWN_SIG "'"
 
 /* low-memory signal from kdbusd */
 #define LOWMEM_SIGNAL_OP "/org/kernel/kernel/high_watermark"

@@ -3,6 +3,9 @@ ke-recv (3.19-10) unstable; urgency=low
   * Fixes: NB#137197 - Not able to enable Mass storage when no other
     applications are running
 
+  Alban Crequy:
+  * Fixes: NB#138145 - ke-recv listens on D-Bus too broadly
+
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 11 Sep 2009 15:59:16 +0300
 
 ke-recv (3.19-9) unstable; urgency=low
