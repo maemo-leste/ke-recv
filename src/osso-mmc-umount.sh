@@ -45,6 +45,11 @@ if [ $? = 0 ]; then
     fi
   elif [ $RC != 0 ]; then
     # old-fashioned unmounting if mmc-unmount failed
+
+    # give processes (such as hildon-thumbnailer) some time to close files
+    # after the GVFS pre-unmount signal
+    sleep 1
+
     umount $MP 2> /dev/null
     RC=$?
     if [ $RC != 0 -a -x /usr/bin/lsof ]; then
