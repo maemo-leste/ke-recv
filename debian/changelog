@@ -2,6 +2,8 @@ ke-recv (3.19-11) unstable; urgency=low
 
   Felipe:
   * Don't remove kernel module after USB cable is disconnected.
+  * Fixes: NB#138089 - AppCert-USB-Enumeration test fails in PCSuite mode
+  * Fixes: NB#135068 - AppCert-USB-Chapter9 tests are failing in full speed
 
  -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 15 Sep 2009 15:59:51 +0300
 
