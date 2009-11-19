@@ -3005,7 +3005,8 @@ static void handle_usb_event(usb_event_t e)
                                 usb_state_t orig = usb_state;
                                 usb_state = S_MASS_STORAGE;
                                 if (!e_plugged_helper()) {
-                                        ULOG_DEBUG_F("no card was USB shared");
+                                        ULOG_DEBUG_F("no card was USB shared"
+                                                     " or cable disconnected");
                                         /* no real state change if no card was
                                          * successful */
                                         usb_state = orig;

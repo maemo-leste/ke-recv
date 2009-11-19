@@ -1,3 +1,11 @@
+ke-recv (3.19-12) unstable; urgency=low
+
+  David Kedves:
+  * Fixes: NB#146099 - Not displaying the "Connected to USB device" dialog
+    when USB is inserted and mounts the device/mmc memory by default
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 16 Nov 2009 11:22:41 +0200
+
 ke-recv (3.19-11) unstable; urgency=low
 
   Felipe:

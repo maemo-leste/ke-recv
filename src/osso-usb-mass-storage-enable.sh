@@ -65,15 +65,24 @@ if [ $RC != 0 ]; then
     exit 1
 fi
 
+LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
+LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
+
+/bin/grep /sys/devices/platform/musb_hdrc/mode -e idle > /dev/null
+if [ $? = 0 ]; then
+    logger "$0: usb cable detached after module change"
+    # make sure we don't have devices in there
+    echo '' > $LUN0
+    echo '' > $LUN1
+    exit 1
+fi
+
 initctl emit --no-wait G_FILE_STORAGE_READY
 
 if [ $# -gt 1 ]; then
     echo "$0: only one argument supported"
     exit 1
 fi
-
-LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
-LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
 
 # check first if the card(s) are already shared
 if [ $# = 1 ]; then
