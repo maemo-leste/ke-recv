@@ -2911,6 +2911,15 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_PERIPHERAL_WAIT) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_PERIPHERAL_WAIT");
+                                /* in case e_plugged_helper failed when we
+                                 * tried enabling mass storage, we need to
+                                 * remount the cards */
+                                usb_state = S_MASS_STORAGE;
+                                handle_event(E_DETACHED, &ext_mmc, NULL);
+                                if (int_mmc_enabled) {
+                                        handle_event(E_DETACHED, &int_mmc,
+                                                     NULL);
+                                }
                         } else if (usb_state == S_CHARGING) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
