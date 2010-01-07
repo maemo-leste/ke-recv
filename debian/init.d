@@ -54,25 +54,45 @@ fi
 
 case "$1" in
   start)
-        STATE="x$(cat /tmp/STATE)x"
-        if [ $STATE != "xACT_DEADx" -a $STATE != "xTESTx" ]; then
-                modprobe omap_hsmmc
-                modprobe sd_mod
+        modprobe omap_hsmmc
+        modprobe sd_mod
 
-	        # Start daemons
-	        echo -n "Starting $DESC: "
+	# Start daemons
+	echo -n "Starting $DESC: "
 
-                # modprobe g_nokia by default, unless in ACT_DEAD
-                modprobe g_nokia
-
-                if [ -x $DTOOL ]; then
-                        $DTOOL -U $USER -n -1 -t $DAEMON
-                else
-                        start-stop-daemon -b --start --quiet --user $USER \
-                                --exec $DAEMON -- $PARAMS
-                fi
-	        echo "$NAME."
+        # check if this is the first boot
+        if [ -e /home/user/first-boot-flag ]; then
+                export FIRST_BOOT=1
         fi
+
+        # check if this is TA image
+        if [ -x /usr/bin/sysinfo-tool ]; then
+                sysinfo-tool -g /device/sw-release-ver | grep -q _TA_
+                if [ $? = 0 ]; then
+                        export TA_IMAGE=1
+                        # modprobe g_nokia automatically in TA images
+                        /usr/sbin/pcsuite-enable.sh
+                fi
+        fi
+
+        if [ "x$TA_IMAGE" = "x" ]; then
+                if [ -e /var/lib/ke-recv/usb_phonet_mode ]; then
+                        /sbin/modprobe g_nokia
+                        rm -f /var/lib/ke-recv/usb_phonet_mode
+                        sync
+                else
+                        # g_file_storage is loaded as the default
+                        /sbin/modprobe g_file_storage stall=0 luns=2 removable
+                fi
+        fi
+
+	if [ -x $DTOOL ]; then
+        	$DTOOL -U $USER -n -1 -t $DAEMON
+	else
+		start-stop-daemon -b --start --quiet --user $USER \
+			--exec $DAEMON -- $PARAMS
+	fi
+	echo "$NAME."
 	;;
   stop)
 	echo -n "Stopping $DESC: "

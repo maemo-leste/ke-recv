@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2008-2009 Nokia Corporation. All rights reserved.
 #
-# Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
+# Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 

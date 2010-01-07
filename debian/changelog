@@ -1,28 +1,92 @@
-ke-recv (3.21-1~unreleased) unstable; urgency=low
+ke-recv (3.19-13) unstable; urgency=low
 
-  * Changes for the newest USB architecture:
-    - Get rid of the D-Bus session bus dependency
-    - Move session bus D-Bus interfaces to system bus
-    - Get rid of libosso functions, because libosso requires session bus
-    - Start ke-recv earlier, after HAL
-    - Insert g_nokia in startup, unless we're in ACTDEAD mode
-    - NOTE: requires infonote and infobanner interfaces to be provided on
-      the system bus also
-    - Assume S_PCSUITE if restarted when the cable is connected
-    - Be more persisting when connecting to hald.
+  * Remount cards in case we are in S_PERIPHERAL_WAIT and the cable is
+    disconnected, because we could have a partially enabled mass storage mode.
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 15 Jul 2009 13:02:48 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 24 Nov 2009 13:03:32 +0200
 
-ke-recv (3.20-1) unstable; urgency=low
+ke-recv (3.19-12) unstable; urgency=low
 
-  * Fixes: NB#121472 - mmc-pre-unmount crashes on mass storage mode when
-    memory is full
-  * Changes for the new USB handling architecture.
-  * Reduce some syslog spam.
-  * Fix bugs in previous Coverity fixes.
+  David Kedves:
+  * Fixes: NB#146099 - Not displaying the "Connected to USB device" dialog
+    when USB is inserted and mounts the device/mmc memory by default
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon, 16 Nov 2009 11:22:41 +0200
+
+ke-recv (3.19-11) unstable; urgency=low
+
+  Felipe:
+  * Don't remove kernel module after USB cable is disconnected.
+  * Fixes: NB#138089 - AppCert-USB-Enumeration test fails in PCSuite mode
+  * Fixes: NB#135068 - AppCert-USB-Chapter9 tests are failing in full speed
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 15 Sep 2009 15:59:51 +0300
+
+ke-recv (3.19-10) unstable; urgency=low
+
+  * Fixes NB#137197 - Not able to enable Mass storage when no other
+    applications are running
+
+  Alban Crequy:
+  * Fixes: NB#138145 - ke-recv listens on D-Bus too broadly
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 11 Sep 2009 15:59:16 +0300
+
+ke-recv (3.19-9) unstable; urgency=low
+
+  * Add usb_phonet_mode flag file for fixing NB#134836.
+  * modprobe g_nokia if usb_phonet_mode exists.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Aug 2009 15:23:53 +0300
+
+ke-recv (3.19-8) unstable; urgency=low
+
+  * Do not require the external card to have a partition in order to format
+    it.
+  * Fixes: NB#135087 - Memory card cannot be formatted
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 28 Aug 2009 13:53:38 +0300
+
+ke-recv (3.19-7) unstable; urgency=low
+
+  Patch from Mox Soini to support '/home/user/.config/user-dirs.dirs':
+  * Fixes: NB#130327 - ke-recv needs to support global safe folders
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 27 Aug 2009 14:42:49 +0300
+
+ke-recv (3.19-6) unstable; urgency=low
+
+  * Make sure logger is not called without command line arguments.
+  * Fixes: NB#134327 - Hot swap is not working
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 21 Aug 2009 13:43:30 +0300
+
+ke-recv (3.19-5) unstable; urgency=low
+
+  * Fixes: NB#123352 - AppCert-USB-Modem query doesn't work after PC reboot
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Mon,  3 Aug 2009 10:39:09 +0300
+
+ke-recv (3.19-4) unstable; urgency=low
+
+  * Keep g_file_storage loaded by default instead of g_nokia.
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Fri, 31 Jul 2009 15:34:41 +0300
+
+ke-recv (3.19-3) unstable; urgency=low
+
+  * Changes to support the new partition layout.
+  * Fixes: NB#128388 - vfat should sit at the first partition
+
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Wed, 29 Jul 2009 10:57:40 +0300
+
+ke-recv (3.19-2fixes) unstable; urgency=low
+
+  * Fixes: NB#127339 - AppCert-ke-recv doesn't export card if the partition
+    format isn't recognized
   * Fixes: NB#122833 - dosfsck should be removed from device mount
 
- -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Tue, 30 Jun 2009 14:32:37 +0300
+ -- Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>  Thu, 23 Jul 2009 10:35:29 +0300
 
 ke-recv (3.19-1) unstable; urgency=low
 

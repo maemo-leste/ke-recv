@@ -94,7 +94,10 @@ extern "C" {
 #define MCE_DEVICELOCK_SIG "devicelock_mode_ind"
 #define MCE_SHUTDOWN_SIG "shutdown_ind"
 #define MCE_LOCKED_STR "locked"
-#define MCE_MATCH_RULE "type='signal',interface='" MCE_SIGNAL_IF "'"
+#define MCE_DEVICELOCK_SIG_MATCH_RULE "type='signal',interface='" \
+  MCE_SIGNAL_IF "',member='" MCE_DEVICELOCK_SIG "'"
+#define MCE_SHUTDOWN_SIG_MATCH_RULE "type='signal',interface='" \
+  MCE_SIGNAL_IF "',member='" MCE_SHUTDOWN_SIG "'"
 
 /* low-memory signal from kdbusd */
 #define LOWMEM_SIGNAL_OP "/org/kernel/kernel/high_watermark"
@@ -201,6 +204,7 @@ typedef struct volume_list_t_ {
         char *udi;
         char *mountpoint;
         char *dev_name;
+        char *fstype;
         int volume_number;
         int corrupt;
         struct volume_list_t_ *next;
@@ -291,11 +295,8 @@ gboolean get_device_lock(void);
 dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                                     const char *msg, const char *btext);
 void close_closeable_dialog(dbus_uint32_t id);
-void show_infobanner(const char *msg);
 gint get_dialog_response(dbus_int32_t id);
-/*
 gboolean send_exit_signal(void);
-*/
 void send_systembus_signal(const char *op, const char *iface,
                                            const char *name);
 char* find_by_cap_and_prop(const char *capability,

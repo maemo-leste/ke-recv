@@ -25,8 +25,10 @@
 
 #include "events.h"
 #include "swap_mgr.h"
+#include <hildon-mime.h>
 #include <libhal.h>
 
+extern DBusConnection *ses_conn;
 extern gboolean desktop_started;
 
 /* whether to handle USB cable or not */
@@ -85,7 +87,6 @@ static void set_localised_label(mmc_info_t *mmc)
                 strncpy(mmc->display_name,
                         (const char*)dgettext("hildon-fm",
                          "sfil_li_memorycard_removable"), 100);
-                mmc->display_name[99] = '\0';
         }
 }
 
@@ -165,7 +166,6 @@ void update_mmc_label(mmc_info_t *mmc)
                         set_localised_label(mmc);
                 } else {
                         strncpy(mmc->display_name, (const char*)buf, 100);
-                        mmc->display_name[99] = '\0';
                 }
         }
         g_free(buf);
@@ -511,9 +511,9 @@ void possibly_turn_swap_off_simple(mmc_info_t *mmc)
 #endif
 }
 
-#if 0
 static gboolean possibly_turn_swap_off_nocheck(mmc_info_t *mmc)
 {
+#if 0
         int ret;
 
         if (mmc->swap_location == NULL) {
@@ -537,9 +537,9 @@ static gboolean possibly_turn_swap_off_nocheck(mmc_info_t *mmc)
                 return FALSE;
         }
         inform_mmc_swapping(FALSE, mmc);
+#endif
         return TRUE;
 }
-#endif
 
 void do_global_init(void)
 {
@@ -678,9 +678,8 @@ static void handle_e_rename(mmc_info_t *mmc)
                 }
         } else {
                 ULOG_DEBUG_F("umount failed");
-                open_closeable_dialog(OSSO_GN_NOTICE,
-                                      dgettext("osso-filemanager",
-                                      "sfil_ni_mmc_rename_mmc_in_use"), "");
+                display_system_note(dgettext("osso-filemanager",
+                                    "sfil_ni_mmc_rename_mmc_in_use"));
         }
 }
 
@@ -711,7 +710,8 @@ static void handle_e_format(mmc_info_t *mmc)
         else
                 vol = get_nth_volume(mmc, mmc->preferred_volume);
 
-        if (vol == NULL || vol->dev_name == NULL) {
+        if (!mmc->control_partitions &&
+            (vol == NULL || vol->dev_name == NULL)) {
                 ULOG_ERR_F("could not find partition");
                 return;
         }
@@ -741,9 +741,8 @@ static void handle_e_format(mmc_info_t *mmc)
         }
         if (!ret) {
                 ULOG_INFO_F("memory card %s is in use", mmc->name);
-                open_closeable_dialog(OSSO_GN_NOTICE,
-                                      dgettext("osso-filemanager",
-                                      "sfil_ni_mmc_format_mmc_in_use"), "");
+                display_system_note(dgettext("osso-filemanager",
+                                    "sfil_ni_mmc_format_mmc_in_use"));
                 if (mmc->control_partitions)
                         /* we could have unmounted some other volumes */
                         mount_volumes(mmc, TRUE);
@@ -768,7 +767,7 @@ static void handle_e_format(mmc_info_t *mmc)
                 } else {
                         mmc->skip_banner = TRUE;
                 }
-                show_infobanner(MSG_FORMATTING_COMPLETE);
+                display_dialog(MSG_FORMATTING_COMPLETE);
         }
 }
 
@@ -787,7 +786,7 @@ static void handle_e_repair(mmc_info_t *mmc)
                 udi = l->udi;
         } else {
                 ULOG_ERR_F("device name for the partition not found");
-                open_closeable_dialog(OSSO_GN_NOTICE, "unable to repair", "");
+                display_system_note("unable to repair");
                 return;
         }
 
@@ -805,15 +804,15 @@ static void handle_e_repair(mmc_info_t *mmc)
 
         if (ret > 2) {
                 ULOG_ERR_F("dosfsck returned: %d", ret - 2);
-                open_closeable_dialog(OSSO_GN_NOTICE, "unable to repair", "");
+                display_system_note("unable to repair");
                 return;
         } else if (ret > 0) {
                 ULOG_ERR_F("mmc-check error code: %d", ret);
-                open_closeable_dialog(OSSO_GN_NOTICE, "unable to repair", "");
+                display_system_note("unable to repair");
                 return;
         } else if (ret < 0) {
                 ULOG_ERR_F("exec_prog error code: %d", ret);
-                open_closeable_dialog(OSSO_GN_NOTICE, "unable to repair", "");
+                display_system_note("unable to repair");
                 return;
         }
         l->corrupt = 0;
@@ -821,10 +820,9 @@ static void handle_e_repair(mmc_info_t *mmc)
 
         init_mmc_volumes(mmc); /* re-init volumes */
         if (mount_volumes(mmc, FALSE)) {
-                open_closeable_dialog(OSSO_GN_NOTICE,
-                                      "memory card repaired", "");
+                display_system_note("memory card repaired");
         } else {
-                open_closeable_dialog(OSSO_GN_NOTICE, "unable to repair", "");
+                display_system_note("unable to repair");
         }
 }
 
@@ -842,8 +840,7 @@ static void handle_e_check(mmc_info_t *mmc)
                 udi = l->udi;
         } else {
                 ULOG_ERR_F("device name for the partition not found");
-                open_closeable_dialog(OSSO_GN_NOTICE,
-                                      "Partition not found", "");
+                display_system_note("Partition not found");
                 return;
         }
 
@@ -861,16 +858,16 @@ static void handle_e_check(mmc_info_t *mmc)
 
         if (ret > 2) {
                 ULOG_ERR_F("dosfsck returned: %d", ret - 2);
-                open_closeable_dialog(OSSO_GN_NOTICE, "dosfsck failed", "");
+                display_system_note("dosfsck failed");
                 /* TODO: set corrupt flag */
                 return;
         } else if (ret > 0) {
                 ULOG_ERR_F("mmc-check error code: %d", ret);
-                open_closeable_dialog(OSSO_GN_NOTICE, "mmc-check failed", "");
+                display_system_note("mmc-check failed");
                 return;
         } else if (ret < 0) {
                 ULOG_ERR_F("exec_prog error code: %d", ret);
-                open_closeable_dialog(OSSO_GN_NOTICE, "exec_prog failed", "");
+                display_system_note("exec_prog failed");
                 return;
         }
 #if 0
@@ -929,10 +926,10 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                 set_mmc_corrupted_flag(TRUE, mmc);
                 if (show_errors) {
                         if (mmc->internal_card)
-                                show_infobanner(
+                                display_dialog(
                                         _("card_ib_unknown_format_device"));
                         else
-                                show_infobanner(
+                                display_dialog(
                                         _("card_ib_unknown_format_card"));
                 }
         }
@@ -1054,7 +1051,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                                 update_mmc_label(mmc);
                                 if (mount_volumes(mmc, TRUE)) {
                                         /*
-                                        show_infobanner(
+                                        display_dialog(
                                                 "card available");
                                         if (desktop_started) {
                                                 check_install_file(mmc);
@@ -1105,10 +1102,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         inform_device_present(FALSE, mmc);
                         break;
                 case E_PLUGGED:
-                        if (mmc)
-                                ULOG_DEBUG_F("E_PLUGGED for %s", mmc->name);
-                        else
-                                ULOG_DEBUG_F("E_PLUGGED");
+                        ULOG_DEBUG_F("E_PLUGGED for %s", mmc->name);
                         break;
                 case E_DETACHED:
                         ULOG_DEBUG_F("E_DETACHED for %s", mmc->name);
@@ -1122,7 +1116,6 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
 
 static void handle_disable_swap(mmc_info_t *mmc)
 {
-#if 0
         gboolean retval = TRUE;
 
         if (mmc->swap_off_with_close_apps) {
@@ -1156,7 +1149,6 @@ static void handle_disable_swap(mmc_info_t *mmc)
         } else {
                 send_error("failure");
         }
-#endif
 }
 
 void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex,
@@ -1175,25 +1167,25 @@ void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex,
                 snprintf(buf, MAX_MSG_LEN,
                          MSG_USB_MEMORY_CARDS_IN_USE,
                          ex->display_name);
-                open_closeable_dialog(OSSO_GN_NOTICE, buf, "");
+                display_system_note(buf);
         } else if (!ex) {
                 /* internal card in use, no external card present */
                 snprintf(buf, MAX_MSG_LEN,
                          MSG_USB_INT_MEMORY_CARD_IN_USE_NO_EXT);
-                show_infobanner(buf);
+                display_dialog(buf);
         } else {
                 if (ext_failed) {
                         /* external card in use */
                         snprintf(buf, MAX_MSG_LEN,
                                  _("card_connected_via_usb_card"),
                                  ex->display_name);
-                        show_infobanner(buf);
+                        display_dialog(buf);
                 } else {
                         /* internal card in use */
                         snprintf(buf, MAX_MSG_LEN,
                                  _("card_connected_via_usb_device"),
                                  ex->display_name);
-                        show_infobanner(buf);
+                        display_dialog(buf);
                 }
         }
 }
@@ -1234,16 +1226,13 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         break;
                 case E_PLUGGED:
                         if (!ignore_cable && in_mass_storage_mode()
-                            && !device_locked && mmc) {
+                            && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
                                 if (!unmount_volumes(mmc, FALSE)) {
                                         ret = 0;
                                 } else {
                                         ret = usb_share_card(mmc, TRUE);
                                 }
-                        } else if (mmc == NULL) {
-                                /* only insert the module */
-                                ret = usb_share_card(NULL, TRUE);
                         }
                         break;
                 case E_DETACHED:
@@ -1273,7 +1262,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 if (mount_volumes(mmc, TRUE)) {
                                         /*
                                         if (!mmc->skip_banner) {
-                                                show_infobanner(
+                                                display_dialog(
                                                  "card available");
                                         }
                                         if (desktop_started) {

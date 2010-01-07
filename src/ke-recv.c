@@ -26,13 +26,11 @@
 
 #include "ke-recv.h"
 #include "exec-func.h"
+#include "gui.h"
 #include "events.h"
 #include "camera.h"
-/*
 #include <hildon-mime.h>
-*/
 #include <libgen.h>
-#include <dbus/dbus-glib-lowlevel.h>
 
 #define FDO_SERVICE "org.freedesktop.Notifications"
 #define FDO_OBJECT_PATH "/org/freedesktop/Notifications"
@@ -76,6 +74,7 @@ static gboolean mmc_keys_set = FALSE;
    the current message or signal that we're handling) came */
 static DBusConnection* the_connection = NULL;
 static DBusConnection* sys_conn = NULL;
+DBusConnection* ses_conn = NULL;
 static DBusMessage* the_message = NULL;
 osso_context_t *osso;
 static LibHalContext *hal_ctx;
@@ -92,9 +91,7 @@ static int mount_volume(volume_list_t *vol);
 static volume_list_t *add_usb_volume(volume_list_t *l, const char *udi);
 static gboolean usb_unmount_recheck(gpointer data);
 static int unmount_usb_volumes(void);
-/*
 static int launch_fm(void);
-*/
 static gboolean e_plugged_helper(void);
 static void possibly_start_am(void);
 static gboolean init_usb_cable_status(gpointer data);
@@ -168,14 +165,12 @@ static void dismantle_usb_unmount_pending()
 static gboolean usb_mount_check(gpointer data)
 {
         ULOG_DEBUG_F("entered");
-#if 0
         /* launch FM with what ever we have mounted */
         if (desktop_started && !launch_fm()) {
                 /* no USB volumes mounted */
                 display_system_note(dgettext(USB_DOMAIN,
                                     "stab_me_usb_no_file_system_available"));
         }
-#endif
         usb_mounting_timer_id = 0;
         return FALSE;
 }
@@ -202,7 +197,7 @@ static gboolean mmc_mount_check(gpointer data)
                 ULOG_DEBUG_F("set %s", mmc->corrupted_key);
                 update_mmc_label(mmc); /* clear old label */
                 if (desktop_started) {
-                        show_infobanner(MSG_MEMORY_CARD_IS_CORRUPTED);
+                        display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
         } else {
                 ULOG_DEBUG_F("volumes found, doing nothing");
@@ -223,12 +218,6 @@ static gboolean set_desktop_started(gpointer data)
                 }
                 handle_event(E_INIT_CARD, &ext_mmc, NULL);
                 mmc_initialised = TRUE;
-        }
-
-        if (usb_state == S_INVALID_USB_STATE) {
-                /* try USB init again now that syncd and obexd
-                 * should be running */
-                init_usb_cable_status ((void*)1);
         }
 #if 0
         if (delayed_auto_install_check) {
@@ -809,7 +798,6 @@ sig_handler(DBusConnection *c, DBusMessage *m, void *data)
     }
 }
 
-#if 0
 static void notification_closed(unsigned int id)
 {
         if (ext_mmc.dialog_id == id) {
@@ -924,7 +912,6 @@ gboolean send_exit_signal(void)
         dbus_connection_flush(ses_conn); /* needed because the sleep hack */
         return TRUE;
 }
-#endif
 
 void send_error(const char* n)
 {
@@ -1001,7 +988,8 @@ gboolean get_device_lock(void)
                 return FALSE;
         }
         dbus_error_init(&err);
-        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn,
+                m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1024,41 +1012,6 @@ gboolean get_device_lock(void)
         }
 }
 
-void show_infobanner(const char *msg)
-{
-        DBusMessage *m = NULL;
-        DBusError err;
-        dbus_bool_t ret;
-
-        assert(sys_conn != NULL);
-
-        if (!desktop_started) {
-                ULOG_DEBUG_F("do nothing - desktop is not running");
-                return;
-        }
-        dbus_error_init(&err);
-
-        m = dbus_message_new_method_call(FDO_SERVICE, FDO_OBJECT_PATH,
-                FDO_INTERFACE, "SystemNoteInfoprint");
-        if (m == NULL) {
-                ULOG_ERR_F("couldn't create message");
-                return;
-        }
-        ret = dbus_message_append_args(m, DBUS_TYPE_STRING, &msg,
-                                       DBUS_TYPE_INVALID);
-        if (!ret) {
-                ULOG_ERR_F("couldn't append arguments");
-                dbus_message_unref(m);
-                return;
-        }
-
-        ret = dbus_connection_send(sys_conn, m, NULL);
-        dbus_message_unref(m);
-        if (!ret) {
-                ULOG_ERR_F("sending failed");
-        }
-}
-
 dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                                     const char *msg, const char *btext)
 {
@@ -1068,7 +1021,7 @@ dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
         dbus_uint32_t id;
         dbus_bool_t ret;
 
-        assert(sys_conn != NULL);
+        assert(ses_conn != NULL);
 
         if (!desktop_started) {
                 ULOG_DEBUG_F("do nothing - desktop is not running");
@@ -1092,7 +1045,8 @@ dbus_uint32_t open_closeable_dialog(osso_system_note_type_t type,
                 return -1;
         }
 
-        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(ses_conn,
+                m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1116,7 +1070,7 @@ void close_closeable_dialog(dbus_uint32_t id)
         DBusError err;
 	dbus_bool_t ret;
 
-        assert(sys_conn != NULL);
+        assert(ses_conn != NULL);
         if (id == -1) {
                 ULOG_DEBUG_F("do nothing, id == -1");
                 return;
@@ -1137,7 +1091,8 @@ void close_closeable_dialog(dbus_uint32_t id)
 		return;
 	}
 
-        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(ses_conn,
+                m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1173,7 +1128,8 @@ gint get_dialog_response(dbus_int32_t id)
 		return retval;
 	}
 
-        r = dbus_connection_send_with_reply_and_block(sys_conn, m, -1, &err);
+        r = dbus_connection_send_with_reply_and_block(sys_conn,
+                m, -1, &err);
         dbus_message_unref(m);
         if (r == NULL) {
                 ULOG_ERR_F("sending failed: %s", err.message);
@@ -1721,7 +1677,6 @@ static void get_usb_cable_udi()
                  "button.type", "usb.cable", &num_devices, &error);
         if (list != NULL && num_devices >= 1) {
                 usb_cable_udi = strdup(list[0]);
-                ULOG_DEBUG_F("using USB cable udi '%s'", usb_cable_udi);
         } else {
                 ULOG_ERR_F("coudn't find USB cable indicator");
         } 
@@ -1831,11 +1786,11 @@ static usb_state_t check_usb_cable(void)
         if (state == S_HOST) {
                 handle_usb_event(E_ENTER_HOST_MODE);
         } else if (state == S_PERIPHERAL_WAIT) {
-                if (usb_state == S_CABLE_DETACHED) {
-                        /* go directly to PC Suite mode whenever cable is
-                         * plugged */
+                if (getenv("TA_IMAGE"))
+                        /* in TA image, we don't wait for user's decision */
                         handle_usb_event(E_ENTER_PCSUITE_MODE);
-                }
+                else
+                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
@@ -1887,12 +1842,8 @@ static gboolean init_usb_cable_status(gpointer data)
                                 /* should reset gconf keys here */
                         } else {
                                 ULOG_DEBUG_F("peripheral but cards not "
-                                        "USB-shared, assuming PC Suite mode");
-                                usb_state = S_PCSUITE;
-                                if (!enable_pcsuite()) {
-                                        ULOG_ERR_F("Couldn't enable PC Suite");
-                                        usb_state = S_INVALID_USB_STATE;
-                                }
+                                        "USB-shared, assuming charging mode");
+                                usb_state = S_CHARGING;
                                 /*
                                 if (do_e_plugged) {
                                         handle_usb_event(
@@ -1905,8 +1856,7 @@ static gboolean init_usb_cable_status(gpointer data)
                         set_usb_mode_key("idle");
                 }
 
-                if (usb_state != S_INVALID_USB_STATE &&
-                    desktop_started && !mmc_initialised) {
+                if (desktop_started && !mmc_initialised) {
                         /* initialise GConf keys and possibly mount or
                          * USB-share */
                         if (int_mmc_enabled) {
@@ -2052,6 +2002,16 @@ static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
                 libhal_free_string(dev);
         }
 
+        /* fstype is needed for supporting old partition layout */
+        dev = get_prop_string(l->udi, "volume.fstype");
+        if (dev == NULL) {
+                ULOG_ERR_F("couldn't get volume.fstype for %s", l->udi);
+        } else {
+                ULOG_DEBUG_F("got volume.fstype '%s' for %s", dev, l->udi);
+                l->fstype = strdup(dev);
+                libhal_free_string(dev);
+        }
+
         l->corrupt = 0;
 
         if (get_prop_bool(l->udi, "volume.is_partition") == 1) {
@@ -2089,6 +2049,10 @@ static void zero_volume_info(volume_list_t *l)
                 if (l->dev_name != NULL) {
                         free(l->dev_name);
                         l->dev_name = NULL;
+                }
+                if (l->fstype != NULL) {
+                        free(l->fstype);
+                        l->fstype = NULL;
                 }
                 l->volume_number = 0;
                 l->corrupt = 0;
@@ -2772,7 +2736,7 @@ static usb_state_t try_eject()
                 snprintf(msg, 100,
                          dgettext(USB_DOMAIN, "stab_me_usb_ejected"),
                          usb_device_name);
-                show_infobanner(msg);
+                display_dialog(msg);
                 set_usb_mode_key("idle"); /* hide the USB plugin */
                 return S_EJECTED;
         } else {
@@ -2781,7 +2745,6 @@ static usb_state_t try_eject()
         }
 }
 
-#if 0
 static int open_fm_folder(const char *folder)
 {
         DBusMessage* m = NULL;
@@ -2866,7 +2829,6 @@ exit_loops:
         }
         return 1;
 }
-#endif
 
 /* Returns TRUE if at least one card was shared */
 static gboolean e_plugged_helper(void)
@@ -2902,7 +2864,7 @@ static gboolean e_plugged_helper(void)
                         retval = TRUE;
                 } else {
                         /* both succeeded */
-                        show_infobanner(_("cards_connected_via_usb"));
+                        display_dialog(_("cards_connected_via_usb"));
                         retval = TRUE;
                 }
         } else {
@@ -2910,22 +2872,11 @@ static gboolean e_plugged_helper(void)
                 if (!ir) {
                         show_usb_sharing_failed_dialog(&int_mmc, NULL, 0);
                 } else {
-                        show_infobanner(_("cards_connected_via_usb"));
+                        display_dialog(_("cards_connected_via_usb"));
                         retval = TRUE;
                 }
         }
         return retval;
-}
-
-static gboolean modprobe_g_nokia()
-{
-        int ret;
-        const char *args[] = {"/sbin/modprobe", "g_nokia", NULL};
-        ret = exec_prog(args[0], args);
-        if (ret)
-                return FALSE;
-        else
-                return TRUE;
 }
 
 static void handle_usb_event(usb_event_t e)
@@ -2948,10 +2899,9 @@ static void handle_usb_event(usb_event_t e)
                                 }
                                 if (ext_mmc.whole_device != NULL
                                     || int_mmc.whole_device != NULL) {
-                                        show_infobanner(
+                                        display_dialog(
                                                 MSG_USB_DISCONNECTED);
                                 }
-                                modprobe_g_nokia();
                         } else if (usb_state == S_EJECTED) {
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in S_EJECTED");
                         } else if (usb_state == S_EJECTING) {
@@ -2961,16 +2911,23 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_PERIPHERAL_WAIT) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_PERIPHERAL_WAIT");
+                                /* in case e_plugged_helper failed when we
+                                 * tried enabling mass storage, we need to
+                                 * remount the cards */
+                                usb_state = S_MASS_STORAGE;
+                                handle_event(E_DETACHED, &ext_mmc, NULL);
+                                if (int_mmc_enabled) {
+                                        handle_event(E_DETACHED, &int_mmc,
+                                                     NULL);
+                                }
                         } else if (usb_state == S_CHARGING) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
                         } else if (usb_state == S_PCSUITE) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
-                                /*
                                 if (!disable_pcsuite()) {
                                         ULOG_ERR_F("disable_pcsuite() failed");
                                 }
-                                */
                         } else {
                                 ULOG_WARN_F("E_CABLE_DETACHED in %d!",
                                             usb_state);
@@ -3053,15 +3010,12 @@ static void handle_usb_event(usb_event_t e)
                         break;
                 case E_ENTER_MASS_STORAGE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
-                            usb_state == S_CHARGING ||
-                            usb_state == S_PCSUITE) {
+                            usb_state == S_CHARGING) {
                                 usb_state_t orig = usb_state;
-                                if (!disable_pcsuite()) {
-                                        ULOG_ERR_F("disable_pcsuite() failed");
-                                }
                                 usb_state = S_MASS_STORAGE;
                                 if (!e_plugged_helper()) {
-                                        ULOG_DEBUG_F("no card was USB shared");
+                                        ULOG_DEBUG_F("no card was USB shared"
+                                                     " or cable disconnected");
                                         /* no real state change if no card was
                                          * successful */
                                         usb_state = orig;
@@ -3074,8 +3028,7 @@ static void handle_usb_event(usb_event_t e)
                 case E_ENTER_PCSUITE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
                             usb_state == S_CHARGING ||
-                            usb_state == S_CABLE_DETACHED ||
-                            usb_state == S_MASS_STORAGE) {
+                            usb_state == S_CABLE_DETACHED) {
                                 usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");
@@ -3086,14 +3039,12 @@ static void handle_usb_event(usb_event_t e)
                         }
                         break;
                 case E_ENTER_CHARGING_MODE:
-#if 0
                         if (usb_state == S_PERIPHERAL_WAIT) {
                                 usb_state = S_CHARGING;
                         } else {
                                 ULOG_WARN_F("E_ENTER_CHARGING_MODE in %d!",
                                             usb_state);
                         }
-#endif
                         break;
                 default:
                         ULOG_ERR_F("unknown event %d", e);
@@ -3139,7 +3090,6 @@ int main(int argc, char* argv[])
 	        .unregister_function = NULL
         };
         int ret;
-        int hal_retries = 10;
 
         if (signal(SIGTERM, sigterm) == SIG_ERR) {
                 ULOG_CRIT_L("signal() failed");
@@ -3161,31 +3111,12 @@ int main(int argc, char* argv[])
       	        ULOG_ERR_L("textdomain() failed");
         }
 
-#if 0
         osso = osso_initialize(APPL_NAME, APPL_VERSION, FALSE,
                                g_main_context_default());
         if (osso == NULL) {
                 ULOG_CRIT_L("Libosso initialisation failed");
                 exit(1);
         }
-#endif
-
-        conn = dbus_bus_get(DBUS_BUS_SYSTEM, &error);
-        if (conn == NULL) {
-                ULOG_ERR_F("Unable to connect to the system bus: %s",
-                           error.message);
-                exit(1);
-        }
-        dbus_connection_setup_with_g_main(conn, g_main_context_default());
-    
-        if (dbus_bus_request_name(conn, "com.nokia." APPL_NAME,
-                DBUS_NAME_FLAG_ALLOW_REPLACEMENT, &error) == -1) {
-                ULOG_ERR_F("dbus_bus_request_name failed: %s", error.message);
-                exit(1);
-        }
-        dbus_connection_set_exit_on_disconnect(conn, FALSE);
-
-#if 0
         ses_conn = (DBusConnection*) osso_get_dbus_connection(osso);
         if (ses_conn == NULL) {
                 ULOG_CRIT_L("osso_get_dbus_connection() failed");
@@ -3211,7 +3142,6 @@ int main(int argc, char* argv[])
                 ULOG_CRIT_L("Failed to get system bus connection");
                 exit(1);
         }
-#endif
         sys_conn = conn;
 
         /* initialise HAL context */
@@ -3223,8 +3153,6 @@ int main(int argc, char* argv[])
                 ULOG_CRIT_L("libhal_ctx_set_dbus_connection() failed");
                 exit(1);
         }
-
-try_hal_again:
         if (!libhal_ctx_init(hal_ctx, &error)) {
                 if (dbus_error_is_set(&error)) {
                         ULOG_CRIT_L("libhal_ctx_init: %s: %s", error.name,
@@ -3232,11 +3160,7 @@ try_hal_again:
                         dbus_error_free(&error);
                 }
                 ULOG_CRIT_L("Could not initialise connection to hald");
-                if (--hal_retries > 0) {
-                        sleep(1);
-                        goto try_hal_again;
-                } else
-                        exit(1);
+                exit(1);
         }
 
         do_global_init();
@@ -3255,10 +3179,16 @@ try_hal_again:
 	        exit(1);
         }
 
-        dbus_bus_add_match(conn, MCE_MATCH_RULE, &error);
+        dbus_bus_add_match(conn, MCE_DEVICELOCK_SIG_MATCH_RULE, &error);
         if (dbus_error_is_set(&error)) {
                 ULOG_CRIT_L("dbus_bus_add_match for %s failed",
-                            MCE_MATCH_RULE);
+                            MCE_DEVICELOCK_SIG_MATCH_RULE);
+	        exit(1);
+        }
+        dbus_bus_add_match(conn, MCE_SHUTDOWN_SIG_MATCH_RULE, &error);
+        if (dbus_error_is_set(&error)) {
+                ULOG_CRIT_L("dbus_bus_add_match for %s failed",
+                            MCE_SHUTDOWN_SIG_MATCH_RULE);
 	        exit(1);
         }
         /* match for HD readiness signal */
@@ -3269,27 +3199,14 @@ try_hal_again:
                 ULOG_CRIT_L("dbus_bus_add_match failed");
 	        exit(1);
         }
-        /* match for FDO Notifications */
-        dbus_bus_add_match(conn, "type='signal',interface='"
-                           FDO_INTERFACE "'", &error);
-        if (dbus_error_is_set(&error)) {
-                ULOG_CRIT_L("dbus_bus_add_match failed");
-	        exit(1);
-        }
 
         /* register D-BUS interface for MMC renaming */
         vtable.message_function = rename_handler;
-        register_op(sys_conn, &vtable, RENAME_OP, NULL);
+        register_op(ses_conn, &vtable, RENAME_OP, NULL);
 
         /* register D-BUS interface for MMC formatting */
         vtable.message_function = format_handler;
-        register_op(sys_conn, &vtable, FORMAT_OP, NULL);
-
-#if 0
-        /* register D-BUS interface for USB mode (used by USB plugin) */
-        vtable.message_function = get_usb_mode_handler;
-        register_op(sys_conn, &vtable, "/com/nokia/ke_recv/get_usb_mode", NULL);
-#endif
+        register_op(ses_conn, &vtable, FORMAT_OP, NULL);
 
         /* register D-BUS interface for enabling swapping on MMC */
         vtable.message_function = enable_mmc_swap_handler;
@@ -3395,6 +3312,13 @@ try_hal_again:
                 ULOG_DEBUG_F("hildon-desktop is running");
                 desktop_started = TRUE;
         }
+
+#if 0
+        if (getenv("FIRST_BOOT") != NULL) {
+                ULOG_DEBUG_F("this is the first boot");
+                first_boot = TRUE;
+        }
+#endif
 
         if (desktop_started && usb_state != S_INVALID_USB_STATE
             && !mmc_initialised) {
