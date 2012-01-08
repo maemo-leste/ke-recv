@@ -925,12 +925,8 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
         mount_args[2] = mount_point;
         mount_args[3] = l->fstype;
         ret = exec_prog(MMC_MOUNT_COMMAND, mount_args);
-
-        if (parts > 1)
-                g_free(mount_point);
-
         if (ret == 0) {
-                l->mountpoint = strdup(mmc->mount_point);
+                l->mountpoint = strdup(mount_point);
                 l->corrupt = 0;
                 possibly_turn_swap_on(mmc);
                 set_mmc_corrupted_flag(FALSE, mmc);
@@ -938,7 +934,7 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
         } else if (ret == 2) {
                 /* is was mounted read-only */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-                l->mountpoint = strdup(mmc->mount_point);
+                l->mountpoint = strdup(mount_point);
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
@@ -958,6 +954,8 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
                                         _("card_ib_unknown_format_card"));
                 }
         }
+        if (parts > 1)
+                g_free(mount_point);
         inform_mmc_used_over_usb(FALSE, mmc);
         return count;
 }
