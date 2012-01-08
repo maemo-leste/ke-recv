@@ -195,7 +195,7 @@ static gboolean mmc_mount_check(gpointer data)
                 /* no volumes found, treat as unformatted */
                 set_mmc_corrupted_flag(TRUE, mmc);
                 ULOG_DEBUG_F("set %s", mmc->corrupted_key);
-                update_mmc_label(mmc); /* clear old label */
+                update_mmc_label(mmc, mmc->udi); /* clear old label */
                 if (desktop_started) {
                         display_dialog(MSG_MEMORY_CARD_IS_CORRUPTED);
                 }
@@ -2006,6 +2006,12 @@ static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
         dev = get_prop_string(l->udi, "volume.fstype");
         if (dev == NULL) {
                 ULOG_ERR_F("couldn't get volume.fstype for %s", l->udi);
+        } else if (dev[0] == 0 || strcmp(dev, "swap") == 0) {
+                ULOG_ERR_F("invalid volume.fstype for %s", l->udi);
+                free(l->udi);
+                l->udi = NULL;
+                /* the empty list item is left in place */
+                return NULL;
         } else {
                 ULOG_DEBUG_F("got volume.fstype '%s' for %s", dev, l->udi);
                 l->fstype = strdup(dev);

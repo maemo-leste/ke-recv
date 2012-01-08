@@ -1,2 +1,4 @@
 #!/bin/sh
-mount -t vfat -o $3,noauto,nodev,noexec,nosuid,noatime,nodiratime,utf8,uid=29999,shortname=mixed,dmask=000,fmask=0133,rodir "$1" "$2" > /dev/null
+if [ -z "$4" -o "$4" = "fat" -o "$4" = "vfat" ]; then type="vfat"; else type="$4"; fi
+if [ "$type" = "vfat" ]; then args=",utf8,uid=29999,shortname=mixed,dmask=000,fmask=0000,rodir"; fi
+mount -t $type -o $3,noauto,nodev,exec,nosuid,noatime,nodiratime$args "$1" "$2" > /dev/null

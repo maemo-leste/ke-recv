@@ -138,7 +138,7 @@ void unshare_usb_shared_card(mmc_info_t *mmc);
 void show_usb_sharing_failed_dialog(mmc_info_t *in, mmc_info_t *ex,
                                     gboolean ext_failed);
 void set_mmc_corrupted_flag(gboolean value, const mmc_info_t *mmc);
-void update_mmc_label(mmc_info_t *mmc);
+void update_mmc_label(mmc_info_t *mmc, const char *udi);
 void possibly_turn_swap_off_simple(mmc_info_t *mmc);
 
 #ifdef __cplusplus

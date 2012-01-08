@@ -26,6 +26,7 @@
 
 PDEV=$1  ;# preferred device (partition)
 MP=$2    ;# mount point
+FS=$3    ;# fstype
 
 grep "$PDEV " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
@@ -44,11 +45,11 @@ if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk1 ]; then
   PID=$(sfdisk -c $DEV $PNUM)
   case "$PID" in
     b | c | e | 4 | 6 | 14 | 16 | 1b | 1c | 1e)
-        logger "$0: $PDEV partition type is '$PID'"
+        logger "$0: $PDEV partition type is FAT '$PID'"
+        FS=vfat
         ;;
     *)
         logger "$0: $PDEV type '$PID' is not FAT32 or FAT16"
-        exit 1
         ;;
   esac
 fi
@@ -67,9 +68,9 @@ fi
 #  fi
 #fi
 
-mmc-mount $PDEV $MP rw
+mmc-mount $PDEV $MP rw $FS
 RC=$?
-logger "$0: mounting $PDEV read-write to $MP, rc: $RC"
+logger "$0: mounting $PDEV read-write fs $FS to $MP, rc: $RC"
 
 if [ $RC = 0 ]; then
   # create some special directories for user's partition
