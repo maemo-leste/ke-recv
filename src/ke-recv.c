@@ -1304,7 +1304,6 @@ int init_mmc_volumes(mmc_info_t *mmc)
         return num_volumes;
 }
 
-#ifndef FREMANTLE_MODE
 static void init_usb_volumes()
 {
         storage_info_t *si;
@@ -1333,15 +1332,27 @@ static void init_usb_volumes()
                 ULOG_DEBUG_F("number of volumes in %s: %d",
                              si->whole_device, num_devices - 1);
                 for (i = 0; i < num_devices; ++i) {
+                        volume_list_t *vol;
                         if (strcmp(list[i], si->storage_udi) == 0) {
                                 continue;
                         }
-                        add_usb_volume(&si->volumes, list[i]);
+                        vol = add_usb_volume(&si->volumes, list[i]);
+                        if (vol != NULL && vol->dev_name != NULL
+                            && vol->mountpoint != NULL
+                            && usb_state == S_HOST) {
+                                ULOG_DEBUG_F("mounting USB VOLUME %s to %s",
+                                             vol->dev_name, vol->mountpoint);
+                                mount_volume(vol);
+
+                                /* refresh the mounting timer to give
+                                 * more time to possible subsequent
+                                 * volumes */
+                                setup_usb_mount_timeout(1);
+                        }
                 }
                 libhal_free_string_array(list);
         }
 }
-#endif
 
 #if 0
 static void init_camera_state()
@@ -1633,10 +1644,29 @@ usb_state_t get_usb_state(void)
 {
         usb_state_t ret;
         char *prop = NULL;
+        FILE *file;
 
+/* HAL does not update usb host mode state, so read state directly from sysfs */
+#if 0
         if (usb_cable_udi != NULL) {
                 prop = get_prop_string(usb_cable_udi, "usb_device.mode");
         }
+#else
+        file = fopen("/sys/devices/platform/musb_hdrc/mode", "r");
+        if (file) {
+                int size = 20;
+                prop = malloc(size);
+                fgets(prop, size, file);
+                fclose(file);
+                /* remove all white space chars at the end */
+                for (size=0; size<20; size++) {
+                        if (prop[size] > 32)
+                                continue;
+                        prop[size] = 0;
+                        break;
+                }
+        }
+#endif
 
         if (prop == NULL) {
                 ULOG_ERR_F("couldn't read 'usb_device.mode' from %s",
@@ -1659,7 +1689,11 @@ usb_state_t get_usb_state(void)
                 ULOG_ERR_F("unknown USB cable type '%s'", prop);
                 ret = S_CABLE_DETACHED;
         }
+#if 0
         if (prop != NULL) libhal_free_string(prop);
+#else
+        if (prop != NULL) free(prop);
+#endif
 
         return ret;
 }
@@ -2199,7 +2233,6 @@ static int mount_usb_volumes(void)
 static int unmount_usb_volumes(void)
 {
         int all_unmounted = 1;
-#ifndef FREMANTLE_MODE
         storage_info_t *si;
 
         si = storage_list;
@@ -2213,7 +2246,6 @@ static int unmount_usb_volumes(void)
                 }
                 si = si->next;
         }
-#endif
         return all_unmounted;
 }
 
@@ -2261,7 +2293,7 @@ static void update_usb_device_name(const char *udi)
         while (parent != NULL) {
                 char *bus, *old_parent;
 
-                bus = get_prop_string(parent, "info.bus");
+                bus = get_prop_string(parent, "info.subsystem");
                 if (bus != NULL && strcmp(bus, "usb_device") == 0) {
                         char *name;
 
@@ -2514,7 +2546,6 @@ static void add_storage_for_mmc(mmc_info_t *mmc,
         handle_event(E_DEVICE_ADDED, mmc, storage_udi);
 }
 
-#ifndef FREMANTLE_MODE
 static void init_usb_storages()
 {
         int num_devices = 0;
@@ -2548,7 +2579,6 @@ static void init_usb_storages()
         }
         libhal_free_string_array(list);
 }
-#endif
 
 static void device_added(LibHalContext *ctx, const char *udi)
 {
@@ -2573,6 +2603,7 @@ static void device_added(LibHalContext *ctx, const char *udi)
                 } else if ((si = storage_for_volume(udi)) != NULL) {
                         volume_list_t *vol;
                         ULOG_DEBUG_F("%s is USB volume", udi);
+                        usb_state = get_usb_state();
                         vol = add_usb_volume(&si->volumes, udi);
                         if (vol != NULL && vol->dev_name != NULL
                             && vol->mountpoint != NULL
@@ -2599,19 +2630,10 @@ static void device_added(LibHalContext *ctx, const char *udi)
                                 mmc_host = grandpa;
                 }
 
-                if (mmc_host == NULL) {
-                        ULOG_DEBUG_F("couldn't find mmc_host for storage");
-                        if (parent != NULL) libhal_free_string(parent);
-                        if (grandpa != NULL) libhal_free_string(grandpa);
-                        return;
-                }
-
-                ULOG_DEBUG_F("comparing %s to %s or to %s", mmc_host,
-                             ext_mmc.udi, int_mmc.udi);
-                if (strcmp(ext_mmc.udi, mmc_host) == 0) {
+                if (mmc_host && strcmp(ext_mmc.udi, mmc_host) == 0) {
                         add_storage_for_mmc(&ext_mmc, parent, udi);
                         setup_mmc_mount_timeout(&ext_mmc, 5);
-                } else if (int_mmc_enabled &&
+                } else if (mmc_host && int_mmc_enabled &&
                            strcmp(int_mmc.udi, mmc_host) == 0) {
                         add_storage_for_mmc(&int_mmc, parent, udi);
                         setup_mmc_mount_timeout(&int_mmc, 5);
@@ -2760,7 +2782,7 @@ static int open_fm_folder(const char *folder)
 
         m = dbus_message_new_method_call("com.nokia.osso_filemanager",
                 "/com/nokia/osso_filemanager",
-                "/com/nokia/osso_filemanager", "open_folder");
+                "com.nokia.osso_filemanager", "open_folder");
         if (m == NULL) {
                 ULOG_ERR_F("couldn't create message");
                 return 0;
@@ -3307,10 +3329,8 @@ int main(int argc, char* argv[])
                         strdup(dgettext(USB_DOMAIN,
                                         "stab_me_usb_device_name"));
         }
-#ifndef FREMANTLE_MODE
         init_usb_storages();
         init_usb_volumes();
-#endif
 
         /* check if hildon-desktop is running */
         if (g_file_test("/tmp/hildon-desktop/desktop-started.stamp",
