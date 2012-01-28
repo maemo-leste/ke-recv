@@ -1644,29 +1644,10 @@ usb_state_t get_usb_state(void)
 {
         usb_state_t ret;
         char *prop = NULL;
-        FILE *file;
 
-/* HAL does not update usb host mode state, so read state directly from sysfs */
-#if 0
         if (usb_cable_udi != NULL) {
                 prop = get_prop_string(usb_cable_udi, "usb_device.mode");
         }
-#else
-        file = fopen("/sys/devices/platform/musb_hdrc/mode", "r");
-        if (file) {
-                int size = 20;
-                prop = malloc(size);
-                fgets(prop, size, file);
-                fclose(file);
-                /* remove all white space chars at the end */
-                for (size=0; size<20; size++) {
-                        if (prop[size] > 32)
-                                continue;
-                        prop[size] = 0;
-                        break;
-                }
-        }
-#endif
 
         if (prop == NULL) {
                 ULOG_ERR_F("couldn't read 'usb_device.mode' from %s",
@@ -1689,11 +1670,7 @@ usb_state_t get_usb_state(void)
                 ULOG_ERR_F("unknown USB cable type '%s'", prop);
                 ret = S_CABLE_DETACHED;
         }
-#if 0
         if (prop != NULL) libhal_free_string(prop);
-#else
-        if (prop != NULL) free(prop);
-#endif
 
         return ret;
 }
