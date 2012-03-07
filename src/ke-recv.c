@@ -88,6 +88,7 @@ static int get_storage(const char *udi, char **storage_parent,
 static char *get_dev_name(const char *storage_udi);
 static void handle_usb_event(usb_event_t e);
 static int mount_volume(volume_list_t *vol);
+static int unmount_volume(volume_list_t *vol);
 static volume_list_t *add_usb_volume(volume_list_t *l, const char *udi);
 static gboolean usb_unmount_recheck(gpointer data);
 static int unmount_usb_volumes(void);
@@ -2215,10 +2216,20 @@ static int unmount_usb_volumes(void)
         si = storage_list;
         while (si != NULL) {
                 if (si->storage_udi != NULL) {
-                        if (!unmount_volumes(&si->volumes, FALSE)) {
-                                ULOG_WARN("couldn't unmount all volumes"
-                                          " for %s", si->storage_udi);
-                                all_unmounted = 0;
+                        volume_list_t *v;
+
+                        v = &si->volumes;
+                        while (v != NULL) {
+                                if (v->udi != NULL
+                                    && v->mountpoint != NULL
+                                    && v->dev_name != NULL) {
+                                        if (unmount_volume(v)) {
+                                                ULOG_WARN("couldn't unmount volume %s",
+                                                          v->mountpoint);
+                                                all_unmounted = 0;
+                                        }
+                                }
+                                v = v->next;
                         }
                 }
                 si = si->next;
