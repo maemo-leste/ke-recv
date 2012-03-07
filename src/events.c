@@ -892,12 +892,37 @@ static void handle_e_check(mmc_info_t *mmc, const char *arg)
 #endif
 }
 
+static int is_mounted(const char *path)
+{
+        struct stat st;
+        struct stat st2;
+        char buf[256];
+
+        if (lstat(path, &st) != 0)
+                return 0;
+        if (!S_ISDIR(st.st_mode))
+                return 1;
+
+        memset(buf, 0, sizeof(buf));
+        strncpy(buf, path, sizeof(buf) - 4);
+        strcat(buf, "/..");
+
+        if (stat(buf, &st2) != 0)
+                return 1;
+
+        if ((st.st_dev != st2.st_dev) ||
+                (st.st_dev == st2.st_dev && st.st_ino == st2.st_ino))
+                return 1;
+        else
+                return 0;
+}
+
 static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
 {
         const char *mount_args[] = {MMC_MOUNT_COMMAND, NULL, NULL, NULL, NULL};
         volume_list_t *l;
         const char *udi = NULL, *device = NULL;
-        char *mount_point = mmc->mount_point;
+        char *mount_point = NULL;
         int ret, count = 0;
         int parts = 0;
        
@@ -911,22 +936,25 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
         udi = l->udi;
         device = l->dev_name;
 
-        ULOG_DEBUG_F("trying to mount %s", device);
-
         if (!mmc->internal_card) {
                 volume_list_t *l1;
                 for (l1 = &mmc->volumes; l1 != NULL; l1 = l1->next)
                         parts++;
-                if (parts > 1)
-                        mount_point = g_strdup_printf("%sp%d", mount_point, volume_get_num(mmc, udi));
-       }
+                if (parts > 1 && (strcmp(l->fstype, "vfat") || is_mounted(mmc->mount_point)))
+                        mount_point = g_strdup_printf("%sp%d", mmc->mount_point, volume_get_num(mmc, udi));
+        }
+
+        if (!mount_point)
+                mount_point = g_strdup(mmc->mount_point);
+
+        ULOG_DEBUG_F("trying mount %s to %s", device, mount_point);
 
         mount_args[1] = device;
         mount_args[2] = mount_point;
         mount_args[3] = l->fstype;
         ret = exec_prog(MMC_MOUNT_COMMAND, mount_args);
         if (ret == 0) {
-                l->mountpoint = strdup(mount_point);
+                l->mountpoint = mount_point;
                 l->corrupt = 0;
                 possibly_turn_swap_on(mmc);
                 set_mmc_corrupted_flag(FALSE, mmc);
@@ -934,13 +962,14 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
         } else if (ret == 2) {
                 /* is was mounted read-only */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
-                l->mountpoint = strdup(mount_point);
+                l->mountpoint = mount_point;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
                 set_mmc_corrupted_flag(TRUE, mmc);
         } else {
                 /* corrupt beyond mounting, or unsupported format */
                 ULOG_DEBUG_F("exec_prog returned %d", ret);
+                g_free(mount_point);
                 l->mountpoint = NULL;
                 l->corrupt = 1;
                 inform_mmc_swapping(FALSE, mmc);
@@ -954,8 +983,6 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
                                         _("card_ib_unknown_format_card"));
                 }
         }
-        if (parts > 1)
-                g_free(mount_point);
         inform_mmc_used_over_usb(FALSE, mmc);
         return count;
 }
