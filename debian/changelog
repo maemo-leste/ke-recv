@@ -1,3 +1,15 @@
+ke-recv (3.19-14) unstable; urgency=low
+
+  * Added support for more MMC card partitions and other filesystems
+  * Mount all partitions on external card when starting up
+  * Mount all partitions after stopped USB Mass Storage mode
+  * Fixed mountpoint of partitions, now paritions are correctly 
+    unmounted when started USB Mass Storage mode
+  * Mount one mmc FAT partition to its default mount point
+  * Fixed unmounting USB storage devices
+
+ -- Pali Rohar <pali.rohar@gmail.com>  Sat, 10 Mar 2012 21:43:51 +0200
+
 ke-recv (3.19-13) unstable; urgency=low
 
   * Remount cards in case we are in S_PERIPHERAL_WAIT and the cable is
