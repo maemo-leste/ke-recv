@@ -27,7 +27,9 @@
 #include "swap_mgr.h"
 #include <hildon-mime.h>
 #include <libhal.h>
-
+#include <libvolume_id.h>
+#include <fcntl.h>
+ 
 extern DBusConnection *ses_conn;
 extern gboolean desktop_started;
 
@@ -90,15 +92,6 @@ static void set_localised_label(mmc_info_t *mmc)
         }
 }
 
-static void empty_file(const char *file)
-{
-        FILE *f;
-        f = fopen(file, "w");
-        if (f) {
-                fclose(f);
-        }
-}
-
 /* helper to hide backwards compatibility for the old layout */
 static volume_list_t *get_internal_mmc_volume(mmc_info_t *mmc)
 {
@@ -123,17 +116,13 @@ static int volume_get_num(mmc_info_t *mmc, const char *udi)
                 return mmc->preferred_volume;
 }
 
-#define UPDATE_MMC_LABEL_SCRIPT "/usr/sbin/osso-update-mmc-label.sh"
-
 void update_mmc_label(mmc_info_t *mmc, const char *udi)
 {
-        const char* args[] = {UPDATE_MMC_LABEL_SCRIPT,
-                              NULL, NULL, NULL};
-        int ret;
-        gchar* buf = NULL;
-        GError* err = NULL;
+        int fd;
         char *part_device = NULL;
         volume_list_t *vol;
+        struct volume_id *vid;
+        const char *label, *cur;
 
         if (mmc->internal_card)
                 vol = get_internal_mmc_volume(mmc);
@@ -150,35 +139,52 @@ void update_mmc_label(mmc_info_t *mmc, const char *udi)
         if (part_device == NULL) {
                 ULOG_ERR_F("device name for partition number %d not found",
                            vol->volume_number);
-                empty_file(mmc->volume_label_file);
-                set_localised_label(mmc);
-                return;
+error1:         set_localised_label(mmc);
+                goto store_label;        
         }
 
-        args[1] = part_device;
-        args[2] = mmc->volume_label_file;
-
-        ret = exec_prog(UPDATE_MMC_LABEL_SCRIPT, args);
-        if (ret != 0) {
-                ULOG_ERR_F("exec_prog returned %d", ret);
+        fd = open (part_device, O_RDONLY);
+        if (fd < 0)
+                goto error1;
+        vid = volume_id_open_fd (fd);
+        if (!vid)
+        {
+                ULOG_ERR_F("could not open partition %s", part_device);
+error2:         close (fd);
+                goto error1;
         }
 
-        /* read the volume label from the file */
-
-        if (!g_file_get_contents(mmc->volume_label_file, &buf, NULL, &err)
-            || err != NULL) {
-                ULOG_ERR_F("couldn't read volume label file %s",
-                           mmc->volume_label_file);
-                g_error_free(err);
-                set_localised_label(mmc);
-        } else {
-                if (buf[0] == '\0' || buf[0] == ' ') {
-                        set_localised_label(mmc);
-                } else {
-                        strncpy(mmc->display_name, (const char*)buf, 100);
-                }
+        if (volume_id_probe_all (vid, 0, 0))
+        {
+                ULOG_ERR_F("failed to probe partition %s", part_device);
+error3:         volume_id_close (vid);
+                goto error2;
         }
-        g_free(buf);
+
+        if (!volume_id_get_label (vid, &label) || !label)
+        {
+                ULOG_ERR_F("failed to retrieve volume label on partition %s", part_device);
+                goto error3;
+        }
+        /* Check if volume label is not empty */
+        cur = label;
+        while (*cur == ' ' || *cur == '\t')
+                cur++;
+
+        if (!*cur)
+                goto error3;
+
+        strcpy (mmc->display_name, label);
+
+        volume_id_close (vid);
+        close (fd);
+
+store_label:
+        /* Store the volume label to file for GVFS2 */
+        g_file_set_contents (mmc->volume_label_file, mmc->display_name,
+                             strlen (mmc->display_name), NULL);
+        /* If we failed... well, we failed. */
+        /* GVFS will display 'mmc-undefined-name' then */
 }
 
 static void inform_device_present(gboolean value, const mmc_info_t *mmc)

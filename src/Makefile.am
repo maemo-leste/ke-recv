@@ -17,8 +17,8 @@ ke_recv_LDFLAGS = \
 	`pkg-config --libs libosso` \
 	`pkg-config --libs hal` \
 	`pkg-config --libs libhildonmime` \
-	`pkg-config --libs gconf-2.0`
-
+	`pkg-config --libs gconf-2.0` \
+	`pkg-config --libs libvolume_id`
 mmc_format_LDFLAGS = \
 	`pkg-config --libs hildon-1`
 
