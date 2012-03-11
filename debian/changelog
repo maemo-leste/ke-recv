@@ -7,6 +7,8 @@ ke-recv (3.19-14) unstable; urgency=low
     unmounted when started USB Mass Storage mode
   * Mount one mmc FAT partition to its default mount point
   * Fixed unmounting USB storage devices
+  * Use libvolume_id instead of osso-update-mmc-label.sh for volume names
+    Applied patch from https://bugs.maemo.org/8904
 
  -- Pali Rohar <pali.rohar@gmail.com>  Sat, 10 Mar 2012 21:43:51 +0200
 
