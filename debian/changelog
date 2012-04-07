@@ -1,3 +1,9 @@
+ke-recv (3.19-15) unstable; urgency=low
+
+  * Rebuild with higher version due to debhelper upsart problem
+
+ -- Christian Ratzenhofer <christian_ratzenhofer@yahoo.de>  Sat,  7 Apr 2012 21:30:43 +0200
+
 ke-recv (3.19-14) unstable; urgency=low
 
   * Added support for more MMC card partitions and other filesystems
