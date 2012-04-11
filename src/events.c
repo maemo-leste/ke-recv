@@ -669,34 +669,21 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
                 return;
         }
 
-        /* Currently renaming is done to unmounted memory card. This would
-         * not be necessary, but there is a problem of updating the volume
-         * label otherwise (sending GnomeVFS signals didn't work). */
-        if (do_unmount(mmc->mount_point, FALSE)) {
-                ret = exec_prog(args[0], args);
-                if (ret != 0) {
-                        ULOG_ERR_F("mlabel failed: exec_prog returned %d",
-                                   ret);
-                        if (mmc->internal_card)
-                                open_closeable_dialog(OSSO_GN_NOTICE,
-                                    MSG_MEMORY_CARD_IS_CORRUPTED_INT, "OMG!");
-                        else
-                                open_closeable_dialog(OSSO_GN_NOTICE,
-                                    MSG_MEMORY_CARD_IS_CORRUPTED, "OMG!");
-                        /* even if renaming failed it makes sense to
-                         * try mounting the card */
-                }
-
-                update_mmc_label(mmc, udi);
-                ULOG_DEBUG_F("successful renaming");
-                if (!mount_volumes(mmc, udi, TRUE)) {
-                        ULOG_ERR_F("could not mount it");
-                }
-        } else {
-                ULOG_DEBUG_F("umount failed");
-                display_system_note(dgettext("osso-filemanager",
-                                    "sfil_ni_mmc_rename_mmc_in_use"));
+        ret = exec_prog(args[0], args);
+        if (ret != 0) {
+                ULOG_ERR_F("mlabel failed: exec_prog returned %d",
+                           ret);
+                if (mmc->internal_card)
+                        open_closeable_dialog(OSSO_GN_NOTICE,
+                            MSG_MEMORY_CARD_IS_CORRUPTED_INT, "OMG!");
+                else
+                        open_closeable_dialog(OSSO_GN_NOTICE,
+                            MSG_MEMORY_CARD_IS_CORRUPTED, "OMG!");
         }
+
+        update_mmc_label(mmc, udi);
+        hal_device_reprobe(udi);
+        ULOG_DEBUG_F("successful renaming");
 }
 
 static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n)

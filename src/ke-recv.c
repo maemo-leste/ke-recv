@@ -326,7 +326,7 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
 {
         mmc_info_t *mmc;
         DBusMessageIter iter;
-        char* dev = NULL, *label = NULL;
+        char* dev = NULL, *label = NULL, *udi = NULL;
 
         ULOG_DEBUG_F("entered");
         the_connection = c;
@@ -374,7 +374,10 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
         mmc->desired_label[11] = '\0';
         ULOG_DEBUG_F("got label: '%s'", mmc->desired_label);
         /* validity of the label is checked later */
-        handle_event(E_RENAME, mmc, NULL);
+        udi = find_by_property("block.device",dev);
+        handle_event(E_RENAME, mmc, udi);
+        if(udi)
+          free(udi);
 
 rename_exit:
         /* invalidate */
@@ -388,7 +391,7 @@ static DBusHandlerResult format_handler(DBusConnection *c,
 {
         mmc_info_t *mmc;
         DBusMessageIter iter;
-        char* dev = NULL, *label = NULL;
+        char* dev = NULL, *label = NULL, *udi = NULL;
 
         ULOG_DEBUG_F("entered");
         the_connection = c;
@@ -436,7 +439,10 @@ static DBusHandlerResult format_handler(DBusConnection *c,
         mmc->desired_label[11] = '\0';
         ULOG_DEBUG_F("got label: '%s'", mmc->desired_label);
         /* validity of the label is checked later */
-        handle_event(E_FORMAT, mmc, NULL);
+        udi = find_by_property("block.device",dev);
+        handle_event(E_FORMAT, mmc, udi);
+        if(udi)
+          free(udi);
 
 away:
         /* invalidate */
@@ -1199,6 +1205,30 @@ char* find_by_cap_and_prop(const char *capability,
                 libhal_free_string(prop);
                 udi = strdup(list[i]);
         }
+        libhal_free_string_array(list);
+        return udi;
+}
+
+/* returns first match */
+char* find_by_property(const char *property, const char *value)
+{
+        int num_devices = 0, i;
+        char **list, *udi = NULL;
+        DBusError error;
+
+        dbus_error_init(&error);
+        list = libhal_manager_find_device_string_match(hal_ctx,
+                                                       property,
+                                                       value,
+                                                       &num_devices,
+                                                       &error);
+        if (dbus_error_is_set(&error)) {
+                ULOG_ERR_F("D-Bus error: %s", error.message);
+                dbus_error_free(&error);
+                return NULL;
+        }
+        ULOG_DEBUG_F("number of devices: %d", num_devices);
+        udi = strdup(list[0]);
         libhal_free_string_array(list);
         return udi;
 }
@@ -3356,5 +3386,20 @@ int main(int argc, char* argv[])
         */
     
         exit(0);
+}
+
+dbus_bool_t hal_device_reprobe(const char *udi)
+{
+        ULOG_DEBUG_F("issuing HAL reprobe on %s",udi);
+        DBusError error;
+        dbus_bool_t result;
+
+        dbus_error_init(&error);
+        result = libhal_device_reprobe(hal_ctx, udi, &error);
+        if (dbus_error_is_set(&error)) {
+                ULOG_ERR_F("D-Bus error: %s", error.message);
+                dbus_error_free(&error);
+        }
+        return result;
 }
 

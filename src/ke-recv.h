@@ -310,6 +310,8 @@ void clear_volume_list(volume_list_t *l);
 int in_mass_storage_mode(void);
 int in_peripheral_wait_mode(void);
 usb_state_t get_usb_state(void);
+dbus_bool_t hal_device_reprobe(const char *udi);
+char* find_by_property(const char *property, const char *value);
 /*
 int check_install_file(const mmc_info_t *mmc);
 */
