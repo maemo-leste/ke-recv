@@ -5,6 +5,7 @@
   This file is part of ke-recv.
 
   Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
+  Copyright (C) 2012 Pali Rohár <pali.rohar@gmail.com>
 
   Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 
@@ -640,7 +641,7 @@ static int usb_share_card(mmc_info_t *mmc, gboolean show)
 
 static void handle_e_rename(mmc_info_t *mmc, const char *udi)
 {
-        const char* args[] = {MMC_RENAME_PROG, NULL, NULL, NULL};
+        const char* args[] = {MMC_RENAME_PROG, NULL, NULL, NULL, NULL};
         int ret;
         volume_list_t *vol;
 
@@ -657,6 +658,7 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
         ULOG_DEBUG_F("using device file %s", vol->dev_name);
         args[1] = vol->dev_name;
         args[2] = mmc->desired_label;
+        args[3] = vol->fstype;
 
         /* check validity of volume label */
         ret = valid_fat_name(args[2]);
@@ -671,7 +673,7 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
 
         ret = exec_prog(args[0], args);
         if (ret != 0) {
-                ULOG_ERR_F("mlabel failed: exec_prog returned %d",
+                ULOG_ERR_F("renaming failed: exec_prog returned %d",
                            ret);
                 if (mmc->internal_card)
                         open_closeable_dialog(OSSO_GN_NOTICE,

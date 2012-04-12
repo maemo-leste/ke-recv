@@ -2,6 +2,7 @@
 # This file is part of ke-recv
 #
 # Copyright (C) 2006-2007 Nokia Corporation. All rights reserved.
+# Copyright (C) 2012 Pali Rohár <pali.rohar@gmail.com>
 #
 # Contact: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 #
@@ -21,18 +22,22 @@
 
 DEV=$1
 LABEL=$2
+FSTYPE=$3
 
-# convert device name to an MS-DOS-style drive letter
-L=`eval grep '\"$DEV\"' /etc/mtools.conf | awk '{print $2}' | sed 's/://'`
-if [ "x$L" = x ]; then
-  echo "$0: could not determine drive letter"
-  exit 1
+if [ -z "$FSTYPE" ]; then
+  FSTYPE=vfat
 fi
 
-# set the MMC volume label
-echo "$LABEL" | grep -E '^[[:space:]]*$' > /dev/null
-if [ $? = 0 ]; then
-  /usr/bin/mlabel "$L:" -c > /dev/null
-else
-  /usr/bin/mlabel "$L:$LABEL" > /dev/null
-fi
+case $FSTYPE in
+  vfat)
+    PROG=/sbin/dosfslabel
+    ;;
+  ext2|ext3|ext4)
+    PROG=/sbin/e2label
+    ;;
+  *)
+    exit 1
+esac
+
+$PROG $DEV $LABEL
+exit 0

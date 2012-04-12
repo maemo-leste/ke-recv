@@ -4,6 +4,7 @@
   This file is part of ke-recv.
 
   Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
+  Copyright (C) 2012 Pali Rohár <pali.rohar@gmail.com>
 
   Author: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
 
