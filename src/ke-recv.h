@@ -208,6 +208,7 @@ typedef struct volume_list_t_ {
         int volume_number;
         int corrupt;
         struct volume_list_t_ *next;
+        char desired_label[32];
 } volume_list_t;
 
 typedef struct {
@@ -223,7 +224,6 @@ typedef struct {
         int control_partitions;  /* whether or not we control the whole
                                     device, not just one partition */
 
-        char desired_label[12];
         const char *mount_point;
         const char *swap_location;
 
@@ -311,7 +311,6 @@ int in_mass_storage_mode(void);
 int in_peripheral_wait_mode(void);
 usb_state_t get_usb_state(void);
 dbus_bool_t hal_device_reprobe(const char *udi);
-char* find_by_property(const char *property, const char *value);
 /*
 int check_install_file(const mmc_info_t *mmc);
 */

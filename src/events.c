@@ -177,6 +177,14 @@ error3:         volume_id_close (vid);
 
         strcpy (mmc->display_name, label);
 
+        if (label[0] == '\0') {
+                /* empty label */
+                vol->desired_label[0] = '\0';
+        } else {
+                strncpy(vol->desired_label, label, 32);
+                vol->desired_label[31] = '\0';
+        }
+
         volume_id_close (vid);
         close (fd);
 
@@ -657,18 +665,20 @@ static void handle_e_rename(mmc_info_t *mmc, const char *udi)
 
         ULOG_DEBUG_F("using device file %s", vol->dev_name);
         args[1] = vol->dev_name;
-        args[2] = mmc->desired_label;
+        args[2] = vol->desired_label;
         args[3] = vol->fstype;
 
-        /* check validity of volume label */
-        ret = valid_fat_name(args[2]);
-        assert(ret < 1 && ret > -3);
-        if (ret == -1) {
-                ULOG_ERR_F("too long name");
-                return;
-        } else if (ret == -2) {
-                ULOG_ERR_F("invalid characters");
-                return;
+        /* check validity of fat volume label */
+        if (strcmp(args[3], "vfat") == 0) {
+                ret = valid_fat_name(args[2]);
+                assert(ret < 1 && ret > -3);
+                if (ret == -1) {
+                        ULOG_ERR_F("too long name");
+                        return;
+                } else if (ret == -2) {
+                        ULOG_ERR_F("invalid characters");
+                        return;
+                }
         }
 
         ret = exec_prog(args[0], args);
@@ -708,12 +718,12 @@ static void handle_e_format(mmc_info_t *mmc, const char *udi)
         volume_list_t *vol;
         char buf[100];
 
-        ULOG_DEBUG_F("label for %s is '%s'", mmc->name, mmc->desired_label);
-
         if (mmc->internal_card)
                 vol = get_internal_mmc_volume(mmc);
         else
                 vol = get_nth_volume(mmc, volume_get_num(mmc, udi));
+
+        ULOG_DEBUG_F("label for %s is '%s'", vol->dev_name, vol->desired_label);
 
         if (!mmc->control_partitions &&
             (vol == NULL || vol->dev_name == NULL)) {
@@ -723,7 +733,7 @@ static void handle_e_format(mmc_info_t *mmc, const char *udi)
 
         if (!mmc->control_partitions) {
                 args[1] = vol->dev_name;
-                args[2] = mmc->desired_label;
+                args[2] = vol->desired_label;
                 ULOG_DEBUG_F("using device file %s", args[1]);
 
                 if (vol->mountpoint != NULL)
@@ -740,7 +750,7 @@ static void handle_e_format(mmc_info_t *mmc, const char *udi)
                 } else
                         snprintf(buf, 100, "%s", vol->dev_name);
                 args[2] = buf;
-                args[3] = mmc->desired_label;
+                args[3] = vol->desired_label;
 
                 ret = unmount_volumes(mmc, FALSE);
         }

@@ -326,6 +326,7 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
                                         DBusMessage *m, void *data)
 {
         mmc_info_t *mmc;
+        volume_list_t *l;
         DBusMessageIter iter;
         char* dev = NULL, *label = NULL, *udi = NULL;
 
@@ -364,21 +365,30 @@ static DBusHandlerResult rename_handler(DBusConnection *c,
                 goto rename_exit;
         }
 
+        for (l = &mmc->volumes; l != NULL; l = l->next) {
+                if (l->dev_name != NULL && strcmp(l->dev_name, dev) == 0) {
+                        udi = l->udi;
+                        break;
+                }
+        }
+        if (!l || !udi) {
+                ULOG_ERR_F("bad device name '%s'", dev);
+                send_error("bad_device_name");
+                goto rename_exit;
+        }
+
         send_reply();
 
         if (label[0] == '\0') {
                 /* empty label */
-                strncpy(mmc->desired_label, "           ", 11);
+                l->desired_label[0] = '\0';
         } else {
-                strncpy(mmc->desired_label, label, 11);
+                strncpy(l->desired_label, label, 32);
+                l->desired_label[31] = '\0';
         }
-        mmc->desired_label[11] = '\0';
-        ULOG_DEBUG_F("got label: '%s'", mmc->desired_label);
+        ULOG_DEBUG_F("got label: '%s'", l->desired_label);
         /* validity of the label is checked later */
-        udi = find_by_property("block.device",dev);
         handle_event(E_RENAME, mmc, udi);
-        if(udi)
-          free(udi);
 
 rename_exit:
         /* invalidate */
@@ -391,6 +401,7 @@ static DBusHandlerResult format_handler(DBusConnection *c,
                                         DBusMessage *m, void *data)
 {
         mmc_info_t *mmc;
+        volume_list_t *l;
         DBusMessageIter iter;
         char* dev = NULL, *label = NULL, *udi = NULL;
 
@@ -430,20 +441,30 @@ static DBusHandlerResult format_handler(DBusConnection *c,
                 goto away;
         }
 
+        for (l = &mmc->volumes; l != NULL; l = l->next) {
+                if (l->dev_name != NULL && strcmp(l->dev_name, dev) == 0) {
+                        udi = l->udi;
+                        break;
+                }
+        }
+        if (!l || !udi) {
+                ULOG_ERR_F("bad device name '%s'", dev);
+                send_error("bad_device_name");
+                goto away;
+        }
+
         send_reply();
+
         if (label[0] == '\0') {
                 /* empty label */
-                strncpy(mmc->desired_label, "           ", 11);
+                l->desired_label[0] = '\0';
         } else {
-                strncpy(mmc->desired_label, label, 11);
+                strncpy(l->desired_label, label, 32);
+                l->desired_label[31] = '\0';
         }
-        mmc->desired_label[11] = '\0';
-        ULOG_DEBUG_F("got label: '%s'", mmc->desired_label);
+        ULOG_DEBUG_F("got label: '%s'", l->desired_label);
         /* validity of the label is checked later */
-        udi = find_by_property("block.device",dev);
         handle_event(E_FORMAT, mmc, udi);
-        if(udi)
-          free(udi);
 
 away:
         /* invalidate */
@@ -1210,30 +1231,6 @@ char* find_by_cap_and_prop(const char *capability,
         return udi;
 }
 
-/* returns first match */
-char* find_by_property(const char *property, const char *value)
-{
-        int num_devices = 0, i;
-        char **list, *udi = NULL;
-        DBusError error;
-
-        dbus_error_init(&error);
-        list = libhal_manager_find_device_string_match(hal_ctx,
-                                                       property,
-                                                       value,
-                                                       &num_devices,
-                                                       &error);
-        if (dbus_error_is_set(&error)) {
-                ULOG_ERR_F("D-Bus error: %s", error.message);
-                dbus_error_free(&error);
-                return NULL;
-        }
-        ULOG_DEBUG_F("number of devices: %d", num_devices);
-        udi = strdup(list[0]);
-        libhal_free_string_array(list);
-        return udi;
-}
-
 char *get_prop_string(const char *udi, const char *property)
 {
         DBusError error;
@@ -1580,7 +1577,6 @@ static int init_card(const char *udi)
         mmc->state = S_INVALID;
         mmc->cover_state = COVER_INVALID;
 
-        mmc->desired_label[0] = '\0';
         if (internal) {
                 mmc->mount_point = ge2("INTERNAL_MMC_MOUNTPOINT", TRUE);
                 mmc->swap_location = ge2("INTERNAL_MMC_SWAP_LOCATION",
@@ -1996,7 +1992,7 @@ static volume_list_t *volume_from_list(volume_list_t *l,
 
 static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
 {
-        char *mp, *dev;
+        char *mp, *dev, *label;
 
         while (l->udi != NULL) {
                 volume_list_t *prev;
@@ -2062,6 +2058,15 @@ static volume_list_t *add_to_volume_list(volume_list_t *l, const char *udi)
         }
 
         l->corrupt = 0;
+
+        label = get_prop_string(l->udi, "volume.label");
+        if (label == NULL || label[0] == '\0') {
+                /* empty label */
+                l->desired_label[0] = '\0';
+        } else {
+                strncpy(l->desired_label, label, 32);
+                l->desired_label[31] = '\0';
+        }
 
         if (get_prop_bool(l->udi, "volume.is_partition") == 1) {
                 l->volume_number = get_prop_int(l->udi,
