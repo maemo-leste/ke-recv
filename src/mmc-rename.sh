@@ -40,4 +40,5 @@ case $FSTYPE in
 esac
 
 $PROG $DEV $LABEL
-exit 0
+RESULT=$?
+exit $RESULT
