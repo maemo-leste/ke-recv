@@ -39,6 +39,6 @@ case $FSTYPE in
     exit 1
 esac
 
-$PROG $DEV $LABEL
+$PROG $DEV "$LABEL"
 RESULT=$?
 exit $RESULT
