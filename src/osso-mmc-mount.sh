@@ -24,9 +24,14 @@
 # 1 - could not mount
 # 2 - mounted read-only
 
+BLS=/etc/default/osso-mmc-blacklist.sh
+
 PDEV=$1  ;# preferred device (partition)
 MP=$2    ;# mount point
 FS=$3    ;# fstype
+
+# hook for blacklist etc. Shall care for logger and exit 0, in case
+test -x $BLS && source $BLS
 
 grep "$PDEV " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
