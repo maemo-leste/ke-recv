@@ -1,4 +1,20 @@
 #!/bin/sh
-if [ -z "$4" -o "$4" = "fat" -o "$4" = "vfat" ]; then type="vfat"; else type="$4"; fi
-if [ "$type" = "vfat" ]; then args=",utf8,uid=29999,shortname=mixed,dmask=000,fmask=0000,rodir"; fi
+
+if [ -z "$4" ]; then
+	type="$(blkid -s TYPE $1 | sed -n 's/.*TYPE="\(.*\)".*/\1/p')"
+	[ -z "$type" ] && type="vfat"
+elif [ -z "$4" = "fat" ]; then
+	type="vfat"
+else
+	type="$4"
+fi
+
+if [ "$type" = "vfat" ]; then
+	args=",utf8,uid=29999,shortname=mixed,dmask=000,fmask=0000,rodir"
+elif [ "$type" = "ntfs" ]; then
+	args=",nls=utf8,uid=29999,umask=0000"
+else
+	args=""
+fi
+
 mount -t $type -o $3,noauto,nodev,exec,nosuid,noatime,nodiratime$args "$1" "$2" > /dev/null
