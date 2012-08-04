@@ -45,6 +45,19 @@ if [ $? = 0 ]; then
     else
         logger "$0: syncd is not running"
     fi
+    if [ -f /var/run/dnsmasq.pid.usb0 ]; then
+        DNSMASQ_PID=`cat /var/run/dnsmasq.pid.usb0`
+        rm -f /var/run/dnsmasq.pid.usb0
+        kill $DNSMASQ_PID
+    else
+        logger "$0: dnsmasq for USB network is not running"
+    fi
+    if [ -f /proc/sys/net/ipv4/ip_forward -a -x /usr/sbin/iptables ]; then
+        echo 0 > /proc/sys/net/ipv4/ip_forward
+        /usr/sbin/iptables -t nat -D POSTROUTING ! -o lo -j MASQUERADE
+    fi
+    rm -f /var/run/resolv.conf.usb0
+    ifdown usb0
 
     sleep 2
     /sbin/rmmod g_nokia
@@ -68,6 +81,7 @@ fi
 LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
 LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
 
+sleep 1
 /bin/grep /sys/devices/platform/musb_hdrc/mode -e idle > /dev/null
 if [ $? = 0 ]; then
     logger "$0: usb cable detached after module change"

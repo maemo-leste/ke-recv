@@ -39,6 +39,32 @@ else
     sleep 2
 fi
 
+ifup usb0
+if [ $? != 0 ]; then
+    logger "$0: ifup usb0 failed"
+else
+    IP_ADDR="$(ifconfig usb0 | sed -n 's/.*inet addr:\([0-9\.]*\).*/\1/p')"
+    if [ -z "$IP_ADDR" ]; then
+        logger "$0: no ip address for usb0"
+    else
+        IP_GW="$(route -n | sed -n 's/^0\.0\.0\.0\s*\([0-9\.]*\).*usb0$/\1/p')"
+        if [ -z "$IP_GW" ]; then IP_GW=${IP_ADDR%.*}.$((${IP_ADDR##*.}-1)); fi
+        echo "nameserver $IP_GW" > /var/run/resolv.conf.usb0
+        if ! grep -q "/var/run/resolv.conf.usb0" /etc/dnsmasq.conf; then
+            logger "$0: restarting dnsmasq"
+            echo "resolv-file=/var/run/resolv.conf.usb0" >> /etc/dnsmasq.conf
+            stop -q dnsmasq
+            start -q dnsmasq
+        fi
+        if [ -f /proc/sys/net/ipv4/ip_forward -a -x /usr/sbin/iptables ]; then
+            echo 1 > /proc/sys/net/ipv4/ip_forward
+            /usr/sbin/iptables -t nat -A POSTROUTING ! -o lo -j MASQUERADE
+        fi
+        /usr/sbin/dnsmasq -i usb0 -I lo -a $IP_ADDR -z -F $IP_GW,$IP_GW -K -x /var/run/dnsmasq.pid.usb0 -C /dev/null -9
+        logger "$0: USB network enabled, local address: $IP_ADDR, remote address: $IP_GW"
+    fi
+fi
+
 initctl emit --no-wait G_NOKIA_READY
 
 # Wait until daemons are up

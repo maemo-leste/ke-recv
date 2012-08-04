@@ -1,3 +1,11 @@
+ke-recv (3.19-15.3) unstable; urgency=low
+
+  * Added hook to ignore partitions per user file
+  * mmc-mount: When filesystem is empty use blkid for detection. Added needed mount arguments for ntfs
+  * Automatically enable USB network in PC Suite mode
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 04 Aug 2012 20:13:30 +0200
+
 ke-recv (3.19-15.2) unstable; urgency=low
 
   * Move desired_label into volume structure
