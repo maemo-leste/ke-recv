@@ -56,7 +56,7 @@
 extern "C" {
 #endif
 
-#define _(X) gettext(X)
+#define _(X) dgettext(PACKAGE, X)
 
 #define APPL_NAME "ke_recv"
 #define APPL_VERSION "1"

@@ -1,3 +1,4 @@
 ../../src/*.conf /etc/dbus-1/system.d
 ../../src/*.sh /usr/sbin
 ../../src/*.schemas /usr/share/gconf/schemas
+../../src/usbnetwork /etc/default/usbnetwork

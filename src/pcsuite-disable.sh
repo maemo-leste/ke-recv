@@ -21,18 +21,25 @@
 
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? = 0 ]; then
-    logger "$0: disable USB network"
-    if [ -f /var/run/dnsmasq.pid.usb0 ]; then
-        DNSMASQ_PID=`cat /var/run/dnsmasq.pid.usb0`
-        rm -f /var/run/dnsmasq.pid.usb0
-        kill $DNSMASQ_PID
+    [ -f /etc/default/usbnetwork ] && . /etc/default/usbnetwork
+    if [ "$USBNETWORK_ENABLE" = "1" ]; then
+        logger "$0: disable USB network"
+        if [ "$USBNETWORK_DNSMASQ" = "1" ]; then
+            if [ -f /var/run/dnsmasq.pid.usb0 ]; then
+                DNSMASQ_PID=`cat /var/run/dnsmasq.pid.usb0`
+                rm -f /var/run/dnsmasq.pid.usb0
+                kill $DNSMASQ_PID
+            fi
+        fi
+        if [ "$USBNETWORK_NAT" = "1" ]; then
+            if [ -f /proc/sys/net/ipv4/ip_forward -a -x /usr/sbin/iptables ]; then
+                echo 0 > /proc/sys/net/ipv4/ip_forward
+                /usr/sbin/iptables -t nat -D POSTROUTING ! -o lo -j MASQUERADE
+            fi
+        fi
+        rm -f /var/run/resolv.conf.usb0
+        ifdown usb0
     fi
-    if [ -f /proc/sys/net/ipv4/ip_forward -a -x /usr/sbin/iptables ]; then
-        echo 0 > /proc/sys/net/ipv4/ip_forward
-        /usr/sbin/iptables -t nat -D POSTROUTING ! -o lo -j MASQUERADE
-    fi
-    rm -f /var/run/resolv.conf.usb0
-    ifdown usb0
 fi
 
 exit 0

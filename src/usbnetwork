@@ -1,0 +1,10 @@
+# Automatically enable USB network when PC Suite mode is active (default disabled)
+USBNETWORK_ENABLE=0
+
+# Automatically also start DNS & DHCP server dnsmasq (default disabled)
+USBNETWORK_DNSMASQ=0
+
+# Automatically also enable NAT (needs kernel with NAT support and iptables, default disabled)
+USBNETWORK_NAT=0
+
+# IP Address configuration is taken from file /etc/network/interfaces (interface usb0)
