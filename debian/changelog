@@ -1,3 +1,10 @@
+ke-recv (3.19-15.5) unstable; urgency=low
+
+  * Added configuration to automatically launch usb networking in pc-suite mode
+    see /etc/default/usbnetwork
+
+ -- Christian Ratzenhofer <christian_ratzenhofer@yahoo.de>  Mon, 12 Nov 2012 21:50:31 +0100
+
 ke-recv (3.19-15.4) unstable; urgency=low
 
   * Do not use cache file for blkid
