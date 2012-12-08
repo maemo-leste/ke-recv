@@ -167,12 +167,14 @@ static void dismantle_usb_unmount_pending()
 static gboolean usb_mount_check(gpointer data)
 {
         ULOG_DEBUG_F("entered");
+#if 0
         /* launch FM with what ever we have mounted */
         if (desktop_started && !launch_fm()) {
                 /* no USB volumes mounted */
                 display_system_note(dgettext(USB_DOMAIN,
                                     "stab_me_usb_no_file_system_available"));
         }
+#endif
         usb_mounting_timer_id = 0;
         return FALSE;
 }
