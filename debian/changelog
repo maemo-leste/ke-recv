@@ -1,3 +1,10 @@
+ke-recv (3.19-15.7) unstable; urgency=low
+
+  * Added support to start only DHCP or DNS server for usbnetwork on n900 side
+  * Do not launch osso file manager when USB device is mounted
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 08 Dec 2012 11:40:30 +0100
+
 ke-recv (3.19-15.6) unstable; urgency=low
 
   * Fixed install path for /etc/default/usbnetwork
