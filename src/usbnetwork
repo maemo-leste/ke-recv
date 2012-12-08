@@ -1,8 +1,11 @@
 # Automatically enable USB network when PC Suite mode is active (default disabled)
 USBNETWORK_ENABLE=0
 
-# Automatically also start DNS & DHCP server dnsmasq (default disabled)
-USBNETWORK_DNSMASQ=0
+# Automatically also start DHCP server dnsmasq (default disabled)
+USBNETWORK_DHCP=0
+
+# Automatically also start DNS server dnsmasq (default disabled)
+USBNETWORK_DNS=0
 
 # Automatically also enable NAT (needs kernel with NAT support and iptables, default disabled)
 USBNETWORK_NAT=0

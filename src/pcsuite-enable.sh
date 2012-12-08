@@ -64,8 +64,15 @@ if [ "$USBNETWORK_ENABLE" = "1" ]; then
                     /usr/sbin/iptables -t nat -A POSTROUTING ! -o lo -j MASQUERADE
                 fi
             fi
-            if [ "$USBNETWORK_DNSMASQ" = "1" ]; then
-                /usr/sbin/dnsmasq -i usb0 -I lo -a $IP_ADDR -z -F $IP_GW,$IP_GW -K -x /var/run/dnsmasq.pid.usb0 -C /dev/null -9
+            DNSMASQ_ARGS=""
+            if [ "$USBNETWORK_DHCP" = "1" ]; then
+                DNSMASQ_ARGS="$DNSMASQ_ARGS -F $IP_GW,$IP_GW -K -9 -l /dev/null"
+                if [ "$USBNETWORK_DNS" != "1" ]; then
+                    DNSMASQ_ARGS="$DNSMASQ_ARGS -p 0"
+                fi
+            fi
+            if [ "$USBNETWORK_DHCP" = "1" -o "$USBNETWORK_DNS" = "1" ]; then
+                /usr/sbin/dnsmasq -i usb0 -I lo -a $IP_ADDR -z -x /var/run/dnsmasq.pid.usb0 -C /dev/null "$DNSMASQ_ARGS"
             fi
             logger "$0: USB network enabled, local address: $IP_ADDR, remote address: $IP_GW"
         fi

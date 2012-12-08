@@ -48,7 +48,7 @@ if [ $? = 0 ]; then
 
     [ -f /etc/default/usbnetwork ] && . /etc/default/usbnetwork
     if [ "$USBNETWORK_ENABLE" = "1" ]; then
-        if [ "$USBNETWORK_DNSMASQ" = "1" ]; then
+        if [ "$USBNETWORK_DHCP" = "1" -o "$USBNETWORK_DNS" = "1" ]; then
             if [ -f /var/run/dnsmasq.pid.usb0 ]; then
                 DNSMASQ_PID=`cat /var/run/dnsmasq.pid.usb0`
                 rm -f /var/run/dnsmasq.pid.usb0
