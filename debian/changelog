@@ -1,3 +1,9 @@
+ke-recv (3.19-15.7+thumb0) unstable; urgency=low
+
+  * Thumb2 compile
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Tue, 25 Dec 2012 12:53:21 +0200
+
 ke-recv (3.19-15.7) unstable; urgency=low
 
   * Added support to start only DHCP or DNS server for usbnetwork on n900 side
