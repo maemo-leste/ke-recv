@@ -82,7 +82,8 @@ case "$1" in
                         sync
                 else
                         # g_file_storage is loaded as the default
-                        /sbin/modprobe g_file_storage stall=0 luns=2 removable
+                        /sbin/modprobe g_file_storage stall=0 luns=2 removable || \
+                                /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1
                 fi
         fi
 

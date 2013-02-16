@@ -24,7 +24,7 @@ if [ $# -gt 2 ]; then
   exit 1
 fi
 
-/sbin/lsmod | grep g_file_storage > /dev/null
+/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
 if [ $? != 0 ]; then
   # the module is not loaded
   exit 0
@@ -33,6 +33,12 @@ fi
 GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
 LUN0='gadget-lun0'
 LUN1='gadget-lun1'
+
+if [ ! -e $GADGETPATH ]; then
+  GADGETPATH='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget'
+  LUN0='lun0'
+  LUN1='lun1'
+fi
 
 if [ $# = 0 ]; then
   # unload all

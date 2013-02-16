@@ -26,6 +26,13 @@ if [ $? = 0 ]; then
     /sbin/rmmod g_file_storage
 fi
 
+/sbin/lsmod | grep g_mass_storage > /dev/null
+if [ $? = 0 ]; then
+    logger "$0: removing g_mass_storage"
+    initctl emit G_FILE_STORAGE_REMOVE
+    /sbin/rmmod g_mass_storage
+fi
+
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_nokia

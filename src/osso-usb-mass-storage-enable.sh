@@ -75,10 +75,14 @@ if [ $? = 0 ]; then
     fi
 fi
 
-/sbin/lsmod | grep g_file_storage > /dev/null
+/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_file_storage stall=0 luns=2 removable
     RC=$?
+    if [ $RC != 0 ]; then
+        /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1
+        RC=$?
+    fi
 fi
 
 if [ $RC != 0 ]; then
@@ -88,9 +92,16 @@ fi
 
 LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
 LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
+MODE='/sys/devices/platform/musb_hdrc/mode'
+
+if [ ! -e $LUN0 ]; then
+    LUN0='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun0/file'
+    LUN1='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun1/file'
+    MODE='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/mode'
+fi
 
 sleep 1
-/bin/grep /sys/devices/platform/musb_hdrc/mode -e idle > /dev/null
+/bin/grep $MODE -e idle > /dev/null
 if [ $? = 0 ]; then
     logger "$0: usb cable detached after module change"
     # make sure we don't have devices in there

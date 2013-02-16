@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep g_file_storage > /dev/null
+/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
 if [ $? != 0 ]; then
   exit 0
 fi
@@ -27,6 +27,12 @@ fi
 GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
 LUN0='gadget-lun0'
 LUN1='gadget-lun1'
+
+if [ ! -e $GADGETPATH ]; then
+  GADGETPATH='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget'
+  LUN0='lun0'
+  LUN1='lun1'
+fi
 
 for lun in $LUN0 $LUN1; do
   STR=`cat $GADGETPATH/$lun/file`
