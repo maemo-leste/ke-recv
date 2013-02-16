@@ -117,6 +117,18 @@ if [ $# -gt 1 ]; then
     exit 1
 fi
 
+# check first if the card(s) are not used
+grep -q "^$1" /proc/swaps
+if [ $? = 0 ]; then
+    echo "$0: $1 is in use for swap"
+    exit 1
+fi
+grep -q "^$1" /proc/mounts
+if [ $? = 0 ]; then
+    echo "$0: $1 is in use"
+    exit 1
+fi
+
 # check first if the card(s) are already shared
 if [ $# = 1 ]; then
     FOUND=0
