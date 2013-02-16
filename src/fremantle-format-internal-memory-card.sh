@@ -25,21 +25,20 @@ if [ "x$1" != "x/dev/mmcblk1" -a "x$1" != "x/dev/mmcblk0" ]; then
 fi
 
 /etc/init.d/ke-recv stop
-umount $1
-umount ${1}p1
-umount ${1}p2
-umount ${1}p3
-umount ${1}p4
+
+for dev in /dev/$1*; do
+  umount $dev
+done
 
 sfdisk -D -uM $1 << EOF
-,768,S
-,2048,L
 ,,b
+,2048,L
+,768,S
 EOF
 
-mkswap ${1}p1
+mkdosfs -F 32 -R 38 ${1}p1
 mkfs.ext3 ${1}p2
-mkdosfs -F 32 -R 38 ${1}p3
+mkswap ${1}p3
 
 sync
 
