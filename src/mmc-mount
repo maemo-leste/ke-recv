@@ -9,12 +9,16 @@ else
 	type="$4"
 fi
 
-if [ "$type" = "vfat" ]; then
-	args=",utf8,uid=29999,shortname=mixed,dmask=000,fmask=0000,rodir"
-elif [ "$type" = "ntfs" ]; then
-	args=",nls=utf8,uid=29999,umask=0000"
-else
-	args=""
+. /etc/default/mount-opts
+
+eval opts="$3,$common_opts,$user_opts,\$${type}_opts"
+
+opts=`echo $opts | sed ':l;s/,,/,/g;tl;s/^,//;s/,$//'`
+
+if [ "$user_fsck" != "0" ]; then
+	echo "`date +'%Y-%m-%d %H:%M:%S'`  fsck.$type -a $1" >> /var/log/fsck.log
+	fsck.$type -a $1 >> /var/log/fsck.log 2>&1
+	echo "" >> /var/log/fsck.log
 fi
 
-mount -t $type -o $3,noauto,nodev,exec,nosuid,noatime,nodiratime$args "$1" "$2" > /dev/null
+mount -t "$type" -o "$opts" "$1" "$2" > /dev/null
