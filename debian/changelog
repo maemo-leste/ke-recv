@@ -1,3 +1,16 @@
+ke-recv (3.19-16) unstable; urgency=low
+
+  * Use new options from /etc/default/mount-opts
+  * Remove overwritng filesystem type in script osso-mmc-mount.sh based on ID from MBR table
+  * Fix partition order in script fremantle-format-internal-memory-card.sh
+  * Do not export card via usb if is in use (mounted or swap)
+  * Fix support for upstream kernel:
+      Driver g_file_storage was replaced by g_mass_storage
+      g_mass_storage needs array of values in param removable
+      lun paths are in /sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Tue, 07 May 2013 20:14:22 +0200
+
 ke-recv (3.19-15.7) unstable; urgency=low
 
   * Added support to start only DHCP or DNS server for usbnetwork on n900 side
