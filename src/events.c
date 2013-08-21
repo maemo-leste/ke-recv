@@ -46,7 +46,7 @@ GConfClient* gconfclient;
 
 static int usb_share_card(mmc_info_t *mmc, gboolean show);
 static int mount_volumes(mmc_info_t *mmc, const char *udi, gboolean show_errors);
-static int do_unmount(const char *mountpoint, gboolean lazy);
+static int do_unmount(mmc_info_t *mmc, const char *mountpoint, gboolean lazy);
 static void open_dialog_helper(mmc_info_t *mmc);
 static volume_list_t *get_nth_volume(mmc_info_t *mmc, int n);
 
@@ -737,10 +737,10 @@ static void handle_e_format(mmc_info_t *mmc, const char *udi)
                 ULOG_DEBUG_F("using device file %s", args[1]);
 
                 if (vol->mountpoint != NULL)
-                        ret = do_unmount(vol->mountpoint, FALSE);
+                        ret = do_unmount(mmc, vol->mountpoint, FALSE);
                 else {
                         ULOG_DEBUG_F("no mountpoint, using dev_name");
-                        ret = do_unmount(vol->dev_name, FALSE);
+                        ret = do_unmount(mmc, vol->dev_name, FALSE);
                 }
         } else {
                 args[1] = mmc->whole_device;
@@ -992,11 +992,20 @@ static int mount_volumes(mmc_info_t *mmc, const char *arg, gboolean show_errors)
         return count;
 }
 
-static int do_unmount(const char *mountpoint, gboolean lazy)
+static int do_unmount(mmc_info_t *mmc, const char *mountpoint, gboolean lazy)
 {
         const char* umount_args[] = {MMC_UMOUNT_COMMAND, NULL, NULL, NULL};
         int ret;
+        volume_list_t *l = NULL;
 
+        if (!mmc->internal_card && is_mounted(mmc->mount_point)) {
+                for (l = &mmc->volumes; l != NULL; l = l->next) {
+                        if(!strcmp(l->mountpoint, mountpoint) && !strcmp(l->fstype, "vfat")) {
+                                mountpoint = mmc->mount_point;
+                        }
+                }
+        }
+        
         emit_gnomevfs_pre_unmount(mountpoint);
         umount_args[1] = mountpoint;
 
@@ -1031,7 +1040,7 @@ static void discard_volume(mmc_info_t *mmc, const char *udi)
                 rm_volume_from_list(&mmc->volumes, udi);
                 return;
         }
-        if (!do_unmount(l->mountpoint, TRUE)) {
+        if (!do_unmount(mmc, l->mountpoint, TRUE)) {
                 ULOG_INFO_F("couldn't unmount %s", udi);
         }
         rm_volume_from_list(&mmc->volumes, udi);
@@ -1051,7 +1060,7 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
                                              l->udi);
                                 continue;
                         }
-                        if (do_unmount(l->mountpoint, lazy)) {
+                        if (do_unmount(mmc, l->mountpoint, lazy)) {
                                 ULOG_DEBUG_F("unmounted %s", l->udi);
                         } else {
                                 ULOG_INFO_F("couldn't unmount %s", l->udi);
@@ -1075,7 +1084,7 @@ int unmount_volumes(mmc_info_t *mmc, gboolean lazy)
                                  * or mount point could be unknown */
                                 arg = vol->dev_name;
 
-                        if (do_unmount(arg, lazy)) {
+                        if (do_unmount(mmc, arg, lazy)) {
                                 ULOG_DEBUG_F("unmounted %s (%s)", arg,
                                              vol->udi);
                         } else {
