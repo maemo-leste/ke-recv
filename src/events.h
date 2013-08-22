@@ -61,6 +61,7 @@ extern "C" {
 #define PRE_UNMOUNT_SIGNAL_PROGRAM "/usr/bin/mmc-pre-unmount"
 #define MMC_RENAME_PROG "/usr/sbin/mmc-rename.sh"
 #define MMC_FORMAT_PROG "/usr/sbin/mmc-format"
+#define GREP_PROG "/bin/grep"
 
 typedef enum {
         E_CLOSED,
