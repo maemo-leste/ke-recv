@@ -113,19 +113,19 @@ fi
 initctl emit --no-wait G_FILE_STORAGE_READY
 
 if [ $# -gt 1 ]; then
-    echo "$0: only one argument supported"
+    logger "$0: only one argument supported"
     exit 1
 fi
 
 # check first if the card(s) are not used
 grep -q "^$1" /proc/swaps
 if [ $? = 0 ]; then
-    echo "$0: $1 is in use for swap"
+    logger "$0: $1 is in use for swap"
     exit 1
 fi
 grep -q "^$1" /proc/mounts
 if [ $? = 0 ]; then
-    echo "$0: $1 is in use"
+    logger "$0: $1 is in use"
     exit 1
 fi
 
