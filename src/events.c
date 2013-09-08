@@ -1296,13 +1296,6 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 init_mmc_volumes(mmc);
                                 update_mmc_label(mmc, arg);
                                 mount_volumes(mmc, arg, TRUE);
-                                if (!mmc->internal_card) {
-                                         volume_list_t *l1;
-                                         for (l1 = &mmc->volumes; l1 != NULL; l1 = l1->next) {
-                                                 update_mmc_label(mmc, l1->udi);
-                                                 mount_volumes(mmc, l1->udi, TRUE);
-                                         }
-                                }
                         }
                         break;
                 case E_RENAME:
