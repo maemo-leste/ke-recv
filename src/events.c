@@ -30,6 +30,7 @@
 #include <libhal.h>
 #include <libvolume_id.h>
 #include <fcntl.h>
+#include <libgen.h>
  
 extern DBusConnection *ses_conn;
 extern gboolean desktop_started;
@@ -44,7 +45,7 @@ typedef enum { USB_DIALOG, NORMAL_DIALOG, NO_DIALOG } swap_dialog_t;
 
 GConfClient* gconfclient;
 
-static int usb_share_card(mmc_info_t *mmc, gboolean show);
+static int usb_share_card(mmc_info_t *mmc, gboolean only_first, gboolean show);
 static int mount_volumes(mmc_info_t *mmc, gboolean show_errors);
 static int do_unmount(const char *mountpoint, gboolean lazy);
 static void open_dialog_helper(mmc_info_t *mmc);
@@ -611,10 +612,10 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
         }
 }
 
-static int usb_share_card(mmc_info_t *mmc, gboolean show)
+static int usb_share_card(mmc_info_t *mmc, gboolean only_first, gboolean show)
 {
         const char *args[] = {NULL, NULL};
-        char *dev;
+        char *dev = NULL;
 
         if (mmc->internal_card) {
                 volume_list_t *vol;
@@ -623,6 +624,14 @@ static int usb_share_card(mmc_info_t *mmc, gboolean show)
                         return 0;
                 }
                 dev = vol->dev_name;
+        } else if (only_first) {
+                volume_list_t *vol;
+                for (vol = &mmc->volumes; vol != NULL; vol = vol->next) {
+                        if (vol->volume_number != 1)
+                                continue;
+                        dev = vol->dev_name;
+                        break;
+                }
         } else
                 dev = mmc->whole_device;
 
@@ -898,10 +907,11 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                         continue;
 
                 if (!l->mountpoint) {
-                        if (mmc->internal_card || l->volume_number == 1)
+                        if (mmc->internal_card || l->volume_number == 1) {
                                 l->mountpoint = strdup(mmc->mount_point);
-                        else
-                                l->mountpoint = g_strdup_printf("/media/%s", l->dev_name);
+                        } else {
+                                l->mountpoint = g_strdup_printf("%sp%d", mmc->mount_point, l->volume_number);
+                        }
                 }
 
                 update_mmc_label(mmc, l->udi);
@@ -1052,7 +1062,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         inform_mmc_cover_open(FALSE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, FALSE, TRUE);
                         } else {
 #if 0 /* cannot mount here anymore after kernel changes in Fremantle */
                                 init_mmc_volumes(mmc);
@@ -1208,6 +1218,32 @@ static void open_dialog_helper(mmc_info_t *mmc)
         */
 }
 
+static int swap_on_mmc(mmc_info_t *mmc)
+{
+        char buf[100];
+        static const char* args[] = {GREP_PROG,
+                                     "-q",
+                                     NULL,
+                                     "/proc/swaps",
+                                     NULL};
+
+        snprintf(buf, sizeof(buf), "^%s", mmc->whole_device);
+
+        args[2] = buf;
+
+        int ret = exec_prog(GREP_PROG, args);
+        if (ret < 0) {
+                ULOG_ERR_F("exec_prog returned %d", ret);
+        }
+
+        if (ret == 1)
+                return FALSE;
+
+        ULOG_INFO_F("Found active swap on %s", mmc->whole_device);
+
+        return TRUE;
+}
+
 static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                  const char *arg)
 {
@@ -1236,10 +1272,27 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
-                                if (!unmount_volumes(mmc, FALSE)) {
+                                if (!mmc->internal_card && swap_on_mmc(mmc)) {
+                                        char *arg = NULL;
+                                        volume_list_t *vol;
+                                        for (vol = &mmc->volumes; vol != NULL; vol = vol->next) {
+                                                if (vol->volume_number != 1)
+                                                        continue;
+                                                if (vol->mountpoint)
+                                                        arg = vol->mountpoint;
+                                                else
+                                                        arg = vol->dev_name;
+                                                break;
+                                        }
+                                        if (!arg || !do_unmount(arg, FALSE)) {
+                                                ret = 0;
+                                        } else {
+                                                ret = usb_share_card(mmc, TRUE, TRUE);
+                                        }
+                                } else if (!unmount_volumes(mmc, FALSE)) {
                                         ret = 0;
                                 } else {
-                                        ret = usb_share_card(mmc, TRUE);
+                                        ret = usb_share_card(mmc, FALSE, TRUE);
                                 }
                         }
                         break;
@@ -1290,7 +1343,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         inform_device_present(TRUE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, FALSE, TRUE);
                         }
                         break;
                 case E_DEVICE_REMOVED:
@@ -1319,7 +1372,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 inform_device_present(TRUE, mmc);
                                 if (!ignore_cable && in_mass_storage_mode()
                                     && !device_locked) {
-                                        ret = usb_share_card(mmc, FALSE);
+                                        ret = usb_share_card(mmc, FALSE, FALSE);
                                 } else if (!in_peripheral_wait_mode()) {
                                         mount_volumes(mmc, TRUE);
                                 }
@@ -1347,7 +1400,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         CLOSE_SWAP_DIALOG
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE);
+                                ret = usb_share_card(mmc, FALSE, TRUE);
                         } else {
                                 init_mmc_volumes(mmc); /* re-read volumes */
                                 mount_volumes(mmc, TRUE);
