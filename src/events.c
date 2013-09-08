@@ -44,7 +44,7 @@ typedef enum { USB_DIALOG, NORMAL_DIALOG, NO_DIALOG } swap_dialog_t;
 
 GConfClient* gconfclient;
 
-static int usb_share_card(mmc_info_t *mmc, gboolean show, gboolean only_first_vfat);
+static int usb_share_card(mmc_info_t *mmc, gboolean show);
 static int mount_volumes(mmc_info_t *mmc, const char *udi, gboolean show_errors);
 static int do_unmount(mmc_info_t *mmc, const char *mountpoint, gboolean lazy);
 static void open_dialog_helper(mmc_info_t *mmc);
@@ -605,10 +605,10 @@ void unshare_usb_shared_card(mmc_info_t *mmc)
         }
 }
 
-static int usb_share_card(mmc_info_t *mmc, gboolean show, gboolean only_first_vfat)
+static int usb_share_card(mmc_info_t *mmc, gboolean show)
 {
         const char *args[] = {NULL, NULL};
-        char *dev = NULL;
+        char *dev;
 
         if (mmc->internal_card) {
                 volume_list_t *vol;
@@ -617,21 +617,8 @@ static int usb_share_card(mmc_info_t *mmc, gboolean show, gboolean only_first_vf
                         return 0;
                 }
                 dev = vol->dev_name;
-        } else {
-                if (only_first_vfat) {
-                        volume_list_t *l;
-                        for (l = &mmc->volumes; l != NULL; l = l->next) {
-                                if (l->fstype && !strcmp(l->fstype, "vfat")) {
-                                      dev = l->dev_name;
-                                      break;
-                                }
-                        }
-                        if (dev == NULL)
-                                dev = mmc->whole_device;
-                } else {
-                        dev = mmc->whole_device;
-                }
-        }
+        } else
+                dev = mmc->whole_device;
 
         if (dev == NULL) {
                 ULOG_DEBUG_F("dev unknown for %s", mmc->name);
@@ -1013,8 +1000,7 @@ static int do_unmount(mmc_info_t *mmc, const char *mountpoint, gboolean lazy)
 
         if (!mmc->internal_card && is_mounted(mmc->mount_point)) {
                 for (l = &mmc->volumes; l != NULL; l = l->next) {
-                        if (l->mountpoint && !strcmp(l->mountpoint, mountpoint) &&
-                            !strcmp(l->fstype, "vfat")) {
+                        if(!strcmp(l->mountpoint, mountpoint) && !strcmp(l->fstype, "vfat")) {
                                 mountpoint = mmc->mount_point;
                         }
                 }
@@ -1122,7 +1108,7 @@ static int event_in_cover_open(mmc_event_t e, mmc_info_t *mmc,
                         inform_mmc_cover_open(FALSE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE, FALSE);
+                                ret = usb_share_card(mmc, TRUE);
                         } else {
 #if 0 /* cannot mount here anymore after kernel changes in Fremantle */
                                 init_mmc_volumes(mmc);
@@ -1278,57 +1264,6 @@ static void open_dialog_helper(mmc_info_t *mmc)
         */
 }
 
-static int swap_on_mmc(mmc_info_t *mmc)
-{
-        char buf[100];
-        static const char* args[] = {GREP_PROG,
-                                     "-q",
-                                     NULL,
-                                     "/proc/swaps",
-                                     NULL};
-
-        snprintf(buf, sizeof(buf), "^%s", mmc->whole_device);
-
-        args[2] = buf;
-
-        int ret = exec_prog(GREP_PROG, args);
-        if (ret < 0) {
-                ULOG_ERR_F("exec_prog returned %d", ret);
-        }
-
-        if (ret == 1)
-                return FALSE;
-
-        ULOG_INFO_F("Found active swap on %s", mmc->whole_device);
-
-        return TRUE;
-}
-
-static gboolean unmount_first_vfat(mmc_info_t *mmc, gboolean lazy)
-{
-        volume_list_t *l;
-        for (l = &mmc->volumes; l != NULL; l = l->next) {
-                if (l->udi != NULL) {
-                        if (l->mountpoint == NULL) {
-                                ULOG_DEBUG_F("mount point not known for %s",
-                                             l->udi);
-                                continue;
-                        }
-                        if (l->fstype && !strcmp(l->fstype, "vfat")) {
-                                if (do_unmount(mmc, l->mountpoint, lazy)) {
-                                        ULOG_DEBUG_F("unmounted %s", l->udi);
-                                        return TRUE;
-                                } else {
-                                        ULOG_INFO_F("couldn't unmount %s", l->udi);
-                                        return FALSE;
-                                }
-                        }
-                }
-        }
-
-        return FALSE;
-}
-
 static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                  const char *arg)
 {
@@ -1357,19 +1292,10 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
                                 possibly_turn_swap_off(NO_DIALOG, mmc);
-                                if(!mmc->internal_card && swap_on_mmc(mmc))
-                                {
-                                        if (!unmount_first_vfat(mmc, FALSE)) {
-                                                ret = 0;
-                                        } else {
-                                                ret = usb_share_card(mmc, TRUE, TRUE);
-                                        }
+                                if (!unmount_volumes(mmc, FALSE)) {
+                                        ret = 0;
                                 } else {
-                                        if (!unmount_volumes(mmc, FALSE)) {
-                                                ret = 0;
-                                        } else {
-                                                ret = usb_share_card(mmc, TRUE, FALSE);
-                                        }
+                                        ret = usb_share_card(mmc, TRUE);
                                 }
                         }
                         break;
@@ -1429,7 +1355,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                         inform_device_present(TRUE, mmc);
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE, FALSE);
+                                ret = usb_share_card(mmc, TRUE);
                         }
                         break;
                 case E_DEVICE_REMOVED:
@@ -1458,7 +1384,7 @@ static int event_in_cover_closed(mmc_event_t e, mmc_info_t *mmc,
                                 inform_device_present(TRUE, mmc);
                                 if (!ignore_cable && in_mass_storage_mode()
                                     && !device_locked) {
-                                        ret = usb_share_card(mmc, FALSE, FALSE);
+                                        ret = usb_share_card(mmc, FALSE);
                                 } else if (!in_peripheral_wait_mode()) {
                                         update_mmc_label(mmc, arg);
                                         mount_volumes(mmc, arg, TRUE);
@@ -1494,7 +1420,7 @@ static int event_in_unmount_pending(mmc_event_t e, mmc_info_t *mmc,
                         CLOSE_SWAP_DIALOG
                         if (!ignore_cable && in_mass_storage_mode()
                             && !device_locked) {
-                                ret = usb_share_card(mmc, TRUE, FALSE);
+                                ret = usb_share_card(mmc, TRUE);
                         } else {
                                 init_mmc_volumes(mmc); /* re-read volumes */
                                 mount_volumes(mmc, arg, TRUE);
