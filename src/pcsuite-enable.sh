@@ -79,7 +79,7 @@ if [ "$USBNETWORK_ENABLE" = "1" ]; then
                 fi
             fi
             if [ "$USBNETWORK_DHCP" = "1" -o "$USBNETWORK_DNS" = "1" ]; then
-                /usr/sbin/dnsmasq -i usb0 -I lo -a $IP_ADDR -z -x /var/run/dnsmasq.pid.usb0 -C /dev/null "$DNSMASQ_ARGS"
+                /usr/sbin/dnsmasq -i usb0 -I lo -a $IP_ADDR -z -x /var/run/dnsmasq.pid.usb0 -C /dev/null $DNSMASQ_ARGS
             fi
             logger "$0: USB network enabled, local address: $IP_ADDR, remote address: $IP_GW"
         fi
