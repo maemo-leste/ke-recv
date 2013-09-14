@@ -16,8 +16,8 @@ eval opts="$3,$common_opts,$user_opts,\$${type}_opts"
 opts=`echo $opts | sed ':l;s/,,/,/g;tl;s/^,//;s/,$//'`
 
 if [ "$user_fsck" != "0" ]; then
-	echo "`date +'%Y-%m-%d %H:%M:%S'`  fsck.$type -a $1" >> /var/log/fsck.log
-	fsck.$type -a $1 >> /var/log/fsck.log 2>&1
+	echo "`date +'%Y-%m-%d %H:%M:%S'`  fsck -a $1" >> /var/log/fsck.log
+	fsck -a $1 >> /var/log/fsck.log 2>&1
 	echo "" >> /var/log/fsck.log
 fi
 
