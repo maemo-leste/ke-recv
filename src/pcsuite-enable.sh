@@ -36,14 +36,12 @@ fi
 /sbin/lsmod | grep g_nokia > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_nokia
-    RC=$?
-fi
-
-if [ $RC != 0 ]; then
-    logger "$0: failed to install g_nokia"
-    exit 1
-else
-    sleep 2
+    if [ $? != 0 ]; then
+        logger "$0: failed to install g_nokia"
+        exit 1
+    else
+        sleep 2
+    fi
 fi
 
 [ -f /etc/default/usbnetwork ] && . /etc/default/usbnetwork
