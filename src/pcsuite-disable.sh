@@ -39,6 +39,7 @@ if [ $? = 0 ]; then
         fi
         rm -f /var/run/resolv.conf.usb0
         ifdown usb0
+        ifconfig usb0 down 0.0.0.0
     fi
 fi
 
