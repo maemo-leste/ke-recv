@@ -1,3 +1,10 @@
+ke-recv (3.19-17.1) unstable; urgency=low
+
+  * Add support for specifing which partition should be mounted to /media/mmc1
+    Use gconf int key /system/osso/mmc-preferred-volume
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 28 Dec 2013 20:46:27 +0100
+
 ke-recv (3.19-17) unstable; urgency=low
 
   * Rewrite support for multiple partitions on SD card, always mount first MBR partition to /media/mmc1
