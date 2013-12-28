@@ -1628,7 +1628,10 @@ static int init_card(const char *udi)
                 mmc->swap_on_op = MMC_SWAP_ON_OP;
                 mmc->swap_off_op = MMC_SWAP_OFF_OP;
 
-                mmc->preferred_volume = 1;
+                mmc->preferred_volume = gconf_client_get_int(gconfclient, "/system/osso/mmc-preferred-volume", NULL);
+                if (mmc->preferred_volume <= 0) {
+                        mmc->preferred_volume = 1;
+                }
                 mmc->control_partitions = 1;
         }
 

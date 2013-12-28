@@ -907,7 +907,7 @@ static int mount_volumes(mmc_info_t *mmc, gboolean show_errors)
                         continue;
 
                 if (!l->mountpoint) {
-                        if (mmc->internal_card || l->volume_number == 1) {
+                        if (l->volume_number == mmc->preferred_volume) {
                                 l->mountpoint = strdup(mmc->mount_point);
                         } else {
                                 l->mountpoint = g_strdup_printf("%sp%d", mmc->mount_point, l->volume_number);
