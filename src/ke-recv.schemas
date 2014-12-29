@@ -84,6 +84,16 @@
       </locale>
     </schema>
     <schema>
+      <key>/schemas/system/osso/mmc-preferred-volume</key>
+      <applyto>/system/osso/mmc-preferred-volume</applyto>
+      <owner>ke-recv</owner>
+      <type>int</type>
+      <default>1</default>
+      <locale name="C">
+       <short>preferred volume number of external memory card device</short>
+      </locale>
+    </schema>
+    <schema>
       <key>/schemas/system/osso/af/camera-is-out</key>
       <applyto>/system/osso/af/camera-is-out</applyto>
       <owner>ke-recv</owner>

@@ -43,22 +43,6 @@ if [ ! -d $MP ]; then
   mkdir -p $MP
 fi
 
-if ! [ $PDEV = /dev/mmcblk0 -o $PDEV = /dev/mmcblk1 ]; then
-  # check the FAT magic number
-  PNUM=$(echo $PDEV | sed "s#/dev/mmcblk[01]p##")
-  DEV=$(echo $PDEV | sed "s#p[1234]##")
-  PID=$(sfdisk -c $DEV $PNUM)
-  case "$PID" in
-    b | c | e | 4 | 6 | 14 | 16 | 1b | 1c | 1e)
-        logger "$0: $PDEV partition type is FAT '$PID'"
-        FS=vfat
-        ;;
-    *)
-        logger "$0: $PDEV type '$PID' is not FAT32 or FAT16"
-        ;;
-  esac
-fi
-
 # time limited check
 #/sbin/dosfsck -I -n -T 10 $PDEV
 #if [ $? != 0 ]; then

@@ -75,10 +75,14 @@ if [ $? = 0 ]; then
     fi
 fi
 
-/sbin/lsmod | grep g_file_storage > /dev/null
+/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
 if [ $? != 0 ]; then
     /sbin/modprobe g_file_storage stall=0 luns=2 removable
     RC=$?
+    if [ $RC != 0 ]; then
+        /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1
+        RC=$?
+    fi
 fi
 
 if [ $RC != 0 ]; then
@@ -88,9 +92,16 @@ fi
 
 LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
 LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
+MODE='/sys/devices/platform/musb_hdrc/mode'
+
+if [ ! -e $LUN0 ]; then
+    LUN0='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun0/file'
+    LUN1='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun1/file'
+    MODE='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/mode'
+fi
 
 sleep 1
-/bin/grep /sys/devices/platform/musb_hdrc/mode -e idle > /dev/null
+/bin/grep $MODE -e idle > /dev/null
 if [ $? = 0 ]; then
     logger "$0: usb cable detached after module change"
     # make sure we don't have devices in there
@@ -102,7 +113,19 @@ fi
 initctl emit --no-wait G_FILE_STORAGE_READY
 
 if [ $# -gt 1 ]; then
-    echo "$0: only one argument supported"
+    logger "$0: only one argument supported"
+    exit 1
+fi
+
+# check first if the card(s) are not used
+grep -q "^$1" /proc/swaps
+if [ $? = 0 ]; then
+    logger "$0: $1 is in use for swap"
+    exit 1
+fi
+grep -q "^$1" /proc/mounts
+if [ $? = 0 ]; then
+    logger "$0: $1 is in use"
     exit 1
 fi
 

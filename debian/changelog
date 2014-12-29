@@ -1,3 +1,38 @@
+ke-recv (3.19-17.1) unstable; urgency=low
+
+  * Add support for specifing which partition should be mounted to /media/mmc1
+    Use gconf int key /system/osso/mmc-preferred-volume
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 28 Dec 2013 20:46:27 +0100
+
+ke-recv (3.19-17) unstable; urgency=low
+
+  * Rewrite support for multiple partitions on SD card, always mount first MBR partition to /media/mmc1
+  * Export only first partition from SD card via USB when swap on SD card is active
+  * Print error messages to syslog, not to stdout
+  * Use direct fsck and not fsck.$type
+  * Down usb0 interface and delete ip address in pcsuite-disable.sh
+  * Fix starting builtin dnsmasq dhcp server from pcsuite-enable.sh
+  * Fix loading g_nokia driver in pcsuite-enable.sh
+  * Fix support for usbnetwork
+      When NAT is disabled do not send gateway and DNS server addresses via DHCP
+      Remove option USBNETWORK_DNS which is useless now
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Thu, 17 Oct 2013 17:39:10 +0200
+
+ke-recv (3.19-16) unstable; urgency=low
+
+  * Use new options from /etc/default/mount-opts
+  * Remove overwritng filesystem type in script osso-mmc-mount.sh based on ID from MBR table
+  * Fix partition order in script fremantle-format-internal-memory-card.sh
+  * Do not export card via usb if is in use (mounted or swap)
+  * Fix support for upstream kernel:
+      Driver g_file_storage was replaced by g_mass_storage
+      g_mass_storage needs array of values in param removable
+      lun paths are in /sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Tue, 07 May 2013 20:14:22 +0200
+
 ke-recv (3.19-15.7+thumb0) unstable; urgency=low
 
   * Thumb2 compile
