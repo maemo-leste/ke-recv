@@ -3,7 +3,7 @@
 if [ -z "$4" ]; then
 	type="$(blkid -c /dev/null -o value -s TYPE $1)"
 	[ -z "$type" ] && type="vfat"
-elif [ -z "$4" = "fat" ]; then
+elif [ "$4" = "fat" ]; then
 	type="vfat"
 else
 	type="$4"
