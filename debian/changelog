@@ -1,3 +1,9 @@
+ke-recv (3.19-17.2+thumb0) unstable; urgency=low
+
+  * Thumb2 compile
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sat, 10 Oct 2015 11:38:14 +0300
+
 ke-recv (3.19-17.2) unstable; urgency=low
 
   * mmc-mount: Fix script for fat partitions
