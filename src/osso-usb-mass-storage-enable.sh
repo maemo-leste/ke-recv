@@ -95,9 +95,9 @@ LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
 MODE='/sys/devices/platform/musb_hdrc/mode'
 
 if [ ! -e $LUN0 ]; then
-    LUN0='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun0/file'
-    LUN1='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget/lun1/file'
-    MODE='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/mode'
+    LUN0='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget/lun0/file'
+    LUN1='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget/lun1/file'
+    MODE='/sys/bus/platform/devices/musb-hdrc.0.auto/mode'
 fi
 
 sleep 1

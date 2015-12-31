@@ -29,7 +29,7 @@ LUN0='gadget-lun0'
 LUN1='gadget-lun1'
 
 if [ ! -e $GADGETPATH ]; then
-  GADGETPATH='/sys/devices/platform/musb-omap2430/musb-hdrc.0.auto/gadget'
+  GADGETPATH='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget'
   LUN0='lun0'
   LUN1='lun1'
 fi
