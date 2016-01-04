@@ -1,5 +1,11 @@
 ke-recv (3.19-17.2) unstable; urgency=low
 
+  * Fix musb path for upstream kernel again
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Mon, 04 Jan 2016 16:41:33 +0100
+
+ke-recv (3.19-17.2) unstable; urgency=low
+
   * mmc-mount: Fix script for fat partitions
 
  -- Pali Rohár <pali.rohar@gmail.com>  Tue, 06 Jan 2015 00:32:59 +0100
