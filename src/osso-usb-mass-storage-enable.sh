@@ -19,10 +19,21 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+MUSB="/sys/devices/platform/musb_hdrc"
+MODE="$MUSB/mode"
+LUN0="$MUSB/gadget/gadget-lun0/file"
+LUN1="$MUSB/gadget/gadget-lun1/file"
+
+if [ ! -e $MUSB ]; then
+  MUSB="/sys/bus/platform/devices/musb-hdrc.0.auto"
+  MODE="$MUSB/mode"
+  LUN0="$MUSB/gadget/lun0/file"
+  LUN1="$MUSB/gadget/lun1/file"
+fi
+
 RC=0
 
-/sbin/lsmod | grep g_nokia > /dev/null
-if [ $? = 0 ]; then
+if [ ! -e $LUN0 ] && /sbin/lsmod | grep -q g_nokia; then
     logger "$0: removing g_nokia"
 
     initctl emit G_NOKIA_REMOVE
@@ -56,8 +67,7 @@ if [ $? = 0 ]; then
     fi
 fi
 
-/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
-if [ $? != 0 ]; then
+if [ ! -e $LUN0 ]; then
     /sbin/modprobe g_file_storage stall=0 luns=2 removable
     RC=$?
     if [ $RC != 0 ]; then
@@ -67,18 +77,8 @@ if [ $? != 0 ]; then
 fi
 
 if [ $RC != 0 ]; then
-    logger "$0: failed to install g_file_storage"
+    logger "$0: failed to install g_file_storage or g_mass_storage"
     exit 1
-fi
-
-LUN0='/sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file'
-LUN1='/sys/devices/platform/musb_hdrc/gadget/gadget-lun1/file'
-MODE='/sys/devices/platform/musb_hdrc/mode'
-
-if [ ! -e $LUN0 ]; then
-    LUN0='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget/lun0/file'
-    LUN1='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget/lun1/file'
-    MODE='/sys/bus/platform/devices/musb-hdrc.0.auto/mode'
 fi
 
 sleep 1

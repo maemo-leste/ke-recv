@@ -19,22 +19,14 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep g_file_storage > /dev/null
-if [ $? = 0 ]; then
-    logger "$0: removing g_file_storage"
+if /sbin/lsmod | grep -q -E 'g_file_storage|g_mass_storage'; then
+    logger "$0: removing g_file_storage and g_mass_storage"
     initctl emit G_FILE_STORAGE_REMOVE
     /sbin/rmmod g_file_storage
-fi
-
-/sbin/lsmod | grep g_mass_storage > /dev/null
-if [ $? = 0 ]; then
-    logger "$0: removing g_mass_storage"
-    initctl emit G_FILE_STORAGE_REMOVE
     /sbin/rmmod g_mass_storage
 fi
 
-/sbin/lsmod | grep g_nokia > /dev/null
-if [ $? != 0 ]; then
+if [ ! -e /sys/module/g_nokia ]; then
     /sbin/modprobe g_nokia
     if [ $? != 0 ]; then
         logger "$0: failed to install g_nokia"

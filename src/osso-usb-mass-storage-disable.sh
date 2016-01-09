@@ -24,43 +24,44 @@ if [ $# -gt 2 ]; then
   exit 1
 fi
 
-/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
-if [ $? != 0 ]; then
+MUSB="/sys/devices/platform/musb_hdrc"
+MODE="$MUSB/mode"
+LUN0="$MUSB/gadget/gadget-lun0/file"
+LUN1="$MUSB/gadget/gadget-lun1/file"
+
+if [ ! -e $MUSB ]; then
+  MUSB="/sys/bus/platform/devices/musb-hdrc.0.auto"
+  MODE="$MUSB/mode"
+  LUN0="$MUSB/gadget/lun0/file"
+  LUN1="$MUSB/gadget/lun1/file"
+fi
+
+if [ ! -e $LUN0 ]; then
   # the module is not loaded
   exit 0
 fi
 
-GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
-LUN0='gadget-lun0'
-LUN1='gadget-lun1'
-
-if [ ! -e $GADGETPATH ]; then
-  GADGETPATH='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget'
-  LUN0='lun0'
-  LUN1='lun1'
-fi
-
 if [ $# = 0 ]; then
   # unload all
-  echo "" > $GADGETPATH/$LUN0/file
-  echo "" > $GADGETPATH/$LUN1/file
+  echo "" > $LUN0
+  echo "" > $LUN1
   exit 0
 fi
 
 # NOTE: works only for 1 or 2 device arguments
 for lun in $LUN0 $LUN1; do
-  grep $1 $GADGETPATH/$lun/file > /dev/null
+  grep $1 $lun > /dev/null
   RC=$?
 
   if [ $# = 2 ]; then
-    grep $2 $GADGETPATH/$lun/file > /dev/null
+    grep $2 $lun > /dev/null
     RC2=$?
   else
     RC2=1
   fi
 
   if [ $RC = 0 -o $RC2 = 0 ]; then
-    echo "" > $GADGETPATH/$lun/file
+    echo "" > $lun
   fi
 done
 

@@ -19,8 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep g_nokia > /dev/null
-if [ $? = 0 ]; then
+if [ -e /sys/module/g_nokia ]; then
     [ -f /etc/default/usbnetwork ] && . /etc/default/usbnetwork
     if [ "$USBNETWORK_ENABLE" = "1" ]; then
         logger "$0: disable USB network"

@@ -19,23 +19,20 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-/sbin/lsmod | grep -E 'g_file_storage|g_mass_storage' > /dev/null
-if [ $? != 0 ]; then
-  exit 0
-fi
+MUSB="/sys/devices/platform/musb_hdrc"
+MODE="$MUSB/mode"
+LUN0="$MUSB/gadget/gadget-lun0/file"
+LUN1="$MUSB/gadget/gadget-lun1/file"
 
-GADGETPATH='/sys/devices/platform/musb_hdrc/gadget'
-LUN0='gadget-lun0'
-LUN1='gadget-lun1'
-
-if [ ! -e $GADGETPATH ]; then
-  GADGETPATH='/sys/bus/platform/devices/musb-hdrc.0.auto/gadget'
-  LUN0='lun0'
-  LUN1='lun1'
+if [ ! -e $MUSB ]; then
+  MUSB="/sys/bus/platform/devices/musb-hdrc.0.auto"
+  MODE="$MUSB/mode"
+  LUN0="$MUSB/gadget/lun0/file"
+  LUN1="$MUSB/gadget/lun1/file"
 fi
 
 for lun in $LUN0 $LUN1; do
-  STR=`cat $GADGETPATH/$lun/file`
+  STR=`cat $lun`
   if [ "x$STR" != "x" ]; then
     exit 1
   fi

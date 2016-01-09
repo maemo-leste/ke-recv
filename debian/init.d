@@ -75,7 +75,9 @@ case "$1" in
                 fi
         fi
 
-        if [ "x$TA_IMAGE" = "x" ]; then
+        if [ "x$TA_IMAGE" = "x" ] && [ ! -e /sys/module/g_nokia ] &&
+           [ ! -e /sys/devices/platform/musb_hdrc/gadget/gadget-lun0/file ] &&
+           [ ! -e /sys/bus/platform/devices/musb-hdrc.0.auto/gadget/lun0/file ]; then
                 if [ -e /var/lib/ke-recv/usb_phonet_mode ]; then
                         /sbin/modprobe g_nokia
                         rm -f /var/lib/ke-recv/usb_phonet_mode
@@ -83,7 +85,8 @@ case "$1" in
                 else
                         # g_file_storage is loaded as the default
                         /sbin/modprobe g_file_storage stall=0 luns=2 removable || \
-                                /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1
+                            /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1 || \
+                                /sbin/modprobe g_nokia
                 fi
         fi
 
