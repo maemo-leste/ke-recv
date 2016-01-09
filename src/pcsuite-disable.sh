@@ -29,6 +29,8 @@ if [ $? = 0 ]; then
                 DNSMASQ_PID=`cat /var/run/dnsmasq.pid.usb0`
                 rm -f /var/run/dnsmasq.pid.usb0
                 kill $DNSMASQ_PID
+            else
+                logger "$0: dnsmasq for USB network is not running"
             fi
         fi
         if [ "$USBNETWORK_NAT" = "1" ]; then
