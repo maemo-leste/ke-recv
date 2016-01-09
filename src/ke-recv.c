@@ -2946,18 +2946,26 @@ static void handle_usb_event(usb_event_t e)
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in S_HOST");
                                 dismantle_usb_mount_timeout();
                                 unmount_usb_volumes();
-                        } else if (usb_state == S_MASS_STORAGE) {
-                                ULOG_DEBUG_F("E_CABLE_DETACHED in"
-                                             " S_MASS_STORAGE");
-                                handle_event(E_DETACHED, &ext_mmc, NULL);
-                                if (int_mmc_enabled) {
-                                        handle_event(E_DETACHED, &int_mmc,
-                                                     NULL);
+                        } else if (usb_state == S_MASS_STORAGE || usb_state == S_PCSUITE || usb_state == S_PCSUITE_MASS_STORAGE) {
+                                if (usb_state == S_MASS_STORAGE || usb_state == S_PCSUITE_MASS_STORAGE) {
+                                        ULOG_DEBUG_F("E_CABLE_DETACHED in"
+                                                     " S_MASS_STORAGE");
+                                        handle_event(E_DETACHED, &ext_mmc, NULL);
+                                        if (int_mmc_enabled) {
+                                                handle_event(E_DETACHED, &int_mmc,
+                                                             NULL);
+                                        }
+                                        if (ext_mmc.whole_device != NULL
+                                            || int_mmc.whole_device != NULL) {
+                                                display_dialog(
+                                                        MSG_USB_DISCONNECTED);
+                                        }
                                 }
-                                if (ext_mmc.whole_device != NULL
-                                    || int_mmc.whole_device != NULL) {
-                                        display_dialog(
-                                                MSG_USB_DISCONNECTED);
+                                if (usb_state == S_PCSUITE || usb_state == S_PCSUITE_MASS_STORAGE) {
+                                        ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
+                                        if (!disable_pcsuite()) {
+                                                ULOG_ERR_F("disable_pcsuite() failed");
+                                        }
                                 }
                         } else if (usb_state == S_EJECTED) {
                                 ULOG_DEBUG_F("E_CABLE_DETACHED in S_EJECTED");
@@ -2980,11 +2988,6 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_CHARGING) {
                                 ULOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
-                        } else if (usb_state == S_PCSUITE) {
-                                ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
-                                if (!disable_pcsuite()) {
-                                        ULOG_ERR_F("disable_pcsuite() failed");
-                                }
                         } else {
                                 ULOG_WARN_F("E_CABLE_DETACHED in %d!",
                                             usb_state);
@@ -3067,9 +3070,13 @@ static void handle_usb_event(usb_event_t e)
                         break;
                 case E_ENTER_MASS_STORAGE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
-                            usb_state == S_CHARGING) {
+                            usb_state == S_CHARGING ||
+                            usb_state == S_PCSUITE) {
                                 usb_state_t orig = usb_state;
-                                usb_state = S_MASS_STORAGE;
+                                if (usb_state == S_PCSUITE)
+                                        usb_state = S_PCSUITE_MASS_STORAGE;
+                                else
+                                        usb_state = S_MASS_STORAGE;
                                 if (!e_plugged_helper()) {
                                         ULOG_DEBUG_F("no card was USB shared"
                                                      " or cable disconnected");
@@ -3085,8 +3092,12 @@ static void handle_usb_event(usb_event_t e)
                 case E_ENTER_PCSUITE_MODE:
                         if (usb_state == S_PERIPHERAL_WAIT ||
                             usb_state == S_CHARGING ||
-                            usb_state == S_CABLE_DETACHED) {
-                                usb_state = S_PCSUITE;
+                            usb_state == S_CABLE_DETACHED ||
+                            usb_state == S_MASS_STORAGE) {
+                                if (usb_state == S_MASS_STORAGE)
+                                        usb_state = S_PCSUITE_MASS_STORAGE;
+                                else
+                                        usb_state = S_PCSUITE;
                                 if (!enable_pcsuite()) {
                                         ULOG_ERR_F("Couldn't enable PC Suite");
                                 }
@@ -3124,7 +3135,7 @@ static void add_prop_watch(const char *udi)
 
 int in_mass_storage_mode(void)
 {
-        return usb_state == S_MASS_STORAGE;
+        return usb_state == S_MASS_STORAGE || usb_state == S_PCSUITE_MASS_STORAGE;
 }
 
 int in_peripheral_wait_mode(void)

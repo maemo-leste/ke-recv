@@ -166,7 +166,8 @@ typedef enum {
         S_EJECTED,
         S_MASS_STORAGE,
         S_CHARGING,
-        S_PCSUITE
+        S_PCSUITE,
+        S_PCSUITE_MASS_STORAGE
 } usb_state_t;
 
 typedef enum {
