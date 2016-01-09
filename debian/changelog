@@ -1,3 +1,13 @@
+ke-recv (3.19-18) unstable; urgency=low
+
+  * Code for disabling usb network is now only at one place (in pcsuite-disable.sh)
+  * Add support for configuration when g_nokia is compiled into kernel image
+  * Add support for mass storage mode provided by g_nokia module
+  * osso-usb-mass-storage-enable.sh: Do not crash if called without argument
+  * Add new mode S_PCSUITE_MASS_STORAGE in which both PC Suite and Mass Storage is enabled
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 09 Jan 2016 16:39:35 +0100
+
 ke-recv (3.19-17.3) unstable; urgency=low
 
   * Fix musb path for upstream kernel again
