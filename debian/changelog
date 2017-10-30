@@ -1,3 +1,9 @@
+ke-recv (3.19-18.1) unstable; urgency=low
+
+  * Fix ke-recv init.d script, make sure that usb_phonet_mode is removed
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Mon, 30 Oct 2017 23:21:25 +0100
+
 ke-recv (3.19-18) unstable; urgency=low
 
   * Code for disabling usb network is now only at one place (in pcsuite-disable.sh)
