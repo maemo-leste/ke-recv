@@ -88,6 +88,9 @@ case "$1" in
                             /sbin/modprobe g_mass_storage stall=0 luns=2 removable=1,1 || \
                                 /sbin/modprobe g_nokia
                 fi
+        else
+                rm -f /var/lib/ke-recv/usb_phonet_mode
+                sync
         fi
 
 	if [ -x $DTOOL ]; then
