@@ -14,7 +14,7 @@ mmc_pre_unmount_SOURCES = \
 	mmc-pre-unmount.c
 
 mmc_pre_unmount_LDFLAGS = \
-	-lgnomevfs-2
+	`pkg-config --libs gnome-vfs-2.0 dbus-1`
 
 mmc_unmount_INCLUDES = \
 	`pkg-config --cflags gio-2.0`
