@@ -26,6 +26,7 @@
 #include "ke-recv.h"
 #include "gui.h"
 
+#if 0
 extern gboolean desktop_started;
 extern osso_context_t* osso;
 
@@ -61,3 +62,4 @@ void display_system_note(const gchar* s)
         }
         osso_rpc_free_val(&retval);
 }
+#endif
