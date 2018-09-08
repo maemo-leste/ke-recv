@@ -2,12 +2,12 @@ Source: ke-recv
 Section: base
 Priority: optional
 Maintainer: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
-Build-Depends: debhelper (>= 4.0.0), libosso-dev, libglib2.0-dev, pkg-config, osso-af-settings, libhildon1-dev, libxml-parser-perl, libgconf2-dev, libosso-gnomevfs2-dev, libhal-dev, libhildonmime-dev, upstart-dev, libvolume-id-dev, automake1.7
+Build-Depends: debhelper (>= 4.0.0), libosso-dev, libglib2.0-dev, pkg-config, osso-af-settings, libhildon1-dev, libxml-parser-perl, libgconf2-dev, libgnomevfs2-dev, libhildonmime-dev, automake
 Standards-Version: 3.6.0
 
 Package: ke-recv
 Architecture: any
-Depends: ${shlibs:Depends}, ke-recv-l10n-mr | ke-recv-l10n-mr0, hildon-fm-l10n-mr | hildon-fm-l10n-mr0, osso-filemanager-l10n-mr | osso-filemanager-l10n-mr0, hildon-status-bar-usb-l10n-mr | hildon-status-bar-usb-l10n-mr0, gconf2, osso-af-startup (>= 1.22), hal, dosfstools (>= 3.0.12-0cssu0), mtools, system-services (>= 0.3.8-68+0cssu5)
+Depends: ${shlibs:Depends}, ke-recv-l10n-mr | ke-recv-l10n-mr0, hildon-fm-l10n-mr | hildon-fm-l10n-mr0, osso-filemanager-l10n-mr | osso-filemanager-l10n-mr0, hildon-status-bar-usb-l10n-mr | hildon-status-bar-usb-l10n-mr0, gconf2, osso-af-startup (>= 1.22), dosfstools (>= 3.0.12-0cssu0), mtools, system-services (>= 0.3.8-68+0cssu5)
 Description: Program for automatical mounting and unmounting of memory cards.
  Program for receiving HW events from the kernel, managing mounting, renaming,
  formatting, and partitioning of memory cards, etc.

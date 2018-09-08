@@ -105,8 +105,9 @@ binary-arch: build install
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
+	dh_installinit
 	dh_installinit -u 'start 30 2 3 4 . stop 30 0 1 5 6 .'
-	dh_installupstart --init-script=ke-recv
+	#dh_installupstart --init-script=ke-recv
 #	dh_installcron
 #	dh_installinfo
 	dh_installman
