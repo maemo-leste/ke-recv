@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+
+description="ke-recv"
+name="ke-recv"
+
+depend() {
+        need dsme dbus dbus-user
+}
+
+
+start() {
+        ebegin "Starting ke-recv"
+        /usr/sbin/dsmetool -u root -n -1 -t "/usr/sbin/ke-recv"
+}
+
+stop() {
+        eend "Stopping ke-recv"
+        /usr/sbin/dsmetool -k "/usr/sbin/ke-recv"
+}
+
