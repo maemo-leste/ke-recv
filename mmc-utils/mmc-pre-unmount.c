@@ -92,8 +92,6 @@ int main (int argc, char **argv)
 	GnomeVFSVolume        *volume;
 	unsigned int          id;
 
-	if (!g_thread_supported ()) g_thread_init (NULL);
-
 	bus_conn = dbus_bus_get (DBUS_BUS_SESSION, NULL);
 	if (!bus_conn) {
 		g_printerr ("Couldn't get session bus.\n");
