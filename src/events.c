@@ -30,6 +30,11 @@
 #include <fcntl.h>
 #include <libgen.h>
  
+extern DBusConnection *ses_conn;
+extern gboolean desktop_started;
+
+/* whether or not the device is locked */
+gboolean device_locked = FALSE;
 
 GConfClient* gconfclient;
 
@@ -47,6 +52,18 @@ void do_global_init(void)
 #endif
 }
 
+void inform_usb_cable_attached(gboolean value)
+{
+        GError* err = NULL;
+        assert(gconfclient != NULL);
+        if (!gconf_client_set_bool(gconfclient, USB_CABLE_ATTACHED_KEY,
+                                   value, &err) && err != NULL) {
+                ULOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
+                           value, err->message);
+                g_error_free(err);
+        }
+}
+
 void inform_slide_keyboard(gboolean value)
 {
         GError* err = NULL;
@@ -58,4 +75,3 @@ void inform_slide_keyboard(gboolean value)
                 g_error_free(err);
         }
 }
-
