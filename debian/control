@@ -2,7 +2,7 @@ Source: ke-recv
 Section: base
 Priority: optional
 Maintainer: Kimmo Hämäläinen <kimmo.hamalainen@nokia.com>
-Build-Depends: debhelper (>= 4.0.0), libosso-dev, libglib2.0-dev, pkg-config, osso-af-settings, libhildon1-dev, libxml-parser-perl, libgconf2-dev, libgnomevfs2-dev, libhildonmime-dev, automake
+Build-Depends: debhelper (>= 4.0.0), libosso-dev, libglib2.0-dev, pkg-config, osso-af-settings, libhildon1-dev, libxml-parser-perl, libgconf2-dev, libgnomevfs2-dev, libhildonmime-dev, automake, libgudev-1.0-dev
 Standards-Version: 3.6.0
 
 Package: ke-recv

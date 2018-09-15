@@ -28,6 +28,7 @@
 #include "gui.h"
 #include "events.h"
 #include "camera.h"
+#include "udev-helper.h"
 #include <hildon-mime.h>
 #include <libgen.h>
 
@@ -294,6 +295,61 @@ void send_error(const char* n)
         dbus_message_unref(e);
 }
 
+usb_state_t map_usb_mode(gint usb_mode) {
+    if (usb_mode == USB_MODE_UNKNOWN) {
+        ULOG_ERR_F("'usb_device mode' is UNKNOWN, not changing the state");
+        return usb_state;
+    } else if ((usb_mode == USB_MODE_A_PERIPHERAL) ||
+        (usb_mode == USB_MODE_B_PERIPHERAL)) {
+        return S_PERIPHERAL_WAIT;
+    } else if ((usb_mode == USB_MODE_A_HOST) ||
+               (usb_mode == USB_MODE_B_HOST)) {
+        return S_HOST;
+    } else if ((usb_mode == USB_MODE_A_IDLE) ||
+               (usb_mode == USB_MODE_B_IDLE)) {
+        return S_CABLE_DETACHED;
+    }
+
+	return usb_state;
+}
+
+usb_state_t get_usb_state(void)
+{
+    gboolean vbus;
+    gint usb_mode, supply_mode;
+    uh_query_state(&vbus, &usb_mode, &supply_mode);
+    return map_usb_mode(usb_mode);
+}
+
+static usb_state_t check_usb_cable(void)
+{
+        usb_state_t state;
+
+        state = get_usb_state();
+        if (state == S_HOST) {
+                handle_usb_event(E_ENTER_HOST_MODE);
+        } else if (state == S_PERIPHERAL_WAIT) {
+#if 0
+                if (getenv("TA_IMAGE"))
+                        /* in TA image, we don't wait for user's decision */
+                        handle_usb_event(E_ENTER_PCSUITE_MODE);
+                else
+#endif
+                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+        } else if (state == S_CABLE_DETACHED) {
+                handle_usb_event(E_CABLE_DETACHED);
+        }
+        return state;
+}
+
+
+void uh_callback(gboolean vbus, gint usb_mode, gint supply_mode, gpointer data) {
+    ULOG_WARN_F("uh_callback: mode = %d", usb_mode);
+	check_usb_cable();
+    //usb_state_t = map_usb_mode(usb_mode);
+    // TODO: call appropriate mode change function
+}
+
 
 static DBusHandlerResult eject_handler(DBusConnection *c,
                                        DBusMessage *m,
@@ -409,8 +465,10 @@ static void handle_usb_event(usb_event_t e)
                                                         MSG_USB_DISCONNECTED);
                                         }
 #endif
+#if 0 // MWTODO
                                         display_dialog(
                                                 MSG_USB_DISCONNECTED);
+#endif
                                 }
                                 if (usb_state == S_PCSUITE || usb_state == S_PCSUITE_MASS_STORAGE) {
                                         ULOG_INFO_F("E_CABLE_DETACHED in S_PCSUITE");
@@ -608,9 +666,8 @@ static void init_slide_keyboard_state()
 
 static gboolean init_usb_cable_status(gpointer data)
 {
-    /* TODO: udev */
-    usb_state = S_PERIPHERAL_WAIT;
-    return TRUE; // TODO
+    usb_state = get_usb_state();
+    return TRUE;
 }
 
 static void sigterm(int signo)
@@ -730,8 +787,15 @@ int main(int argc, char* argv[])
         vtable.message_function = enable_charging_handler;
         register_op(sys_conn, &vtable, ENABLE_CHARGING_OP, NULL);
 
+        if (uh_init() != 0) {
+            ULOG_CRIT_L("uh_init() failed");
+	        exit(1);
+        }
+
         init_slide_keyboard_state();
         init_usb_cable_status(NULL);
+
+        uh_set_callback((UhCallback)uh_callback, NULL);
 
         g_main_loop_run(mainloop);
         ULOG_DEBUG_L("Returned from the main loop");
