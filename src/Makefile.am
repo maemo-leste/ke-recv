@@ -10,12 +10,14 @@ INCLUDES = \
 	`pkg-config --cflags gtk+-2.0` \
 	`pkg-config --cflags hildon-1` \
 	`pkg-config --cflags libhildonmime` \
+	`pkg-config --cflags gudev-1.0` \
 	-DLOCALEDIR=\"`pkg-config --variable=localedir osso-af-settings`\"
 
 ke_recv_LDFLAGS = \
 	`pkg-config --libs libosso` \
 	`pkg-config --libs libhildonmime` \
-	`pkg-config --libs gconf-2.0`
+	`pkg-config --libs gconf-2.0` \
+	`pkg-config --libs gudev-1.0`
 
 mmc_format_LDFLAGS = \
 	`pkg-config --libs hildon-1`
@@ -40,7 +42,9 @@ ke_recv_SOURCES = \
 	events.c \
 	swap_mgr.c \
 	camera.c \
-	fat-tools.c
+	fat-tools.c \
+	udev-helper.h \
+	udev-helper.c
 
 ke_recv_test_SOURCES = \
         ke-recv.h \
