@@ -4,6 +4,7 @@ description="ke-recv"
 name="ke-recv"
 
 depend() {
+        before xorg xsession
         need dsme dbus dbus-user
 }
 
