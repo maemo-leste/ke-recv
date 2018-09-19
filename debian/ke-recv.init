@@ -17,6 +17,11 @@ start_pre() {
 
 start() {
         ebegin "Starting ke-recv"
+
+        # XXX: HACK: This should maybe be somewhere else
+        modprobe configfs
+        modprobe usb_f_mass_storage
+
         /usr/sbin/dsmetool -U root -n -1 -t "/usr/sbin/ke-recv"
 }
 
