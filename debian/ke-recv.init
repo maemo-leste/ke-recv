@@ -7,10 +7,16 @@ depend() {
         need dsme dbus dbus-user
 }
 
+start_pre() {
+        ebegin "Starting hulda ($description)"
+        /usr/sbin/waitdbus system
+        . /tmp/session_bus_address.user
+        /usr/sbin/waitdbus session
+}
 
 start() {
         ebegin "Starting ke-recv"
-        /usr/sbin/dsmetool -u root -n -1 -t "/usr/sbin/ke-recv"
+        /usr/sbin/dsmetool -U root -n -1 -t "/usr/sbin/ke-recv"
 }
 
 stop() {
