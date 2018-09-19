@@ -670,6 +670,7 @@ static void init_slide_keyboard_state()
 
 static gboolean init_usb_cable_status(gpointer data)
 {
+    check_usb_cable();
     usb_state = get_usb_state();
     return TRUE;
 }
