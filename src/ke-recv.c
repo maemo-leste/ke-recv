@@ -339,7 +339,10 @@ static usb_state_t check_usb_cable(void)
                         handle_usb_event(E_ENTER_PCSUITE_MODE);
                 else
 #endif
-                        handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);
+                /*handle_usb_event(E_ENTER_PERIPHERAL_WAIT_MODE);*/
+
+                /* Just go to PC suite mode right away */
+                handle_usb_event(E_ENTER_PCSUITE_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         }
