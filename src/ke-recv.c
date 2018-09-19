@@ -295,7 +295,7 @@ void send_error(const char* n)
         dbus_message_unref(e);
 }
 
-usb_state_t map_usb_mode(gint usb_mode) {
+usb_state_t map_usb_mode(gint usb_mode, gboolean vbus) {
     if (usb_mode == USB_MODE_UNKNOWN) {
         ULOG_ERR_F("'usb_device mode' is UNKNOWN, not changing the state");
         return usb_state;
@@ -307,7 +307,11 @@ usb_state_t map_usb_mode(gint usb_mode) {
         return S_HOST;
     } else if ((usb_mode == USB_MODE_A_IDLE) ||
                (usb_mode == USB_MODE_B_IDLE)) {
-        return S_CABLE_DETACHED;
+        if (vbus) {
+            return S_PERIPHERAL_WAIT;
+        } else {
+            return S_CABLE_DETACHED;
+        }
     }
 
 	return usb_state;
@@ -318,7 +322,7 @@ usb_state_t get_usb_state(void)
     gboolean vbus;
     gint usb_mode, supply_mode;
     uh_query_state(&vbus, &usb_mode, &supply_mode);
-    return map_usb_mode(usb_mode);
+    return map_usb_mode(usb_mode, vbus);
 }
 
 static usb_state_t check_usb_cable(void)
