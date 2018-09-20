@@ -9,7 +9,7 @@ depend() {
 }
 
 start_pre() {
-        ebegin "Starting hulda ($description)"
+        ebegin "Starting ke-recv presetup"
         /usr/sbin/waitdbus system
         . /tmp/session_bus_address.user
         /usr/sbin/waitdbus session
