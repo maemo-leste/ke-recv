@@ -8,7 +8,7 @@ Standards-Version: 3.6.0
 Package: ke-recv
 Architecture: any
 #Depends: ${shlibs:Depends}, ke-recv-l10n-mr | ke-recv-l10n-mr0, hildon-fm-l10n-mr | hildon-fm-l10n-mr0, osso-filemanager-l10n-mr | osso-filemanager-l10n-mr0, hildon-status-bar-usb-l10n-mr | hildon-status-bar-usb-l10n-mr0, gconf2, osso-af-startup (>= 1.22), dosfstools (>= 3.0.12-0cssu0), mtools, system-services (>= 0.3.8-68+0cssu5)
-Depends: ${shlibs:Depends}, ke-recv-l10n-mr | ke-recv-l10n-mr0, hildon-fm-l10n-mr | hildon-fm-l10n-mr0, hildon-status-bar-usb-l10n-mr | hildon-status-bar-usb-l10n-mr0, gconf2, osso-af-startup (>= 1.22), dosfstools (>= 3.0.12-0cssu0), mtools
+Depends: ${shlibs:Depends}, ke-recv-l10n-mr | ke-recv-l10n-mr0, hildon-fm-l10n-mr | hildon-fm-l10n-mr0, hildon-status-bar-usb-l10n-mr | hildon-status-bar-usb-l10n-mr0, gconf2, osso-af-startup (>= 1.22), dosfstools (>= 3.0.12-0cssu0), mtools, hildon-usb-gadgets
 Description: Program for automatical mounting and unmounting of memory cards.
  Program for receiving HW events from the kernel, managing mounting, renaming,
  formatting, and partitioning of memory cards, etc.
