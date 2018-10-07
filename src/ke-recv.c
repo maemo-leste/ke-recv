@@ -685,6 +685,8 @@ static void sigterm(int signo)
 /* Does initialisations and goes to the Glib main loop. */
 int main(int argc, char* argv[])
 {
+        gboolean uh_ok = FALSE;
+
         DBusError error;
         DBusConnection *conn = NULL;
         DBusObjectPathVTable vtable = {
@@ -795,14 +797,17 @@ int main(int argc, char* argv[])
         register_op(sys_conn, &vtable, ENABLE_CHARGING_OP, NULL);
 
         if (uh_init() != 0) {
-            ULOG_CRIT_L("uh_init() failed");
-	        exit(1);
+            ULOG_WARN_L("uh_init() failed, usb otg events will not work");
+        } else {
+            uh_ok = TRUE;
         }
 
         init_slide_keyboard_state();
         init_usb_cable_status(NULL);
 
-        uh_set_callback((UhCallback)uh_callback, NULL);
+        if (uh_ok) {
+            uh_set_callback((UhCallback)uh_callback, NULL);
+        }
 
         g_main_loop_run(mainloop);
         ULOG_DEBUG_L("Returned from the main loop");
