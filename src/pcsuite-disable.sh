@@ -22,7 +22,9 @@
 logger "$0: removing pcsuite"
 
 ifconfig usb0 down
-/usr/sbin/hildon-usb-gadget-clear
+# Let's not remove this for now, since we always want a gadget loaded at the
+# moment. Better would be to fix this in the ke-recv state machine
+#/usr/sbin/hildon-usb-gadget-clear
 
 #if [ -e /sys/module/g_nokia ]; then
 #    [ -f /etc/default/usbnetwork ] && . /etc/default/usbnetwork

@@ -21,4 +21,6 @@
 
 logger "$0: removing pcsuite"
 
-/root/hildon-status-bar-usb/gadget-clear
+# Let's not remove this for now, since we always want a gadget loaded at the
+# moment. Better would be to fix this in the ke-recv state machine
+#/usr/sbin/hildon-usb-gadget-clear
