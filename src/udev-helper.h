@@ -1,12 +1,12 @@
 #ifndef __UDEV_HELPER_H__
 #define __UDEV_HELPER_H__
-typedef void (*UhCallback)(gboolean, gint, gint, gpointer);
+typedef void (*UhCallback)(gint, gint, gpointer);
 
 
 int uh_init();
 int uh_destroy();
 void uh_set_callback(UhCallback cb, gpointer data);
-void uh_query_state(gboolean*, gint*, gint*);
+void uh_query_state(gint*, gint*);
 
 /* TODO: Implement this */
 char *uh_get_device_name();
