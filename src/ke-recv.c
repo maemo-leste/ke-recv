@@ -674,6 +674,7 @@ static gboolean init_usb_cable_status(gpointer data)
 {
     check_usb_cable();
     usb_state = get_usb_state();
+    handle_usb_event(E_ENTER_PCSUITE_MODE);
     return TRUE;
 }
 
