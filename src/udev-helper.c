@@ -63,7 +63,7 @@ static DeviceDrivers *active_device;
 static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
 
-#define DRIVER_COUNT 1
+#define DRIVER_COUNT 2
 static DeviceDrivers drivers[DRIVER_COUNT] = {
     {
         .name = "Nokia N900",
@@ -81,21 +81,22 @@ static DeviceDrivers drivers[DRIVER_COUNT] = {
         },
     },
     {
-        .name = "Nokia N900",
+        .name = "LIME2",
         .usb_driver = {
             .present = TRUE,
             .subsystem = "platform",
             .driver = "musb-hdrc",
             .name = NULL,
         },
+        /* We can't read the mode from extcon, but at least we can use this to
+         * trigger on cable plugs and report on musb modes */
         .supply_driver = {
-            .present = FALSE,
-            .subsystem = NULL,
+            .present = TRUE,
+            .subsystem = "extcon",
             .driver = NULL,
-            .name = NULL,
+            .name = "extcon0",
         },
     },
-#endif
 };
 /* TODO: Also add generic best-effort later on, perhaps with attr matching? */
 
