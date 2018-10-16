@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# ke-recv	HAL-based automatic mounting etc.
+# ke-recv	Kernel events based automatic mounting etc.
 #
 # Copyright (C) 2004-2009 Nokia Corporation. All rights reserved.
 #

@@ -4,7 +4,7 @@ Kernel events proxy.
 
 Description
 ===========
-* Receiving HW events from the HAL, managing mounting, renaming,
+* Receiving HW events from the kernel, managing mounting, renaming,
   formatting, and partitioning of memory cards, etc.
 * PC Suite, USB Mass Storage and USB Host modes handling.
 * Swap files support.
