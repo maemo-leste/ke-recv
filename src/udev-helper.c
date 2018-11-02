@@ -63,7 +63,7 @@ static DeviceDrivers *active_device;
 static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
 
-#define DRIVER_COUNT 2
+#define DRIVER_COUNT 3
 static DeviceDrivers drivers[DRIVER_COUNT] = {
     {
         .name = "Nokia N900",
@@ -95,6 +95,23 @@ static DeviceDrivers drivers[DRIVER_COUNT] = {
             .subsystem = "extcon",
             .driver = NULL,
             .name = "extcon0",
+        },
+    },
+    {
+        .name = "Motorola Droid 4",
+        .usb_driver = {
+            .present = TRUE,
+            .subsystem = "platform",
+            .driver = "musb-hdrc",
+            .name = NULL,
+        },
+        /* We can't read the mode from extcon, but at least we can use this to
+         * trigger on cable plugs and report on musb modes */
+        .supply_driver = {
+            .present = TRUE,
+            .subsystem = "power_supply",
+            .driver = NULL,
+            .name = "battery",
         },
     },
 };
