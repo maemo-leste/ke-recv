@@ -26,7 +26,7 @@ fi
 
 /etc/init.d/ke-recv stop
 
-for dev in /dev/$1*; do
+for dev in $1*; do
   umount $dev
 done
 
