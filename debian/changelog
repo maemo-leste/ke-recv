@@ -1,3 +1,9 @@
+ke-recv (4.3-1) unstable; urgency=low
+
+  * Support Pinephone devkit 1.x
+
+ -- Merlijn B. W. Wajer <merlijn@wizzup.org>  Sat, 04 May 2019 00:40:48 +0200
+
 ke-recv (4.2-1) unstable; urgency=low
 
   * Support Motorola Droid 4
