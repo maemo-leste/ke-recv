@@ -34,98 +34,95 @@
 #define DVD_DAEMON_INTERFACE                        "org.gnome.GnomeVFS.Daemon"
 #define DVD_DAEMON_METHOD_EMIT_PRE_UNMOUNT_VOLUME   "EmitPreUnmountVolume"
 
-static void
-emit_pre_unmount (DBusConnection *bus_conn, unsigned int id)
+static void emit_pre_unmount(DBusConnection * bus_conn, unsigned int id)
 {
 	DBusMessage *message, *reply;
-	
-	message = dbus_message_new_method_call (DVD_DAEMON_SERVICE,
-						DVD_DAEMON_OBJECT,
-						DVD_DAEMON_INTERFACE,
-						DVD_DAEMON_METHOD_EMIT_PRE_UNMOUNT_VOLUME);
-	dbus_message_append_args (message,
-				  DBUS_TYPE_INT32, &id,
-				  DBUS_TYPE_INVALID);
-	
-	reply = dbus_connection_send_with_reply_and_block (bus_conn, 
-							   message,
-							   -1,
-							   NULL);
 
-	dbus_message_unref (message);
+	message = dbus_message_new_method_call(DVD_DAEMON_SERVICE,
+					       DVD_DAEMON_OBJECT,
+					       DVD_DAEMON_INTERFACE,
+					       DVD_DAEMON_METHOD_EMIT_PRE_UNMOUNT_VOLUME);
+	dbus_message_append_args(message,
+				 DBUS_TYPE_INT32, &id, DBUS_TYPE_INVALID);
+
+	reply = dbus_connection_send_with_reply_and_block(bus_conn,
+							  message, -1, NULL);
+
+	dbus_message_unref(message);
 	if (reply) {
-		dbus_message_unref (reply);
+		dbus_message_unref(reply);
 	}
 }
 
-static int check_volume (const char *vol)
+static int check_volume(const char *vol)
 {
 	GnomeVFSVolumeMonitor *monitor;
-        GList *l;
+	GList *l;
 
-	monitor = gnome_vfs_get_volume_monitor ();
-        if (monitor == NULL)
-                return 0;
-
-        l = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
-        for (; l != NULL; l = l->next) {
-                GnomeVFSVolume *v;
-                v = l->data;
-                if (v != NULL) {
-                        char *s;
-                        s = gnome_vfs_volume_get_activation_uri (v);
-                        if (s && strstr(s, vol) != NULL) {
-                                g_free (s);
-                                return 1;
-                        }
-                        if (s) g_free (s);
-                }
-        }
-        return 0;
-}
-
-int main (int argc, char **argv)
-{
-	DBusConnection        *bus_conn;
-	const gchar           *mmc;
-	GnomeVFSVolumeMonitor *monitor;
-	GnomeVFSVolume        *volume;
-	unsigned int          id;
-
-	bus_conn = dbus_bus_get (DBUS_BUS_SESSION, NULL);
-	if (!bus_conn) {
-		g_printerr ("Couldn't get session bus.\n");
-		return 1;
-	}
-	
-	if (argc == 2) {
-		mmc = argv[1];
-	} else {
-		mmc = g_getenv ("MMC_MOUNTPOINT");
-	}
-
-	if (mmc == NULL) {
-		g_printerr ("Usage: %s <mountpoint> or set MMC_MOUNTPOINT\n", argv[0]);
-		return 1;
-	}
-
-	gnome_vfs_init ();
-
-        if (!check_volume (mmc)) {
-                g_printerr ("%s is not mounted\n", mmc);
-                return 0;
-        }
-	monitor = gnome_vfs_get_volume_monitor ();
-
-	volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, mmc);
-	if (!volume) {
-                g_printerr ("%s: volume not found\n", mmc);
+	monitor = gnome_vfs_get_volume_monitor();
+	if (monitor == NULL)
 		return 0;
-	}
 
-	id = gnome_vfs_volume_get_id (volume);
-	emit_pre_unmount (bus_conn, id);
-	
+	l = gnome_vfs_volume_monitor_get_mounted_volumes(monitor);
+	for (; l != NULL; l = l->next) {
+		GnomeVFSVolume *v;
+		v = l->data;
+		if (v != NULL) {
+			char *s;
+			s = gnome_vfs_volume_get_activation_uri(v);
+			if (s && strstr(s, vol) != NULL) {
+				g_free(s);
+				return 1;
+			}
+			if (s)
+				g_free(s);
+		}
+	}
 	return 0;
 }
 
+int main(int argc, char **argv)
+{
+	DBusConnection *bus_conn;
+	const gchar *mmc;
+	GnomeVFSVolumeMonitor *monitor;
+	GnomeVFSVolume *volume;
+	unsigned int id;
+
+	bus_conn = dbus_bus_get(DBUS_BUS_SESSION, NULL);
+	if (!bus_conn) {
+		g_printerr("Couldn't get session bus.\n");
+		return 1;
+	}
+
+	if (argc == 2) {
+		mmc = argv[1];
+	} else {
+		mmc = g_getenv("MMC_MOUNTPOINT");
+	}
+
+	if (mmc == NULL) {
+		g_printerr("Usage: %s <mountpoint> or set MMC_MOUNTPOINT\n",
+			   argv[0]);
+		return 1;
+	}
+
+	gnome_vfs_init();
+
+	if (!check_volume(mmc)) {
+		g_printerr("%s is not mounted\n", mmc);
+		return 0;
+	}
+	monitor = gnome_vfs_get_volume_monitor();
+
+	volume = gnome_vfs_volume_monitor_get_volume_for_path(monitor, mmc);
+	if (!volume) {
+		g_printerr("%s: volume not found\n", mmc);
+		return 0;
+	}
+
+	id = gnome_vfs_volume_get_id(volume);
+	emit_pre_unmount(bus_conn, id);
+
+	return 0;
+}
