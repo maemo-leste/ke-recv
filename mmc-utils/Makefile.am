@@ -2,7 +2,7 @@ bin_PROGRAMS = \
 	mmc-unmount
 
 INCLUDES = \
-	`pkg-config --cflags gnome-vfs-2.0 gio-2.0` \
+	`pkg-config --cflags gio-2.0` \
 	-I . \
 	-DUSE_EXT_DBUS_DAEMON=1
 
