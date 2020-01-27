@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <glib.h>
 
 #include <gudev/gudev.h>
 
@@ -63,8 +64,7 @@ static DeviceDrivers *active_device;
 static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
 
-#define DRIVER_COUNT 4
-static DeviceDrivers drivers[DRIVER_COUNT] = {
+static DeviceDrivers drivers[] = {
     {
         .name = "Nokia N900",
         .usb_driver = {
@@ -241,7 +241,7 @@ static int find_devices(void) {
     DeviceDrivers *d;
     gboolean ok = FALSE;
 
-    for (i = 0; i < DRIVER_COUNT; i++) {
+    for (i = 0; i < G_N_ELEMENTS(drivers); i++) {
         otg = NULL;
         supply = NULL;
 
