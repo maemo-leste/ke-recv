@@ -296,7 +296,7 @@ void send_error(const char* n)
         dbus_message_unref(e);
 }
 
-usb_state_t map_usb_mode(gint usb_mode) {
+static usb_state_t map_usb_mode(gint usb_mode) {
     if (usb_mode == USB_MODE_UNKNOWN) {
         ULOG_ERR_F("'usb_device mode' is UNKNOWN, not changing the state");
         return usb_state;
@@ -350,7 +350,7 @@ static usb_state_t check_usb_cable(void)
 }
 
 
-void uh_callback(gint usb_mode, gint supply_mode, gpointer data) {
+static void uh_callback(gint usb_mode, gint supply_mode, gpointer data) {
     ULOG_WARN_F("uh_callback: mode = %d", usb_mode);
 	check_usb_cable();
     //usb_state_t = map_usb_mode(usb_mode);

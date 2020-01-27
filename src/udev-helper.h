@@ -3,13 +3,13 @@
 typedef void (*UhCallback)(gint, gint, gpointer);
 
 
-int uh_init();
-int uh_destroy();
+int uh_init(void);
+int uh_destroy(void);
 void uh_set_callback(UhCallback cb, gpointer data);
 void uh_query_state(gint*, gint*);
 
 /* TODO: Implement this */
-char *uh_get_device_name();
+char *uh_get_device_name(void);
 
 enum {
     USB_MODE_UNKNOWN = 0,
