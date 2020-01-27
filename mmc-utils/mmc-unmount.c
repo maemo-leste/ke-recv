@@ -136,8 +136,6 @@ main (int argc, char *argv[])
   GFile *file;
   GMount *mount;
 
-  g_type_init ();
-
   context = g_option_context_new ("- Unmount a memcard");
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_parse (context, &argc, &argv, NULL);
