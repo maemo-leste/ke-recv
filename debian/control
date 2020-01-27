@@ -14,6 +14,7 @@ Build-Depends:
  libgnomevfs2-dev,
  libhildonmime-dev,
  libgudev-1.0-dev,
+ libevdev-dev,
  automake,
 Standards-Version: 3.6.0
 
