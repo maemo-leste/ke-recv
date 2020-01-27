@@ -285,10 +285,6 @@ static int find_devices(void) {
     return 1;
 }
 
-static gboolean pc_connected() {
-    return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
-}
-
 static gboolean update_info() {
     cache.supply_mode = read_supply_mode();
     cache.usb_mode = read_usb_mode();
@@ -368,6 +364,10 @@ char *uh_get_device_name() {
 #if 0
 /* TODO: g_udev_device_has_sysfs_attr can be used to see if something has attrs
  * like vbus and mode */
+
+static gboolean pc_connected() {
+    return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
+}
 
 static void test_callback(gboolean pc_connected, gpointer data) {
     fprintf(stderr, "test_callback: PC connected: %d - %p.\n", pc_connected, data);
