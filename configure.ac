@@ -10,6 +10,6 @@ AM_GLIB_GNU_GETTEXT
 
 PKG_CHECK_MODULES([DEPS], [libosso glib-2.0 gconf-2.0 dbus-1 gtk+-2.0
                            hildon-1 libhildonmime gudev-1.0 libevdev
-                           gnome-vfs-2.0 gio-2.0 dbus-glib-1])
+                           gio-2.0 dbus-glib-1])
 
 AC_OUTPUT([Makefile src/Makefile mmc-utils/Makefile])

@@ -11,7 +11,6 @@ Build-Depends:
  libhildon1-dev,
  libxml-parser-perl,
  libgconf2-dev,
- libgnomevfs2-dev,
  libhildonmime-dev,
  libgudev-1.0-dev,
  libevdev-dev,
