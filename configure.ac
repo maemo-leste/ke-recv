@@ -1,5 +1,5 @@
 AC_INIT(src/ke-recv.c)
-AM_INIT_AUTOMAKE(ke-recv, 2.18)
+AM_INIT_AUTOMAKE(ke-recv, 4.5)
 AM_CONFIG_HEADER(config.h)
 AC_PROG_CC
 
