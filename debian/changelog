@@ -1,3 +1,12 @@
+ke-recv (4.5) unstable; urgency=medium
+
+  * Update to compat level 10
+  * Migrate to debhelper command sequencer
+  * Simplify autotools files
+  * Fix build time warnings
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Tue, 28 Jan 2020 11:43:10 +0300
+
 ke-recv (4.4-1) unstable; urgency=medium
 
   * Add slide keyboard state monitoring
