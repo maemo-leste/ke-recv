@@ -1,3 +1,9 @@
+ke-recv (4.5.2) unstable; urgency=medium
+
+  * Match input evdev by SW_KEYPAD_SLIDE capability
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Wed, 29 Jan 2020 16:30:29 +0300
+
 ke-recv (4.5.1) unstable; urgency=medium
 
   * Don't build mmc-utils (beowulf/buster porting)
