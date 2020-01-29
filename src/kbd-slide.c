@@ -35,8 +35,6 @@
 #define DEV_INPUT_PATH "/dev/input"
 /* Prefix for event files */
 #define EVENT_FILE_PREFIX "event"
-/* The name of device we are going to monitor */
-#define KBD_SLIDE_DEV_NAME "gpio_keys"
 
 static struct libevdev *kbd_slide_dev = NULL;
 static GIOChannel *kbd_slide_iochan = NULL;
@@ -65,8 +63,7 @@ kbd_slide_set_input_dev(gchar *path)
         return FALSE;
     }
 
-    if (strcmp(libevdev_get_name(dev), KBD_SLIDE_DEV_NAME) == 0 &&
-        libevdev_has_event_type(dev, EV_SW))
+    if (libevdev_has_event_code(dev, EV_SW, SW_KEYPAD_SLIDE))
     {
         gboolean state = libevdev_get_event_value(dev, EV_SW, SW_KEYPAD_SLIDE);
         inform_slide_keyboard(state);
