@@ -50,7 +50,7 @@ static gboolean kbd_slide_add_handler(void);
 static gboolean
 kbd_slide_set_input_dev(gchar *path)
 {
-    gint fd, rc;
+    gint fd, rc, state;
     struct libevdev *dev = NULL;
 
     fd = open(path, O_RDONLY|O_NONBLOCK);
@@ -58,14 +58,15 @@ kbd_slide_set_input_dev(gchar *path)
         return FALSE;
 
     rc = libevdev_new_from_fd(fd, &dev);
-    if (rc < 0) {
+    if (rc < 0)
+    {
         close(fd);
         return FALSE;
     }
 
     if (libevdev_has_event_code(dev, EV_SW, SW_KEYPAD_SLIDE))
     {
-        gboolean state = libevdev_get_event_value(dev, EV_SW, SW_KEYPAD_SLIDE);
+        state = libevdev_get_event_value(dev, EV_SW, SW_KEYPAD_SLIDE);
         inform_slide_keyboard(state);
         kbd_slide_dev = dev;
         return TRUE;
@@ -86,8 +87,10 @@ kbd_slide_find_evdev()
     DIR *dir = NULL;
     struct dirent *direntry = NULL;
     gboolean result = FALSE;
+    gchar *dev_path = NULL;
 
-    if ((dir = opendir(DEV_INPUT_PATH)) == NULL) {
+    if ((dir = opendir(DEV_INPUT_PATH)) == NULL)
+    {
         perror(__func__);
         return FALSE;
     }
@@ -96,7 +99,6 @@ kbd_slide_find_evdev()
          (direntry != NULL && telldir(dir));
          direntry = readdir(dir))
     {
-        gchar *dev_path = NULL;
         if (strncmp(direntry->d_name, EVENT_FILE_PREFIX,
                     strlen(EVENT_FILE_PREFIX)) != 0)
         {
@@ -105,7 +107,8 @@ kbd_slide_find_evdev()
 
         dev_path = g_strconcat(DEV_INPUT_PATH, "/", direntry->d_name, NULL);
 
-        if (kbd_slide_set_input_dev(dev_path)) {
+        if (kbd_slide_set_input_dev(dev_path))
+        {
             result = kbd_slide_add_handler();
             g_free(dev_path);
             break;
@@ -128,33 +131,39 @@ static gboolean
 kbd_slide_handler(GIOChannel *src, GIOCondition cond, gpointer data)
 {
     struct input_event ev;
+    gboolean state;
     int rc;
 
-    for (;;) {
+    for (;;)
+    {
         rc = libevdev_next_event(kbd_slide_dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
 
-        if (rc == LIBEVDEV_READ_STATUS_SYNC) {
+        if (rc == LIBEVDEV_READ_STATUS_SYNC)
+        {
             /* We are out of sync, fix it */
-            do {
+            do
+            {
                 rc = libevdev_next_event(kbd_slide_dev,
                                          LIBEVDEV_READ_FLAG_SYNC, &ev);
-            } while (rc == LIBEVDEV_READ_STATUS_SYNC);
+            }
+            while (rc == LIBEVDEV_READ_STATUS_SYNC);
 
             /* Re-read current keyboard slide state */
-            gboolean state = libevdev_get_event_value(kbd_slide_dev,
-                                                      EV_SW, SW_KEYPAD_SLIDE);
+            state = libevdev_get_event_value(kbd_slide_dev,
+                                             EV_SW, SW_KEYPAD_SLIDE);
             inform_slide_keyboard(state);
             continue;
         }
 
-        if (rc == LIBEVDEV_READ_STATUS_SUCCESS) {
-            if (libevdev_event_is_code(&ev, EV_SW, SW_KEYPAD_SLIDE)) {
+        if (rc == LIBEVDEV_READ_STATUS_SUCCESS)
+        {
+            if (libevdev_event_is_code(&ev, EV_SW, SW_KEYPAD_SLIDE))
                 inform_slide_keyboard(ev.value);
-            }
             continue;
         }
 
-        if (rc == -EAGAIN) {
+        if (rc == -EAGAIN)
+        {
             /* There's no more input data */
             return TRUE;
         }
@@ -179,12 +188,14 @@ kbd_slide_add_handler()
 void
 kbd_slide_monitor_start()
 {
-    if (kbd_slide_dev != NULL) {
+    if (kbd_slide_dev != NULL)
+    {
         /* Already started */
         return;
     }
 
-    if (!kbd_slide_find_evdev()) {
+    if (!kbd_slide_find_evdev())
+    {
         /* Keypad slide state is considered closed if the device is not found */
         inform_slide_keyboard(FALSE);
         kbd_slide_monitor_stop();
@@ -194,18 +205,23 @@ kbd_slide_monitor_start()
 void
 kbd_slide_monitor_stop()
 {
-    if (kbd_slide_src_id != 0) {
+    gint fd;
+
+    if (kbd_slide_src_id != 0)
+    {
         g_source_remove(kbd_slide_src_id);
         kbd_slide_src_id = 0;
     }
 
-    if (kbd_slide_iochan != NULL) {
+    if (kbd_slide_iochan != NULL)
+    {
         g_io_channel_unref(kbd_slide_iochan);
         kbd_slide_iochan = NULL;
     }
 
-    if (kbd_slide_dev != NULL) {
-        gint fd = libevdev_get_fd(kbd_slide_dev);
+    if (kbd_slide_dev != NULL)
+    {
+        fd = libevdev_get_fd(kbd_slide_dev);
         if (fd != -1)
             close(fd);
         libevdev_free(kbd_slide_dev);
