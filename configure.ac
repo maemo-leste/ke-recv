@@ -12,4 +12,8 @@ PKG_CHECK_MODULES([DEPS], [libosso glib-2.0 gconf-2.0 dbus-1 gtk+-2.0
                            hildon-1 libhildonmime gudev-1.0 libevdev
                            gio-2.0 dbus-glib-1])
 
+AC_DEFINE_UNQUOTED([LOCALEDIR],
+                   ["`pkg-config --variable=localedir osso-af-settings`"],
+                   [Define the path to locales directory])
+
 AC_OUTPUT([Makefile src/Makefile mmc-utils/Makefile])

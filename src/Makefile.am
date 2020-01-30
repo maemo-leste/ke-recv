@@ -5,8 +5,6 @@ bin_PROGRAMS  = ke-recv-test
 AM_CFLAGS = $(DEPS_CFLAGS)
 LDADD     = $(DEPS_LIBS)
 
-AM_CPPFLAGS = -DLOCALEDIR=\"`pkg-config --variable=localedir osso-af-settings`\"
-
 ke_recv_SOURCES = \
         ke-recv.h \
         exec-func.h \
