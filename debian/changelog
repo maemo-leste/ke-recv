@@ -1,3 +1,10 @@
+ke-recv (4.5.3) unstable; urgency=medium
+
+  * Fix init service runlevels configuration.
+    Thanks to Ivaylo Dimitrov for pointing it out
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Thu, 30 Jan 2020 11:14:52 +0300
+
 ke-recv (4.5.2) unstable; urgency=medium
 
   * Match input evdev by SW_KEYPAD_SLIDE capability
