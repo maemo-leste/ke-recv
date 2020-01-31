@@ -1,3 +1,37 @@
+ke-recv (4.5.3) unstable; urgency=medium
+
+  * Fix init service runlevels configuration.
+    Thanks to Ivaylo Dimitrov for pointing it out
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Thu, 30 Jan 2020 11:14:52 +0300
+
+ke-recv (4.5.2) unstable; urgency=medium
+
+  * Match input evdev by SW_KEYPAD_SLIDE capability
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Wed, 29 Jan 2020 16:30:29 +0300
+
+ke-recv (4.5.1) unstable; urgency=medium
+
+  * Don't build mmc-utils (beowulf/buster porting)
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Tue, 28 Jan 2020 12:37:17 +0300
+
+ke-recv (4.5) unstable; urgency=medium
+
+  * Update to compat level 10
+  * Migrate to debhelper command sequencer
+  * Simplify autotools files
+  * Fix build time warnings
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Tue, 28 Jan 2020 11:43:10 +0300
+
+ke-recv (4.4-1) unstable; urgency=medium
+
+  * Add slide keyboard state monitoring
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Mon, 27 Jan 2020 16:51:16 +0300
+
 ke-recv (4.3-1) unstable; urgency=low
 
   * Support Pinephone devkit 1.x

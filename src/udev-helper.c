@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <glib.h>
 
 #include <gudev/gudev.h>
 
@@ -63,8 +64,7 @@ static DeviceDrivers *active_device;
 static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
 
-#define DRIVER_COUNT 4
-static DeviceDrivers drivers[DRIVER_COUNT] = {
+static DeviceDrivers drivers[] = {
     {
         .name = "Nokia N900",
         .usb_driver = {
@@ -241,7 +241,7 @@ static int find_devices(void) {
     DeviceDrivers *d;
     gboolean ok = FALSE;
 
-    for (i = 0; i < DRIVER_COUNT; i++) {
+    for (i = 0; i < G_N_ELEMENTS(drivers); i++) {
         otg = NULL;
         supply = NULL;
 
@@ -283,10 +283,6 @@ static int find_devices(void) {
     }
 
     return 1;
-}
-
-static gboolean pc_connected() {
-    return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
 }
 
 static gboolean update_info() {
@@ -368,6 +364,10 @@ char *uh_get_device_name() {
 #if 0
 /* TODO: g_udev_device_has_sysfs_attr can be used to see if something has attrs
  * like vbus and mode */
+
+static gboolean pc_connected() {
+    return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
+}
 
 static void test_callback(gboolean pc_connected, gpointer data) {
     fprintf(stderr, "test_callback: PC connected: %d - %p.\n", pc_connected, data);

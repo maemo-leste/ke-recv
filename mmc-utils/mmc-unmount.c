@@ -104,7 +104,7 @@ do_unmount_cb (GObject      *object,
 
   mount = G_MOUNT (object);
 
-  if (!g_mount_unmount_finish (mount, result, &error))
+  if (!g_mount_unmount_with_operation_finish (mount, result, &error))
     {
       log_message ("Could not perform unmount, %s",
                    (error) ? error->message : "No error given");
@@ -122,11 +122,12 @@ do_unmount_cb (GObject      *object,
 static void
 do_unmount (GMount *mount)
 {
-  g_mount_unmount (mount,
-                   G_MOUNT_UNMOUNT_NONE,
-                   NULL,
-                   do_unmount_cb,
-                   NULL);
+  g_mount_unmount_with_operation (mount,
+                                  G_MOUNT_UNMOUNT_NONE,
+                                  NULL,
+                                  NULL,
+                                  do_unmount_cb,
+                                  NULL);
 }
 
 int
@@ -135,8 +136,6 @@ main (int argc, char *argv[])
   GOptionContext *context;
   GFile *file;
   GMount *mount;
-
-  g_type_init ();
 
   context = g_option_context_new ("- Unmount a memcard");
   g_option_context_add_main_entries (context, entries, NULL);

@@ -69,7 +69,7 @@ void inform_slide_keyboard(gboolean value)
         GError* err = NULL;
         assert(gconfclient != NULL);
         if (!gconf_client_set_bool(gconfclient, SLIDE_OPEN_KEY,
-                                   !value, &err) && err != NULL) {
+                                   value, &err) && err != NULL) {
                 ULOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
                            value, err->message);
                 g_error_free(err);

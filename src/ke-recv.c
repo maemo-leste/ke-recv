@@ -28,6 +28,7 @@
 #include "gui.h"
 #include "events.h"
 #include "camera.h"
+#include "kbd-slide.h"
 #include "udev-helper.h"
 #include <hildon-mime.h>
 #include <libgen.h>
@@ -295,7 +296,7 @@ void send_error(const char* n)
         dbus_message_unref(e);
 }
 
-usb_state_t map_usb_mode(gint usb_mode) {
+static usb_state_t map_usb_mode(gint usb_mode) {
     if (usb_mode == USB_MODE_UNKNOWN) {
         ULOG_ERR_F("'usb_device mode' is UNKNOWN, not changing the state");
         return usb_state;
@@ -349,7 +350,7 @@ static usb_state_t check_usb_cable(void)
 }
 
 
-void uh_callback(gint usb_mode, gint supply_mode, gpointer data) {
+static void uh_callback(gint usb_mode, gint supply_mode, gpointer data) {
     ULOG_WARN_F("uh_callback: mode = %d", usb_mode);
 	check_usb_cable();
     //usb_state_t = map_usb_mode(usb_mode);
@@ -655,21 +656,6 @@ static void handle_usb_event(usb_event_t e)
         }
 }
 
-static void init_slide_keyboard_state()
-{
-        int state = TRUE;
-
-        /* TODO: set up listener for input event file(s), look at mce */
-#if 0 // MWTODO
-        if (slide_keyboard_udi != NULL) {
-                state = get_prop_bool(slide_keyboard_udi,
-                                      "button.state.value");
-        }
-#endif
-        if (state != -1)
-                inform_slide_keyboard(state);
-}
-
 static gboolean init_usb_cable_status(gpointer data)
 {
     check_usb_cable();
@@ -803,15 +789,18 @@ int main(int argc, char* argv[])
             uh_ok = TRUE;
         }
 
-        init_slide_keyboard_state();
         init_usb_cable_status(NULL);
 
         if (uh_ok) {
             uh_set_callback((UhCallback)uh_callback, NULL);
         }
 
+        kbd_slide_monitor_start();
+
         g_main_loop_run(mainloop);
         ULOG_DEBUG_L("Returned from the main loop");
+
+        kbd_slide_monitor_stop();
 
         exit(0);
 }

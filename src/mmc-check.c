@@ -87,13 +87,13 @@ static int no_wait_exec(const char* cmd, const char* args[])
                 ULOG_ERR_F("fork() failed");
                 return -1;
         } else if (pid == 0) {
-                int ret = -1;
                 close(fd[0]);
                 if (dup2(fd[1], STDERR_FILENO) != STDERR_FILENO) {
                         ULOG_ERR_F("dup2() failed");
                 }
                 close(fd[1]);
-                ret = execve(cmd, (char** const) args, environ);
+                execve(cmd, (char** const) args, environ);
+                /* On success, execve() does not return */
                 ULOG_ERR_F("execve() returned error: %s",
                            strerror(errno));
                 exit(2);
