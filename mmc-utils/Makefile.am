@@ -1,4 +1,4 @@
-bin_PROGRAMS = mmc-pre-unmount mmc-unmount
+libexec_PROGRAMS = mmc-pre-unmount mmc-unmount
 
 AM_CFLAGS = $(DEPS_CFLAGS)
 LDADD     = $(DEPS_LIBS)

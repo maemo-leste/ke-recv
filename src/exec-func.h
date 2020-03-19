@@ -30,15 +30,15 @@
 extern "C" {
 #endif
 
-#define MMC_MOUNT_COMMAND "/usr/sbin/osso-mmc-mount.sh"
-#define MMC_UMOUNT_COMMAND "/usr/sbin/osso-mmc-umount.sh"
-#define MMC_CORRUPTED_SCRIPT "/usr/sbin/osso-mmc-corrupted.sh"
-#define MMC_NOT_CORRUPTED_SCRIPT "/usr/sbin/osso-mmc-not-corrupted.sh"
-#define LOAD_USB_DRIVER_COMMAND "/usr/sbin/osso-usb-mass-storage-enable.sh"
-#define UNLOAD_USB_DRIVER_COMMAND "/usr/sbin/osso-usb-mass-storage-disable.sh"
-#define USB_DRIVER_IS_USED_COMMAND "/usr/sbin/osso-usb-mass-storage-is-used.sh"
-#define ENABLE_PCSUITE_COMMAND "/usr/sbin/pcsuite-enable.sh"
-#define DISABLE_PCSUITE_COMMAND "/usr/sbin/pcsuite-disable.sh"
+#define MMC_MOUNT_COMMAND PACKAGE_LIBEXEC_DIR "/osso-mmc-mount.sh"
+#define MMC_UMOUNT_COMMAND PACKAGE_LIBEXEC_DIR "/osso-mmc-umount.sh"
+#define MMC_CORRUPTED_SCRIPT PACKAGE_LIBEXEC_DIR "/osso-mmc-corrupted.sh"
+#define MMC_NOT_CORRUPTED_SCRIPT PACKAGE_LIBEXEC_DIR "/osso-mmc-not-corrupted.sh"
+#define LOAD_USB_DRIVER_COMMAND PACKAGE_LIBEXEC_DIR "/osso-usb-mass-storage-enable.sh"
+#define UNLOAD_USB_DRIVER_COMMAND PACKAGE_LIBEXEC_DIR "/osso-usb-mass-storage-disable.sh"
+#define USB_DRIVER_IS_USED_COMMAND PACKAGE_LIBEXEC_DIR "/osso-usb-mass-storage-is-used.sh"
+#define ENABLE_PCSUITE_COMMAND PACKAGE_LIBEXEC_DIR "/pcsuite-enable.sh"
+#define DISABLE_PCSUITE_COMMAND PACKAGE_LIBEXEC_DIR "/pcsuite-disable.sh"
 
 int exec_prog(const char* cmd, const char* args[]);
 

@@ -58,9 +58,9 @@ extern "C" {
 #define CAMERA_TURNED_KEY "/system/osso/af/camera-has-turned"
 #define SLIDE_OPEN_KEY "/system/osso/af/slide-open"
 
-#define PRE_UNMOUNT_SIGNAL_PROGRAM "/usr/bin/mmc-pre-unmount"
-#define MMC_RENAME_PROG "/usr/sbin/mmc-rename"
-#define MMC_FORMAT_PROG "/usr/sbin/mmc-format"
+#define PRE_UNMOUNT_SIGNAL_PROGRAM PACKAGE_LIBEXEC_DIR "/mmc-pre-unmount"
+#define MMC_RENAME_PROG PACKAGE_LIBEXEC_DIR "/mmc-rename"
+#define MMC_FORMAT_PROG PACKAGE_LIBEXEC_DIR "/mmc-format"
 #define GREP_PROG "/bin/grep"
 
 typedef enum {

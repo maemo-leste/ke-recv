@@ -1,9 +1,13 @@
-sbin_PROGRAMS = ke-recv mmc-format mmc-check
-sbin_SCRIPTS  = mmc-mount mmc-rename
+sbin_PROGRAMS = ke-recv
 bin_PROGRAMS  = ke-recv-test
+libexec_PROGRAMS = mmc-format mmc-check
+libexec_SCRIPTS  = mmc-mount mmc-rename
 
 AM_CFLAGS = $(DEPS_CFLAGS)
 LDADD     = $(DEPS_LIBS)
+
+AM_CPPFLAGS = \
+	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"
 
 ke_recv_SOURCES = \
         ke-recv.h \
