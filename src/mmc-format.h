@@ -43,7 +43,7 @@ extern "C" {
 typedef void (*sighandler_t)(int);
 
 #define MMC_FORMAT_PROG_NAME "mmc-format"
-#define MMC_PARTITIONING_COMMAND "/usr/sbin/osso-prepare-partition.sh"
+#define MMC_PARTITIONING_COMMAND PACKAGE_LIBEXEC_DIR "/osso-prepare-partition.sh"
 #define MMC_FORMAT_COMMAND "/sbin/mkdosfs"
 
 #define MSG_FORMATTING_MEMORY_CARD _("card_nw_formatting_memory_card")

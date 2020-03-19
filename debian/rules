@@ -2,6 +2,10 @@
 %:
 	dh $@
 
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--libexecdir=\$${prefix}/lib/ke-recv
+
 override_dh_installinit:
 	dh_installinit -- 'start 30 2 3 4 . stop 30 0 1 5 6 .'
 

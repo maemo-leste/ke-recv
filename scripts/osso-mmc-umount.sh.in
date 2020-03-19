@@ -29,7 +29,7 @@ MP=$1
 grep "$MP " /proc/mounts > /dev/null
 if [ $? = 0 ]; then
   # first try in gvfs way
-  mmc-unmount $MP 2> /dev/null
+  @LIBEXECDIR@/mmc-unmount $MP 2> /dev/null
   RC=$?
   if [ $RC != 0 -a $# = 2 ]; then
     # lazy unmounting if mmc-unmount failed

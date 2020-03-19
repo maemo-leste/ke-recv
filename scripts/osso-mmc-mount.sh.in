@@ -47,7 +47,7 @@ fi
 #/sbin/dosfsck -I -n -T 10 $PDEV
 #if [ $? != 0 ]; then
 #  logger "$0: $PDEV is corrupt, trying to mount it read-only"
-#  mmc-mount $PDEV $MP ro
+#  @LIBEXECDIR@/mmc-mount $PDEV $MP ro
 #  if [ $? = 0 ]; then
 #    logger "$0: $PDEV mounted read-only"
 #    exit 2
@@ -57,7 +57,7 @@ fi
 #  fi
 #fi
 
-mmc-mount $PDEV $MP rw $FS
+@LIBEXECDIR@/mmc-mount $PDEV $MP rw $FS
 RC=$?
 logger "$0: mounting $PDEV read-write fs $FS to $MP, rc: $RC"
 
