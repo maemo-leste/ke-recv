@@ -1,0 +1,35 @@
+#!/bin/sh
+#####################################
+# Startup script for ke-recv daemon #
+#####################################
+
+ke_recv_prep() {
+    # XXX: This should be somewhere else
+    /sbin/modprobe configfs
+    # Just probe any, it will enable all to be used
+    /sbin/modprobe usb_f_mass_storage
+
+    /usr/sbin/hildon-usb-gadget-network
+
+    . /etc/osso-af-init/af-defines.sh
+}
+
+case "$1" in
+    start)
+        # openrc
+        ke_recv_prep
+        /usr/sbin/dsmetool -U root -n -1 -t "@sbindir@/sbin/ke-recv"
+        ;;
+    stop)
+        # openrc
+        /usr/sbin/dsmetool -k "@sbindir@/ke-recv"
+        ;;
+    exec)
+        # systemd
+        ke_recv_prep
+        exec @sbindir@/ke-recv
+        ;;
+    *)
+        echo -e "Usage:\n$0 [start|stop|exec]" >&2
+        exit 1
+esac

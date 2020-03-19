@@ -17,19 +17,11 @@ start_pre() {
 
 start() {
         ebegin "Starting ke-recv"
-
-        # XXX: HACK: This should maybe be somewhere else
-        modprobe configfs
-        # Just probe any, it will enable all to be used
-        modprobe usb_f_mass_storage
-
-        /usr/sbin/hildon-usb-gadget-network
-
-        /usr/sbin/dsmetool -U root -n -1 -t "/usr/sbin/ke-recv"
+        /usr/sbin/ke-recv.sh start
 }
 
 stop() {
         eend "Stopping ke-recv"
-        /usr/sbin/dsmetool -k "/usr/sbin/ke-recv"
+        /usr/sbin/ke-recv.sh stop
 }
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Kernel events proxy (ke-recv)
+Requires=dbus-user.socket
+After=dbus-user.socket
+
+[Service]
+ExecStart=/usr/sbin/ke-recv.sh exec
+Nice=-1
+
+[Install]
+WantedBy=multi-user.target
