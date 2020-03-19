@@ -1,5 +1,5 @@
 sbin_PROGRAMS = ke-recv mmc-format mmc-check
-sbin_SCRIPTS  = mmc-mount
+sbin_SCRIPTS  = mmc-mount mmc-rename
 bin_PROGRAMS  = ke-recv-test
 
 AM_CFLAGS = $(DEPS_CFLAGS)

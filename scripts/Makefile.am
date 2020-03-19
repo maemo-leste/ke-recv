@@ -1,6 +1,5 @@
 sbin_SCRIPTS = \
 	fremantle-format-internal-memory-card.sh \
-	mmc-rename.sh \
 	osso-mmc-mount.sh \
 	osso-mmc-umount.sh \
 	osso-prepare-partition.sh \
