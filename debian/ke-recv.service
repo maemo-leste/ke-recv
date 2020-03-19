@@ -1,0 +1,14 @@
+[Unit]
+Description=Kernel events proxy (ke-recv)
+Requires=dbus.socket dbus-user.socket
+After=dbus.socket dbus-user.socket
+
+[Service]
+ExecStartPre=/sbin/modprobe configfs
+ExecStartPre=/sbin/modprobe usb_f_mass_storage
+ExecStartPre=/usr/sbin/hildon-usb-gadget-network
+ExecStart=/usr/sbin/ke-recv
+Nice=-1
+
+[Install]
+WantedBy=multi-user.target
