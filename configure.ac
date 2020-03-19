@@ -16,4 +16,4 @@ AC_DEFINE_UNQUOTED([LOCALEDIR],
                    ["`pkg-config --variable=localedir osso-af-settings`"],
                    [Define the path to locales directory])
 
-AC_OUTPUT([Makefile src/Makefile mmc-utils/Makefile])
+AC_OUTPUT([Makefile src/Makefile scripts/Makefile mmc-utils/Makefile])

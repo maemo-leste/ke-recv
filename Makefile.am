@@ -1,4 +1,5 @@
-SUBDIRS = src
+SUBDIRS = src scripts
 
-flagfiledir = /var/lib/ke-recv
-flagfile_DATA = usb_phonet_mode
+install-data-hook:
+	mkdir -p $(DESTDIR)/var/lib/ke-recv
+	:> $(DESTDIR)/var/lib/ke-recv/usb_phonet_mode
