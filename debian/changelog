@@ -1,3 +1,9 @@
+ke-recv (4.5.7) unstable; urgency=medium
+
+  * Add LSB header to init script
+
+ -- Arthur Demchenkov <spinal.by@gmail.com>  Mon, 23 Mar 2020 20:40:33 +0300
+
 ke-recv (4.5.6) unstable; urgency=medium
 
   * Move helpers to /usr/lib/ke-recv
