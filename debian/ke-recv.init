@@ -1,12 +1,12 @@
 #!/sbin/openrc-run
-
-description="ke-recv"
-name="ke-recv"
-
-depend() {
-        before xorg xsession
-        need dsme dbus dbus-user
-}
+### BEGIN INIT INFO
+# Provides:          ke-recv
+# Required-Start:    $remote_fs dsme dbus dbus-user
+# Required-Stop:     $remote_fs dsme dbus dbus-user
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Kernel events proxy
+### END INIT INFO
 
 start_pre() {
         ebegin "Starting ke-recv presetup"
@@ -32,4 +32,3 @@ stop() {
         eend "Stopping ke-recv"
         /usr/sbin/dsmetool -k "/usr/sbin/ke-recv"
 }
-
