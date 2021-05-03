@@ -1,3 +1,9 @@
+ke-recv (4.5.8) unstable; urgency=medium
+
+  * Revert "Add LSB header to init script"
+
+ -- Ivan J. <parazyd@dyne.org>  Mon, 03 May 2021 09:14:08 +0200
+
 ke-recv (4.5.7) unstable; urgency=medium
 
   * Add LSB header to init script
