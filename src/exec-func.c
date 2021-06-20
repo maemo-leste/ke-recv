@@ -54,18 +54,18 @@ int exec_prog(const char* cmd, const char* args[])
          * below works (strangely SIG_IGN didn't work) */
         handler = signal(SIGCHLD, SIG_DFL);
         if (handler == SIG_ERR) {
-                ULOG_ERR_F("signal() failed: %s", strerror(errno));
+                DLOG_ERR_F("signal() failed: %s", strerror(errno));
                 return -1;
         }
 
         pid = fork();
         if (pid < 0) {
-                ULOG_ERR_F("fork() failed");
+                DLOG_ERR_F("fork() failed");
                 signal(SIGCHLD, handler);
                 return -1;
         } else if (pid == 0) {
                 execve(cmd, (char** const) args, environ);
-                ULOG_ERR_F("execve() error: %s", strerror(errno));
+                DLOG_ERR_F("execve() error: %s", strerror(errno));
                 exit(-2);
         }
         assert(pid > 0);
@@ -77,7 +77,7 @@ waitpid_again:
                         /* interrupted by a signal */
                         goto waitpid_again;
                 }
-                ULOG_ERR_F("waitpid() returned error: %s",
+                DLOG_ERR_F("waitpid() returned error: %s",
                            strerror(errno));
                 signal(SIGCHLD, handler);
                 return -4;
@@ -87,7 +87,7 @@ waitpid_again:
                 signal(SIGCHLD, handler);
                 return WEXITSTATUS(status);
         }
-        ULOG_ERR_F("child terminated abnormally");
+        DLOG_ERR_F("child terminated abnormally");
         signal(SIGCHLD, handler);
         return -3;
 }
@@ -126,7 +126,7 @@ static gboolean try_mount(const mmc_info_t *mmc)
                 }
         }
         if (part_device == NULL) {
-                ULOG_ERR_F("device name for first partition not found");
+                DLOG_ERR_F("device name for first partition not found");
                 return FALSE;
         }
 
@@ -137,7 +137,7 @@ static gboolean try_mount(const mmc_info_t *mmc)
         if (ret == 0) {
                 return TRUE;
         } else {
-                ULOG_DEBUG_F("exec_prog returned %d", ret);
+                DLOG_DEBUG_F("exec_prog returned %d", ret);
                 return FALSE;
         }
 }
@@ -204,7 +204,7 @@ gboolean usb_driver_is_used(void)
 
         ret = exec_prog(args[0], args);
         if (ret < 0) {
-                ULOG_ERR_F("exec_prog() failed");
+                DLOG_ERR_F("exec_prog() failed");
                 return FALSE;
         } else if (ret > 0) {
                 return TRUE;

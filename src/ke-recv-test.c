@@ -36,7 +36,7 @@ static void format_mmc(const char *device)
 	DBusError err;
 	const char* label = "";
 
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	dbus_error_init(&err);
         m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/format",
@@ -46,13 +46,13 @@ static void format_mmc(const char *device)
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
 			&device, DBUS_TYPE_INVALID);
     	if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
 	ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
 			&label, DBUS_TYPE_INVALID);
     	if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
 	assert(ses_conn != NULL);
@@ -60,11 +60,11 @@ static void format_mmc(const char *device)
 	reply = dbus_connection_send_with_reply_and_block(ses_conn, m,
 			20000, &err);
     	if (dbus_error_is_set(&err)) {
-       	   ULOG_ERR_F("error reply: %s", err.message);
+       	   DLOG_ERR_F("error reply: %s", err.message);
         } else if (reply == NULL) {
-           ULOG_ERR_F("reply was null, error: %s", err.message);
+           DLOG_ERR_F("reply was null, error: %s", err.message);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_device_locked()
@@ -78,7 +78,7 @@ static void send_device_locked()
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
                         &mce_locked, DBUS_TYPE_INVALID);
         if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
         dbus_connection_send(sys_conn, m, NULL);
@@ -95,7 +95,7 @@ static void send_device_unlocked()
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
                         &mce_unlocked, DBUS_TYPE_INVALID);
     	if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
         dbus_connection_send(sys_conn, m, NULL);
@@ -108,7 +108,7 @@ static void rename_mmc(const char *device)
 	DBusError err;
 	const char* label = "KERECVTEST";
 
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	dbus_error_init(&err);
 
         m = dbus_message_new_method_call("com.nokia.ke_recv",
@@ -119,30 +119,30 @@ static void rename_mmc(const char *device)
         ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
 			&device, DBUS_TYPE_INVALID);
     	if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
 	ret = dbus_message_append_args(m, DBUS_TYPE_STRING,
 			&label, DBUS_TYPE_INVALID);
     	if (!ret) {
-       	   ULOG_CRIT_F("dbus_message_append_args failed");
+       	   DLOG_CRIT_F("dbus_message_append_args failed");
            exit(1);
         }
 
 	assert(ses_conn != NULL);
 	dbus_connection_send_with_reply_and_block(ses_conn, m, 20000, &err);
     	if (dbus_error_is_set(&err)) {
-       	   ULOG_CRIT_F("error reply: %s", err.message);
+       	   DLOG_CRIT_F("error reply: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_swap_on(int mode)
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	assert(sys_conn != NULL);
 	dbus_error_init(&err);
         if (mode == 'i') {
@@ -159,17 +159,17 @@ static void send_swap_on(int mode)
 	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
 			20000, &err);
     	if (reply == NULL) {
-       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+       	   DLOG_CRIT_F("dbus_connection_send failed: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_enable_pcsuite()
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	assert(sys_conn != NULL);
 	dbus_error_init(&err);
 	  m = dbus_message_new_method_call("com.nokia.ke_recv",
@@ -179,17 +179,17 @@ static void send_enable_pcsuite()
 	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
 			20000, &err);
     	if (reply == NULL) {
-       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+       	   DLOG_CRIT_F("dbus_connection_send failed: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_enable_charging()
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	assert(sys_conn != NULL);
 	dbus_error_init(&err);
 	  m = dbus_message_new_method_call("com.nokia.ke_recv",
@@ -199,17 +199,17 @@ static void send_enable_charging()
 	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
 			20000, &err);
     	if (reply == NULL) {
-       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+       	   DLOG_CRIT_F("dbus_connection_send failed: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_enable_mass_storage()
 {
 	DBusMessage* m = NULL, *reply = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	assert(sys_conn != NULL);
 	dbus_error_init(&err);
 	  m = dbus_message_new_method_call("com.nokia.ke_recv",
@@ -219,10 +219,10 @@ static void send_enable_mass_storage()
 	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
 			20000, &err);
     	if (reply == NULL) {
-       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+       	   DLOG_CRIT_F("dbus_connection_send failed: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void send_swap_off(int mode)
@@ -230,7 +230,7 @@ static void send_swap_off(int mode)
 	DBusMessage* m = NULL, *reply = NULL;
 	DBusError err;
         dbus_bool_t b = TRUE;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	assert(sys_conn != NULL);
 	dbus_error_init(&err);
         if (mode == 'i') {
@@ -249,17 +249,17 @@ static void send_swap_off(int mode)
 	reply = dbus_connection_send_with_reply_and_block(sys_conn, m,
 			20000, &err);
     	if (reply == NULL) {
-       	   ULOG_CRIT_F("dbus_connection_send failed: %s", err.message);
+       	   DLOG_CRIT_F("dbus_connection_send failed: %s", err.message);
            exit(1);
         }
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void open_bat_cover()
 {
 	DBusMessage* m = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	dbus_error_init(&err);
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/test_batt_cover_on",
@@ -267,14 +267,14 @@ static void open_bat_cover()
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void attach_usb()
 {
 	DBusMessage* m = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	dbus_error_init(&err);
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/test_usb_cable_on",
@@ -282,14 +282,14 @@ static void attach_usb()
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void close_bat_cover()
 {
 	DBusMessage* m = NULL;
 	DBusError err;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	dbus_error_init(&err);
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/test_batt_cover_off",
@@ -297,26 +297,26 @@ static void close_bat_cover()
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void detach_usb()
 {
 	DBusMessage* m = NULL;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/test_usb_cable_off",
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void repair_card(const char *device)
 {
 	DBusMessage* m = NULL;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/check_card",
 			"com.nokia.ke_recv",
@@ -325,48 +325,48 @@ static void repair_card(const char *device)
         dbus_message_append_args(m, DBUS_TYPE_STRING,
                                  &device, DBUS_TYPE_INVALID);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void usb_eject()
 {
 	DBusMessage* m = NULL;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/usb_eject",
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void usb_cancel_eject()
 {
 	DBusMessage* m = NULL;
-    	ULOG_DEBUG_F("entering");
+    	DLOG_DEBUG_F("entering");
 	m = dbus_message_new_method_call("com.nokia.ke_recv",
 			"/com/nokia/ke_recv/usb_cancel_eject",
 			"com.nokia.ke_recv",
 			"dummymethodname");
 	assert(sys_conn != NULL && m != NULL);
 	dbus_connection_send(sys_conn, m, NULL);
-    	ULOG_DEBUG_F("leaving");
+    	DLOG_DEBUG_F("leaving");
 }
 
 static void init()
 {
     DBusError err;
-    ULOG_DEBUG_F("entering");
+    DLOG_DEBUG_F("entering");
     dbus_error_init(&err);
     ses_conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
     if (ses_conn == NULL) {
-        ULOG_CRIT("dbus_bus_get() failed: %s", err.message);
+        DLOG_CRIT("dbus_bus_get() failed: %s", err.message);
         exit(1);
     }
     sys_conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
     if (sys_conn == NULL) {
-        ULOG_CRIT("dbus_bus_get() failed: %s", err.message);
+        DLOG_CRIT("dbus_bus_get() failed: %s", err.message);
         exit(1);
     }
 }
@@ -395,7 +395,7 @@ int main(int argc, char* argv[])
                    "m - enable USB mass storage\n");
             exit(1);
     }
-    ULOG_OPEN("ke_recv_test");
+    DLOG_OPEN("ke_recv_test");
     init();
     switch (argv[1][0]) {
 	    case 'c':

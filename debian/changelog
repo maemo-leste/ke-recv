@@ -1,3 +1,10 @@
+ke-recv (4.5.9) unstable; urgency=medium
+
+  * Log as daemon, not as user
+  * Fix writing to log before opening it
+
+ -- Merlijn Wajer <parazyd@dyne.org>  Sun, 20 Jun 2021 14:04:46 +0200
+
 ke-recv (4.5.8) unstable; urgency=medium
 
   * Revert "Add LSB header to init script"

@@ -36,15 +36,15 @@ void display_dialog(const gchar* s)
         assert(osso != NULL);
 
         if (!desktop_started) {
-                ULOG_DEBUG_F("do nothing, desktop is not running");
+                DLOG_DEBUG_F("do nothing, desktop is not running");
                 return;
         }
 
         ret = osso_system_note_infoprint(osso, s, NULL);
         if (ret == OSSO_INVALID) {
-                ULOG_ERR_F("invalid arguments");
+                DLOG_ERR_F("invalid arguments");
         } else if (ret == OSSO_ERROR) {
-                ULOG_ERR_F("other error");
+                DLOG_ERR_F("other error");
         }
 }
 
@@ -52,13 +52,13 @@ void display_system_note(const gchar* s)
 {
         osso_return_t ret;
 	osso_rpc_t retval;
-	ULOG_DEBUG_F("entered");
+	DLOG_DEBUG_F("entered");
         assert(osso != NULL);
         ret = osso_system_note_dialog(osso, s, OSSO_GN_NOTICE, &retval);
         if (ret == OSSO_INVALID) {
-                ULOG_ERR_F("invalid arguments");
+                DLOG_ERR_F("invalid arguments");
         } else if (ret == OSSO_ERROR) {
-                ULOG_ERR_F("other error");
+                DLOG_ERR_F("other error");
         }
         osso_rpc_free_val(&retval);
 }

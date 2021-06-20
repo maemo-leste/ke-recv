@@ -59,29 +59,29 @@ static int no_wait_exec(const char* cmd, const char* args[])
 {
         pid_t pid = -1;
         int fd[2];
-        ULOG_DEBUG_F("entered");
+        DLOG_DEBUG_F("entered");
         assert(cmd != NULL);
         if (pipe(fd) < 0) {
-                ULOG_ERR_F("pipe() failed");
+                DLOG_ERR_F("pipe() failed");
                 return -1;
         }
         pid = fork();
         if (pid < 0) {
-                ULOG_ERR_F("fork() failed");
+                DLOG_ERR_F("fork() failed");
                 return -1;
         } else if (pid == 0) {
                 close(fd[0]);
                 if (dup2(fd[1], STDERR_FILENO) != STDERR_FILENO) {
-                        ULOG_ERR_F("dup2() failed");
+                        DLOG_ERR_F("dup2() failed");
                 }
                 close(fd[1]);
                 /* On success, execve() does not return */
                 execve(cmd, (char** const) args, environ);
-                ULOG_ERR_F("execve() returned error: %s",
+                DLOG_ERR_F("execve() returned error: %s",
                            strerror(errno));
                 exit(-2);
         }
-        ULOG_DEBUG_F("after fork (pid=%d)", pid);
+        DLOG_DEBUG_F("after fork (pid=%d)", pid);
         assert(pid > 0);
         child_pid = pid;
         close(fd[1]);  /* close the writing end */
@@ -99,17 +99,17 @@ static gboolean gio_func(GIOChannel* ch, GIOCondition cond, gpointer p)
         GError* err = NULL;
         GIOStatus ret;
 
-        ULOG_DEBUG_F("entered");
+        DLOG_DEBUG_F("entered");
         ret = g_io_channel_read_chars(ch, buf, 100, &count, &err);
         if (ret != G_IO_STATUS_NORMAL) {
-                ULOG_DEBUG_F("pipe error or eof");
+                DLOG_DEBUG_F("pipe error or eof");
                 return FALSE;
         }
         buf[count] = '\0';
-        ULOG_DEBUG_F("read %d bytes: |%s|", count, buf);
+        DLOG_DEBUG_F("read %d bytes: |%s|", count, buf);
         if (hash_count == 0) {
                 if (sscanf(buf, "%d\n", &hash_count) != 1) {
-                        ULOG_ERR_F("could not read the hash count");
+                        DLOG_ERR_F("could not read the hash count");
 			/* garbage from pipe, consider formatting complete... */
                 	assert(hildon_banner != NULL);
 			hildon_banner_set_fraction(hildon_banner, 1.0);
@@ -148,7 +148,7 @@ static gboolean prepare_partition()
         if (ret == 0) {
                 return TRUE;
         } else {
-                ULOG_DEBUG_F("exec_prog returned %d", ret);
+                DLOG_DEBUG_F("exec_prog returned %d", ret);
                 return FALSE;
         }
 }
@@ -169,14 +169,14 @@ static gboolean start_format()
 #endif
                               NULL};
 
-        ULOG_DEBUG_F("entered");
+        DLOG_DEBUG_F("entered");
 
         if (mmc_dev_file_without_part != NULL) {
                 /* prepare partition table */
                 if (!prepare_partition()) {
                         return FALSE;
                 }
-                ULOG_DEBUG_F("partition prepared");
+                DLOG_DEBUG_F("partition prepared");
         }
 
         args[1] = mmc_dev_file_with_part;
@@ -185,24 +185,24 @@ static gboolean start_format()
         /* discover the logical sector size */
         fd = open(mmc_dev_file_with_part, O_RDONLY);
         if (fd < 0) {
-                ULOG_ERR_F("open() of '%s' failed: %s",
+                DLOG_ERR_F("open() of '%s' failed: %s",
                            mmc_dev_file_with_part, strerror(errno));
                 return FALSE;
         }
 
         ret = ioctl(fd, BLKSSZGET, &blk_sz);
         if (ret < 0) {
-                ULOG_ERR_F("ioctl() failed: %s", strerror(errno));
+                DLOG_ERR_F("ioctl() failed: %s", strerror(errno));
                 close(fd);
                 return FALSE;
         }
         close(fd);
-        ULOG_DEBUG_F("'%s' has block size of %d", mmc_dev_file_with_part,
+        DLOG_DEBUG_F("'%s' has block size of %d", mmc_dev_file_with_part,
                      blk_sz);
 
         ret = snprintf(blk_sz_buf, sizeof(blk_sz_buf), "%d", blk_sz);
         if (ret < 0) {
-                ULOG_ERR_F("snprintf() failed");
+                DLOG_ERR_F("snprintf() failed");
                 return FALSE;
         }
         args[5] = blk_sz_buf;
@@ -213,7 +213,7 @@ static gboolean start_format()
                 GIOChannel* ch = g_io_channel_unix_new(pipe_fd);
                 if (g_io_channel_set_encoding(ch, NULL, &err) !=
                                 G_IO_STATUS_NORMAL) {
-                        ULOG_ERR_F("failed to set encoding");
+                        DLOG_ERR_F("failed to set encoding");
                 }
                 g_io_channel_set_buffered(ch, FALSE);
                 g_io_add_watch(ch, G_IO_IN | G_IO_ERR | G_IO_HUP,
@@ -260,11 +260,11 @@ int main(int argc, char* argv[])
 {
         struct sigaction sa;
 
-        ULOG_OPEN(MMC_FORMAT_PROG_NAME);
-        ULOG_DEBUG_L("entered");
+        DLOG_OPEN(MMC_FORMAT_PROG_NAME);
+        DLOG_DEBUG_L("entered");
 
         if (argc != 3 && argc != 4) {
-                ULOG_CRIT_L("Usage: mmc-format [<device>] <partition>"
+                DLOG_CRIT_L("Usage: mmc-format [<device>] <partition>"
                             " <volume label>");
                 exit(1);
         }
@@ -272,18 +272,18 @@ int main(int argc, char* argv[])
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = SA_RESTART;
         if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-                ULOG_CRIT_L("could not set SIGCHLD handler");
+                DLOG_CRIT_L("could not set SIGCHLD handler");
                 exit(1);
         }
         if (setlocale(LC_ALL, "") == NULL) {
-                ULOG_CRIT_L("could not set locale");
+                DLOG_CRIT_L("could not set locale");
                 exit(1);
         }
         if (bindtextdomain(PACKAGE, LOCALEDIR) == NULL) {
-                ULOG_ERR_L("bindtextdomain() failed");
+                DLOG_ERR_L("bindtextdomain() failed");
         }
         if (textdomain(PACKAGE) == NULL) {
-                ULOG_ERR_L("textdomain() failed");
+                DLOG_ERR_L("textdomain() failed");
         }
 
         if (argc == 4) {
@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
         }
 
         if (!gtk_init_check(&argc, &argv)) {
-                ULOG_CRIT_L("gtk_init failed");
+                DLOG_CRIT_L("gtk_init failed");
                 exit(1);
         }
 
@@ -309,13 +309,13 @@ int main(int argc, char* argv[])
         }
 
         if (start_format()) {
-                ULOG_DEBUG_L("going to main loop");
+                DLOG_DEBUG_L("going to main loop");
                 gtk_main();
-                ULOG_WARN_L("returned from main loop");
+                DLOG_WARN_L("returned from main loop");
                 sync();  /* sync before exit */
                 exit(0);
         } else {
-                ULOG_CRIT_L("could not start formatting");
+                DLOG_CRIT_L("could not start formatting");
                 exit(1);
         }
 }

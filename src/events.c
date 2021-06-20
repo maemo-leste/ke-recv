@@ -44,7 +44,7 @@ void do_global_init(void)
 
 #if 0
         if (getenv("OSSO_KE_RECV_IGNORE_CABLE") != NULL) {
-                ULOG_WARN_F("OSSO_KE_RECV_IGNORE_CABLE "
+                DLOG_WARN_F("OSSO_KE_RECV_IGNORE_CABLE "
                             "defined, ignoring the USB cable");
                 ignore_cable = TRUE;
         }
@@ -58,7 +58,7 @@ void inform_usb_cable_attached(gboolean value)
         assert(gconfclient != NULL);
         if (!gconf_client_set_bool(gconfclient, USB_CABLE_ATTACHED_KEY,
                                    value, &err) && err != NULL) {
-                ULOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
+                DLOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
                            value, err->message);
                 g_error_free(err);
         }
@@ -70,7 +70,7 @@ void inform_slide_keyboard(gboolean value)
         assert(gconfclient != NULL);
         if (!gconf_client_set_bool(gconfclient, SLIDE_OPEN_KEY,
                                    value, &err) && err != NULL) {
-                ULOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
+                DLOG_ERR_F("gconf_client_set_bool(%d) failed: %s",
                            value, err->message);
                 g_error_free(err);
         }
