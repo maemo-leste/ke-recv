@@ -681,12 +681,15 @@ int main(int argc, char* argv[])
 	        .unregister_function = NULL
         };
 
+        ULOG_OPEN(APPL_NAME);
+
+        ULOG_INFO("ke-recv starting");
+
         if (signal(SIGTERM, sigterm) == SIG_ERR) {
                 ULOG_CRIT_L("signal() failed");
         }
 
         mainloop = g_main_loop_new(NULL, TRUE);
-        ULOG_OPEN(APPL_NAME);
 
         dbus_error_init(&error);
 
