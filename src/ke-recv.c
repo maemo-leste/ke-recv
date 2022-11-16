@@ -296,7 +296,7 @@ void send_error(const char* n)
         dbus_message_unref(e);
 }
 
-static usb_state_t map_usb_mode(gint usb_mode) {
+static usb_state_t map_usb_mode(gint usb_mode, gint supply_mode) {
     if (usb_mode == USB_MODE_UNKNOWN) {
         DLOG_ERR_F("'usb_device mode' is UNKNOWN, not changing the state");
         return usb_state;
@@ -308,21 +308,20 @@ static usb_state_t map_usb_mode(gint usb_mode) {
         return S_HOST;
     } else if ((usb_mode == USB_MODE_A_IDLE) ||
                (usb_mode == USB_MODE_B_IDLE)) {
-        /* TODO: we need more than musb mode status to determine if we are
-         * charging or not, but ke-recv should not care? 
-         * Let's return S_CABLE_DETACHED for now */
-        return S_CABLE_DETACHED;
-        /* return S_PERIPHERAL_WAIT; */
+        if (supply_mode == USB_SUPPLY_UNKNOWN || supply_mode == USB_SUPPLY_NONE)
+            return S_CABLE_DETACHED;
+        else
+            return S_CHARGING;
     }
 
-	return usb_state;
+    return usb_state;
 }
 
 usb_state_t get_usb_state(void)
 {
     gint usb_mode, supply_mode;
     uh_query_state(&usb_mode, &supply_mode);
-    return map_usb_mode(usb_mode);
+    return map_usb_mode(usb_mode, supply_mode);
 }
 
 static usb_state_t check_usb_cable(void)
@@ -345,7 +344,10 @@ static usb_state_t check_usb_cable(void)
                 handle_usb_event(E_ENTER_PCSUITE_MODE);
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
+        } else if (state == S_CHARGING) {
+            handle_usb_event(E_ENTER_CHARGING_MODE);
         }
+
         return state;
 }
 
@@ -660,7 +662,10 @@ static gboolean init_usb_cable_status(gpointer data)
 {
     check_usb_cable();
     usb_state = get_usb_state();
-    handle_usb_event(E_ENTER_PCSUITE_MODE);
+
+    if (usb_state != S_CHARGING)
+        handle_usb_event(E_ENTER_PCSUITE_MODE);
+
     return TRUE;
 }
 

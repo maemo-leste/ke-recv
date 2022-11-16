@@ -30,7 +30,6 @@ typedef struct {
 
 typedef struct {
     const gchar* name;
-    const DeviceDriver usb_driver;
     const DeviceDriver supply_driver;
 } DeviceDrivers;
 
@@ -57,9 +56,16 @@ static gpointer user_data = NULL;
 static UhCallback user_callback = NULL;
 
 static GUdevClient* client = NULL;
-static GUdevDevice* otg = NULL;
 static GUdevDevice* supply = NULL;
 static DeviceDrivers *active_device;
+static guint update_info_timeout = 0;
+/*
+  list of UDC devices - so far we do not support more than one, but,
+  in future, that may change
+ */
+GList *udc_devices = NULL;
+/* list of extcon devices that support USB cable */
+GList *extcon_devices = NULL;
 
 static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
@@ -67,12 +73,6 @@ static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
 static DeviceDrivers drivers[] = {
     {
         .name = "Nokia N900",
-        .usb_driver = {
-            .present = TRUE,
-            .subsystem = "platform",
-            .driver = "musb-hdrc",
-            .name = NULL,
-        },
         .supply_driver = {
             .present = TRUE,
             .subsystem = "power_supply",
@@ -81,54 +81,14 @@ static DeviceDrivers drivers[] = {
         },
     },
     {
-        .name = "LIME2",
-        .usb_driver = {
-            .present = TRUE,
-            .subsystem = "platform",
-            .driver = "musb-hdrc",
-            .name = NULL,
-        },
-        /* We can't read the mode from extcon, but at least we can use this to
-         * trigger on cable plugs and report on musb modes */
-        .supply_driver = {
-            .present = TRUE,
-            .subsystem = "extcon",
-            .driver = NULL,
-            .name = "extcon0",
-        },
-    },
-    {
-        .name = "PinePhone Devkit 1.x",
-        .usb_driver = {
-            .present = TRUE,
-            .subsystem = "platform",
-            .driver = "musb-hdrc",
-            .name = NULL,
-        },
-        /* We can't read the mode from extcon, but at least we can use this to
-         * trigger on cable plugs and report on musb modes */
-        .supply_driver = {
-            .present = TRUE,
-            .subsystem = "extcon",
-            .driver = NULL,
-            .name = "extcon1",
-        },
-    },
-    {
         .name = "Motorola Droid 4",
-        .usb_driver = {
-            .present = TRUE,
-            .subsystem = "platform",
-            .driver = "musb-hdrc",
-            .name = NULL,
-        },
         /* We can't read the mode from extcon, but at least we can use this to
          * trigger on cable plugs and report on musb modes */
         .supply_driver = {
             .present = TRUE,
             .subsystem = "power_supply",
             .driver = NULL,
-            .name = "battery",
+            .name = "usb",
         },
     },
 };
@@ -136,14 +96,12 @@ static DeviceDrivers drivers[] = {
 
 
 static gint read_usb_mode(void) {
-    const gchar* otg_sysfs_path = g_udev_device_get_sysfs_path(otg);
-    gchar* path;
+    const gchar* path = udc_devices->data;
     gchar *strmode = NULL;
     int mode;
 
     mode = USB_MODE_UNKNOWN;
 
-    path = g_strconcat(otg_sysfs_path, "/mode", NULL);
     gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
     if (ok) {
         if (strcmp(strmode, "b_idle\n") == 0) {
@@ -162,33 +120,80 @@ static gint read_usb_mode(void) {
 
         free(strmode);
     }
-    free(path);
 
     return mode;
 }
 
+static gchar **extcon_get_state(const char *path) {
+    gchar **rv = NULL;
+    gchar *fname = g_strconcat(path, "/state", NULL);
+    GError *error = NULL;
+    gchar *state;
+
+    if (g_file_get_contents(fname, &state, NULL, &error)) {
+        rv = g_strsplit_set(state, "=\n", 0);
+        g_free(state);
+    } else {
+        fprintf(stderr, "error reading %s: %s\n", fname, error->message);
+        g_clear_error(&error);
+    }
+
+    g_free(fname);
+
+    return rv;
+}
+
 static gint read_supply_mode(void) {
-    const gchar* supply_sysfs_path = g_udev_device_get_sysfs_path(supply);
-    gchar* path;
-    gchar *strmode = NULL;
     int mode;
 
     mode = USB_SUPPLY_UNKNOWN;
 
-    path = g_strconcat(supply_sysfs_path, "/type", NULL);
-    gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
-    if (ok) {
-        if (strcmp(strmode, "USB_CDP\n") == 0) {
-            mode = USB_SUPPLY_CDP;
-        } else if (strcmp(strmode, "USB_DCP\n") == 0) {
-            mode = USB_SUPPLY_DCP;
-        } else if (strcmp(strmode, "USB\n") == 0) {
-            mode = USB_SUPPLY_NONE;
-        }
+    if (supply) {
+        const gchar* supply_sysfs_path = g_udev_device_get_sysfs_path(supply);
+        gchar* path;
+        gchar *strmode = NULL;
 
-        free(strmode);
+        path = g_strconcat(supply_sysfs_path, "/type", NULL);
+        gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
+        if (ok) {
+            if (strcmp(strmode, "USB_CDP\n") == 0) {
+                mode = USB_SUPPLY_CDP;
+            } else if (strcmp(strmode, "USB_DCP\n") == 0) {
+                mode = USB_SUPPLY_DCP;
+            } else if (strcmp(strmode, "USB\n") == 0) {
+                mode = USB_SUPPLY_NONE;
+            }
+
+            free(strmode);
+        }
+        free(path);
+    } else {
+        gchar **state = extcon_get_state(extcon_devices->data);
+
+        if (state) {
+            gchar **p = state;
+
+            while (*p) {
+                if (!p[1] || !*p[1])
+                    break;
+                if (!strcmp(*p, "DCP") && *p[1] != '0') {
+                    mode = USB_SUPPLY_DCP;
+                    break;
+                } else if (!strcmp(*p, "CDP") && *p[1] != '0') {
+                    mode = USB_SUPPLY_CDP;
+                    break;
+                } else if (!strcmp(*p, "USB") && *p[1] != '0') {
+                    /* do not overwrite high-priority modes */
+                    if (mode == USB_SUPPLY_UNKNOWN)
+                        mode = USB_SUPPLY_NONE;
+                }
+
+                p += 2;
+            }
+
+            g_strfreev(state);
+        }
     }
-    free(path);
 
     return mode;
 }
@@ -222,7 +227,10 @@ static GUdevDevice* find_device(const gchar* subsystem_match, const gchar* drive
     }
 
 DONE:
-    g_list_free(l);
+    if (res)
+        g_object_ref(res);
+
+    g_list_free_full(l, g_object_unref);
 
     return res;
 }
@@ -236,56 +244,8 @@ static int setup_udev(void) {
     return 0;
 }
 
-static int find_devices(void) {
-    int i;
-    DeviceDrivers *d;
-    gboolean ok = FALSE;
-
-    for (i = 0; i < G_N_ELEMENTS(drivers); i++) {
-        otg = NULL;
-        supply = NULL;
-
-        d = &drivers[i];
-        fprintf(stderr, "Probing for drivers for %s\n", d->name);
-
-        if (d->supply_driver.present == TRUE) {
-            supply = find_device(d->supply_driver.subsystem,
-                                 d->supply_driver.driver,
-                                 d->supply_driver.name);
-            if (!supply) {
-                fprintf(stderr, "Cannot find supply for %s\n", d->name);
-                continue;
-            }
-            fprintf(stderr, "Found supply\n");
-        }
-
-        if (d->usb_driver.present == TRUE) {
-            otg = find_device(d->usb_driver.subsystem,
-                              d->usb_driver.driver,
-                              d->usb_driver.name);
-            if (!otg) {
-                fprintf(stderr, "Cannot find otg for %s\n", d->name);
-                continue;
-            }
-            fprintf(stderr, "Found otg\n");
-        }
-
-        active_device = d;
-        ok = TRUE;
-        break;
-    }
-
-    if (ok) {
-        cache.usb_mode = read_usb_mode();
-        if (active_device->supply_driver.present)
-            cache.supply_mode = read_supply_mode();
-        return 0;
-    }
-
-    return 1;
-}
-
 static gboolean update_info() {
+    update_info_timeout = 0;
     cache.supply_mode = read_supply_mode();
     cache.usb_mode = read_usb_mode();
     fprintf(stderr, "usb_mode: %d; supply_mode: %d\n", cache.usb_mode, cache.supply_mode);
@@ -297,20 +257,127 @@ static gboolean update_info() {
     return G_SOURCE_REMOVE;
 }
 
+static void idle_update_info() {
+    if (update_info_timeout)
+        g_source_remove(update_info_timeout);
+
+    /* Not all values update fast enough, and we're not in a hurry */
+    update_info_timeout = g_timeout_add(1000, update_info, NULL);
+}
+
+static int find_devices(void) {
+    GList *l, *devices;
+    gboolean ok = FALSE;
+
+    g_list_free_full(udc_devices, g_free);
+    udc_devices = NULL;
+
+    g_list_free_full(extcon_devices, g_free);
+    extcon_devices = NULL;
+
+    devices = g_udev_client_query_by_subsystem(client, "udc");
+
+    for (l = devices; l; l = l->next) {
+        const char *s = g_udev_device_get_sysfs_path(l->data);
+        gchar *sysfs_path;
+
+        fprintf(stderr, "Found udc %s\n", s);
+        sysfs_path = g_strconcat(s, "/device/mode", NULL);
+        udc_devices = g_list_append(udc_devices, sysfs_path);
+    }
+
+    if (!devices) {
+        fprintf(stderr, "No udc device found\n");
+        return 1;
+    }
+
+    g_list_free_full(devices, g_object_unref);
+
+    devices = g_udev_client_query_by_subsystem(client, "extcon");
+
+    for (l = devices; l; l = l->next) {
+        const char *s = g_udev_device_get_sysfs_path(l->data);
+        gchar **state = extcon_get_state(s);
+
+        if (state) {
+            if (g_strv_contains((const char *const*)state, "USB")) {
+                fprintf(stderr, "Found USB extcon %s\n", s);
+                extcon_devices = g_list_append(extcon_devices, g_strdup(s));
+            }
+
+            g_strfreev(state);
+        }
+    }
+
+    g_list_free_full(devices, g_object_unref);
+
+    if (!extcon_devices)
+    {
+        int i;
+        DeviceDrivers *d;
+        for (i = 0; i < G_N_ELEMENTS(drivers); i++) {
+            supply = NULL;
+
+            d = &drivers[i];
+            fprintf(stderr, "Probing for drivers for %s\n", d->name);
+
+            if (d->supply_driver.present == TRUE) {
+                supply = find_device(d->supply_driver.subsystem,
+                                     d->supply_driver.driver,
+                                     d->supply_driver.name);
+                if (!supply) {
+                    fprintf(stderr, "Cannot find supply for %s\n", d->name);
+                    continue;
+                }
+                fprintf(stderr, "Found supply\n");
+            }
+
+            active_device = d;
+            ok = TRUE;
+            break;
+        }
+    } else {
+        ok = TRUE;
+    }
+
+    if (ok) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static gint find_extcon(gconstpointer a, gconstpointer b) {
+    return strcmp(a, b);
+}
+
 static void on_uevent(GUdevClient *client, const char *action, GUdevDevice *device) {
     (void)client;
     (void)action;
 
-    const gchar* sysfs_path = g_udev_device_get_sysfs_path(device);
-    const gchar* supply_sysfs_path;
+    if (!strcmp(action, "add") || !strcmp(action, "remove")) {
+        const gchar* subsys = g_udev_device_get_subsystem(device);
 
-    if (active_device->supply_driver.present)
-        supply_sysfs_path = g_udev_device_get_sysfs_path(supply);
+        if (!strcmp(subsys, "udc") || !strcmp(subsys, "extcon") ||
+            !strcmp(subsys, "power_supply")) {
+            find_devices();
+        }
+    } else {
+        const gchar* sysfs_path = g_udev_device_get_sysfs_path(device);
+        const gchar* supply_sysfs_path;
 
-    if (active_device->supply_driver.present && (strcmp(supply_sysfs_path, sysfs_path) == 0)) {
-        /* Not all values update fast enough, and we're not in a hurry */
-        g_timeout_add(1000, update_info, NULL);
+        if (g_list_find_custom(extcon_devices, sysfs_path, find_extcon)) {
+            idle_update_info();
+        } else if (active_device) {
+            if (active_device->supply_driver.present)
+                supply_sysfs_path = g_udev_device_get_sysfs_path(supply);
+
+            if (active_device->supply_driver.present && (strcmp(supply_sysfs_path, sysfs_path) == 0)) {
+                idle_update_info();
+            }
+        }
     }
+
     return;
 }
 
