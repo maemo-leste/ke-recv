@@ -258,11 +258,8 @@ static gboolean update_info() {
 }
 
 static void idle_update_info() {
-    if (update_info_timeout)
-        g_source_remove(update_info_timeout);
-
-    /* Not all values update fast enough, and we're not in a hurry */
-    update_info_timeout = g_timeout_add(1000, update_info, NULL);
+    if (!update_info_timeout)
+        update_info_timeout = g_idle_add(update_info, NULL);
 }
 
 static int find_devices(void) {
