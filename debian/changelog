@@ -1,3 +1,9 @@
+ke-recv (4.5.10) unstable; urgency=medium
+
+  * Properly support devices that expose extcon USB devices
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Fri, 18 Nov 2022 06:37:56 +0200
+
 ke-recv (4.5.9) unstable; urgency=medium
 
   * Log as daemon, not as user
