@@ -96,14 +96,16 @@ static DeviceDrivers drivers[] = {
 
 
 static gint read_usb_mode(void) {
-    const gchar* path = udc_devices->data;
+    const gchar* path;
     gchar *strmode = NULL;
-    int mode;
+    int mode = USB_MODE_UNKNOWN;
 
-    mode = USB_MODE_UNKNOWN;
+    if (udc_devices)
+        path = udc_devices->data;
+    else
+        return mode;
 
-    gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
-    if (ok) {
+    if (g_file_get_contents(path, &strmode, NULL, NULL)) {
         if (strcmp(strmode, "b_idle\n") == 0) {
             mode = USB_MODE_B_IDLE;
         } else if (strcmp(strmode, "b_peripheral\n") == 0) {
@@ -168,7 +170,10 @@ static gint read_supply_mode(void) {
         }
         free(path);
     } else {
-        gchar **state = extcon_get_state(extcon_devices->data);
+        gchar **state = NULL;
+
+        if (extcon_devices)
+            state = extcon_get_state(extcon_devices->data);
 
         if (state) {
             gchar **p = state;
