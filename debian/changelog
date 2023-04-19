@@ -1,3 +1,9 @@
+ke-recv (4.5.11) unstable; urgency=medium
+
+  * Do not segfault if there is no USB hdc or extcon devices
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Wed, 19 Apr 2023 17:42:22 +0300
+
 ke-recv (4.5.10) unstable; urgency=medium
 
   * Properly support devices that expose extcon USB devices
