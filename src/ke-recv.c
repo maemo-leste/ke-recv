@@ -345,7 +345,9 @@ static usb_state_t check_usb_cable(void)
         } else if (state == S_CABLE_DETACHED) {
                 handle_usb_event(E_CABLE_DETACHED);
         } else if (state == S_CHARGING) {
-            handle_usb_event(E_ENTER_CHARGING_MODE);
+            /* Let's force pc-suite for now since we're still in alpha/beta */
+            handle_usb_event(E_ENTER_PCSUITE_MODE);
+            /* handle_usb_event(E_ENTER_CHARGING_MODE); */
         }
 
         return state;
