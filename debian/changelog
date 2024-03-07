@@ -1,3 +1,10 @@
+ke-recv (4.5.12) unstable; urgency=medium
+
+  * Silence some verbose logs
+  * Always enter pcsuite for now
+
+ -- Merlijn Wajer <merlijn@wizzup.org>  Thu, 07 Mar 2024 15:58:31 +0100
+
 ke-recv (4.5.11) unstable; urgency=medium
 
   * Do not segfault if there is no USB hdc or extcon devices
