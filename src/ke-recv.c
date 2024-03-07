@@ -510,7 +510,7 @@ static void handle_usb_event(usb_event_t e)
                         } else if (usb_state == S_CHARGING) {
                                 DLOG_INFO_F("E_CABLE_DETACHED in "
                                             "S_CHARGING");
-                        } else {
+                        } else if (usb_state != E_CABLE_DETACHED) {
                                 DLOG_WARN_F("E_CABLE_DETACHED in %d!",
                                             usb_state);
                         }
